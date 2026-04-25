@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMC Health Management · IMC স্বাস্থ্য ব্যবস্থাপনা — Bengal Zone</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════ */
+:root {
+  --bg:           #0b1120;
+  --panel:        #111827;
+  --panel2:       #0f1e33;
+  --border:       #1e3050;
+  --border-lite:  rgba(30,48,80,0.45);
+  --teal:         #0ea5b0;
+  --gold:         #d4a017;
+  --red:          #e05a5a;
+  --green:        #3cba7a;
+  --orange:       #e07d3c;
+  --purple:       #8b5cf6;
+  --sky:          #38bdf8;
+  --text:         #d6e4f0;
+  --text-dim:     #5a7a9a;
+  --text-mid:     #8ba8c4;
+  --warn-bg:      #1f1200;
+  --warn-bdr:     #92400e;
+  --warn-txt:     #fbbf24;
+  --ban-bg:       #1a0000;
+  --ban-bdr:      #7f1d1d;
+  --ban-txt:      #fca5a5;
+  --tip-bg:       rgba(14,165,176,0.07);
+  --tip-bdr:      rgba(14,165,176,0.22);
+  --tip-txt:      #67c8cd;
+  --bn-accent:    #4fc3c9; /* Bengali tile accent */
+  --bn-panel:     #0d1a2e;
+}
+
+/* ═══════════════════════════════════════════
+RESET & BASE
+═══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘IBM Plex Sans’, sans-serif;
+font-size: 13px;
+line-height: 1.65;
+padding: 28px 16px 64px;
+}
+
+.bn { font-family: ‘Hind Siliguri’, sans-serif; }
+
+/* ═══════════════════════════════════════════
+HEADER
+═══════════════════════════════════════════ */
+.header {
+text-align: center;
+margin-bottom: 36px;
+}
+.header-rule {
+height: 2px;
+background: linear-gradient(90deg, transparent 0%, var(–teal) 40%, var(–gold) 60%, transparent 100%);
+margin-bottom: 26px;
+border-radius: 2px;
+}
+.eyebrow {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 10px;
+letter-spacing: 3px;
+color: var(–teal);
+text-transform: uppercase;
+margin-bottom: 10px;
+}
+.header h1 {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 22px;
+font-weight: 700;
+color: #fff;
+margin-bottom: 4px;
+line-height: 1.3;
+}
+.header h1 .bn-title {
+font-family: ‘Hind Siliguri’, sans-serif;
+font-size: 19px;
+font-weight: 600;
+color: var(–bn-accent);
+}
+.header .sub {
+font-size: 12px;
+color: var(–text-dim);
+font-style: italic;
+margin-bottom: 16px;
+}
+.species-row {
+display: flex;
+justify-content: center;
+gap: 8px;
+flex-wrap: wrap;
+margin-bottom: 4px;
+}
+.sp-tag {
+background: rgba(14,165,176,0.1);
+border: 1px solid rgba(14,165,176,0.25);
+border-radius: 4px;
+padding: 2px 11px;
+font-size: 11px;
+color: var(–sky);
+font-family: ‘IBM Plex Mono’, monospace;
+}
+.sp-tag .bn {
+font-family: ‘Hind Siliguri’, sans-serif;
+font-size: 12px;
+color: var(–bn-accent);
+}
+.header-rule-bottom {
+height: 1px;
+background: var(–border);
+margin-top: 22px;
+}
+
+/* ═══════════════════════════════════════════
+SEASON CALENDAR
+═══════════════════════════════════════════ */
+.season-wrap {
+background: var(–panel2);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 14px 18px 16px;
+margin-bottom: 28px;
+}
+.season-head {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 9px;
+letter-spacing: 2px;
+color: var(–text-dim);
+text-transform: uppercase;
+margin-bottom: 12px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.season-head .bn {
+font-size: 11px;
+color: var(–text-dim);
+letter-spacing: 0;
+font-family: ‘Hind Siliguri’, sans-serif;
+}
+.seasons {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 8px;
+}
+.s-item {
+background: var(–panel);
+border-radius: 7px;
+padding: 9px 11px;
+border-left: 3px solid var(–border);
+}
+.s-item.eus   { border-left-color: var(–red); }
+.s-item.arg   { border-left-color: var(–orange); }
+.s-item.gill  { border-left-color: var(–purple); }
+.s-item.gen   { border-left-color: var(–green); }
+
+.s-label {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 8.5px;
+letter-spacing: 1px;
+margin-bottom: 3px;
+}
+.eus .s-label  { color: var(–red); }
+.arg .s-label  { color: var(–orange); }
+.gill .s-label { color: var(–purple); }
+.gen .s-label  { color: var(–green); }
+
+.s-name { font-size: 12px; font-weight: 600; color: var(–text); }
+.s-name .bn { font-size: 11.5px; font-weight: 600; font-family: ‘Hind Siliguri’, sans-serif; color: var(–bn-accent); display: block; }
+.s-months { font-size: 10.5px; color: var(–text-dim); margin-top: 3px; }
+.s-months .bn { font-family: ‘Hind Siliguri’, sans-serif; font-size: 10px; display: block; }
+
+/* ═══════════════════════════════════════════
+SECTION LABELS
+═══════════════════════════════════════════ */
+.sec-label {
+display: flex;
+align-items: center;
+gap: 12px;
+margin: 30px 0 14px;
+}
+.sec-label-text {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 9.5px;
+letter-spacing: 2.5px;
+color: var(–text-dim);
+text-transform: uppercase;
+white-space: nowrap;
+}
+.sec-label-text .bn {
+font-family: ‘Hind Siliguri’, sans-serif;
+font-size: 11px;
+letter-spacing: 0;
+color: var(–text-dim);
+font-weight: 500;
+margin-left: 6px;
+}
+.sec-label::after {
+content: ‘’;
+flex: 1;
+height: 1px;
+background: var(–border);
+}
+
+/* ═══════════════════════════════════════════
+CARD PAIR — the bilingual side-by-side unit
+═══════════════════════════════════════════ */
+.pair {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 12px;
+margin-bottom: 14px;
+}
+
+/* ═══════════════════════════════════════════
+BASE CARD
+═══════════════════════════════════════════ */
+.card {
+background: var(–panel);
+border: 1px solid var(–border);
+border-radius: 10px;
+overflow: hidden;
+display: flex;
+flex-direction: column;
+}
+.card.bn-card {
+background: var(–bn-panel);
+border-color: rgba(79,195,201,0.18);
+}
+
+/* Card head */
+.ch {
+padding: 9px 14px 8px;
+display: flex;
+align-items: center;
+gap: 9px;
+border-bottom: 1px solid var(–border-lite);
+}
+.bn-card .ch {
+border-bottom-color: rgba(79,195,201,0.15);
+}
+.ch-icon {
+font-size: 15px;
+line-height: 1;
+flex-shrink: 0;
+}
+.ch-title {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 11px;
+font-weight: 700;
+letter-spacing: 0.3px;
+text-transform: uppercase;
+flex: 1;
+line-height: 1.3;
+}
+.bn-card .ch-title {
+font-family: ‘Hind Siliguri’, sans-serif;
+font-size: 13px;
+font-weight: 700;
+text-transform: none;
+letter-spacing: 0;
+color: var(–bn-accent);
+}
+.ch-badge {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 8.5px;
+padding: 2px 6px;
+border-radius: 3px;
+border: 1px solid;
+letter-spacing: 0.8px;
+white-space: nowrap;
+flex-shrink: 0;
+}
+.bn-card .ch-badge {
+font-family: ‘Hind Siliguri’, sans-serif;
+font-size: 10px;
+letter-spacing: 0;
+}
+.b-bact   { background:rgba(224,90,90,.1);   border-color:var(–red);    color:var(–red); }
+.b-para   { background:rgba(224,125,60,.1);  border-color:var(–orange); color:var(–orange); }
+.b-fung   { background:rgba(139,92,246,.1);  border-color:var(–purple); color:var(–purple); }
+.b-water  { background:rgba(14,165,176,.1);  border-color:var(–teal);   color:var(–teal); }
+.b-nut    { background:rgba(60,186,122,.1);  border-color:var(–green);  color:var(–green); }
+.b-crit   { background:rgba(224,90,90,.2);   border-color:var(–red);    color:var(–red); }
+.b-myx    { background:rgba(139,92,246,.12); border-color:var(–purple); color:var(–purple); }
+
+/* Card colour accents on header */
+.cc-red    .ch { background:rgba(224,90,90,.05); }
+.cc-red    .ch-title { color:#f87171; }
+.cc-orange .ch { background:rgba(224,125,60,.05); }
+.cc-orange .ch-title { color:#fb923c; }
+.cc-purple .ch { background:rgba(139,92,246,.05); }
+.cc-purple .ch-title { color:#a78bfa; }
+.cc-teal   .ch { background:rgba(14,165,176,.05); }
+.cc-teal   .ch-title { color:#2dd4d8; }
+.cc-green  .ch { background:rgba(60,186,122,.05); }
+.cc-green  .ch-title { color:#4ade80; }
+.cc-gold   .ch { background:rgba(212,160,23,.05); }
+.cc-gold   .ch-title { color:#fbbf24; }
+.cc-sky    .ch { background:rgba(56,189,248,.05); }
+.cc-sky    .ch-title { color:#38bdf8; }
+
+/* Card body */
+.cb { padding: 12px 14px; flex: 1; }
+
+/* Causative agent */
+.cause {
+font-size: 11.5px;
+color: var(–text-mid);
+font-style: italic;
+margin-bottom: 9px;
+padding-bottom: 9px;
+border-bottom: 1px solid var(–border-lite);
+line-height: 1.5;
+}
+.cause strong { color: #80a4c8; font-style: normal; font-size: 10px; letter-spacing: 0.5px; }
+.bn-card .cause {
+font-family: ‘Hind Siliguri’, sans-serif;
+font-style: normal;
+font-size: 12px;
+color: var(–text-mid);
+}
+.bn-card .cause strong {
+font-family: ‘Hind Siliguri’, sans-serif;
+font-size: 12px;
+color: #6baecf;
+letter-spacing: 0;
+}
+
+/* Symptom box */
+.symp {
+background: rgba(30,48,80,0.35);
+border-left: 2px solid var(–border);
+border-radius: 4px;
+padding: 7px 10px;
+margin-bottom: 10px;
+font-size: 11.5px;
+color: var(–text-mid);
+line-height: 1.5;
+}
+.symp-head {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 9px;
+letter-spacing: 1px;
+color: var(–text-dim);
+text-transform: uppercase;
+display: block;
+margin-bottom: 3px;
+}
+.bn-card .symp { font-family: ‘Hind Siliguri’, sans-serif; font-size: 12px; }
+.bn-card .symp-head { font-family: ‘IBM Plex Mono’, monospace; }
+
+/* Step labels */
+.step {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 9px;
+letter-spacing: 1px;
+color: var(–text-dim);
+text-transform: uppercase;
+margin: 10px 0 5px;
+}
+.bn-card .step { font-size: 9px; }
+
+/* Dose list */
+.dl { list-style: none; }
+.dl li {
+display: flex;
+gap: 8px;
+padding: 4px 0;
+border-bottom: 1px solid var(–border-lite);
+align-items: baseline;
+font-size: 12px;
+}
+.dl li:last-child { border-bottom: none; }
+.dl-chem { flex: 1; color: var(–text); font-weight: 600; line-height: 1.4; }
+.dl-qty {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 10.5px;
+color: var(–gold);
+white-space: nowrap;
+flex-shrink: 0;
+text-align: right;
+line-height: 1.4;
+}
+.dl-note {
+display: block;
+font-size: 10.5px;
+color: var(–text-dim);
+font-weight: 400;
+font-style: italic;
+margin-top: 1px;
+font-family: ‘IBM Plex Sans’, sans-serif;
+}
+.bn-card .dl li { font-size: 12px; }
+.bn-card .dl-chem { font-family: ‘Hind Siliguri’, sans-serif; font-size: 12.5px; font-weight: 600; }
+.bn-card .dl-qty { font-family: ‘IBM Plex Mono’, monospace; font-size: 10.5px; }
+.bn-card .dl-note { font-family: ‘Hind Siliguri’, sans-serif; font-size: 11px; font-style: normal; }
+
+/* Info boxes */
+.warn-box {
+background: var(–warn-bg);
+border: 1px solid var(–warn-bdr);
+border-radius: 5px;
+padding: 8px 11px;
+font-size: 11.5px;
+color: var(–warn-txt);
+margin-top: 10px;
+line-height: 1.5;
+}
+.warn-box .bx-head {
+font-weight: 700;
+font-size: 10px;
+letter-spacing: 0.5px;
+margin-bottom: 3px;
+display: block;
+}
+.ban-box {
+background: var(–ban-bg);
+border: 1px solid var(–ban-bdr);
+border-radius: 5px;
+padding: 8px 11px;
+font-size: 11.5px;
+color: var(–ban-txt);
+margin-top: 10px;
+line-height: 1.5;
+}
+.ban-box .bx-head {
+font-weight: 700;
+font-size: 10px;
+letter-spacing: 0.5px;
+margin-bottom: 3px;
+display: block;
+}
+.tip-box {
+background: var(–tip-bg);
+border: 1px solid var(–tip-bdr);
+border-radius: 5px;
+padding: 8px 11px;
+font-size: 11.5px;
+color: var(–tip-txt);
+margin-top: 10px;
+line-height: 1.5;
+}
+.tip-box .bx-head {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 9px;
+letter-spacing: 1px;
+color: var(–teal);
+text-transform: uppercase;
+margin-bottom: 3px;
+display: block;
+}
+.bn-card .warn-box,
+.bn-card .ban-box,
+.bn-card .tip-box {
+font-family: ‘Hind Siliguri’, sans-serif;
+font-size: 12px;
+}
+
+/* ═══════════════════════════════════════════
+ADVISORY PANEL
+═══════════════════════════════════════════ */
+.advisory {
+background: var(–panel2);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 20px 22px;
+margin-top: 32px;
+}
+.advisory-head {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 10px;
+letter-spacing: 2px;
+color: var(–gold);
+text-transform: uppercase;
+margin-bottom: 16px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.advisory-head .bn {
+font-family: ‘Hind Siliguri’, sans-serif;
+font-size: 13px;
+color: var(–gold);
+letter-spacing: 0;
+font-weight: 600;
+}
+.adv-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 10px;
+margin-bottom: 22px;
+}
+.adv-item {
+background: var(–panel);
+border: 1px solid var(–border);
+border-radius: 7px;
+padding: 11px 13px;
+}
+.adv-head {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 9px;
+letter-spacing: 1px;
+color: var(–text-dim);
+text-transform: uppercase;
+margin-bottom: 5px;
+}
+.adv-head .bn { font-family:‘Hind Siliguri’,sans-serif; font-size:11px; letter-spacing:0; color:var(–bn-accent); display:block; margin-top:2px; }
+.adv-item p { font-size: 11.5px; color: var(–text-mid); line-height: 1.55; }
+.adv-item p strong { color: var(–text); }
+.adv-item p .bn { font-family:‘Hind Siliguri’,sans-serif; font-size:12px; display:block; margin-top:4px; color:var(–text-mid); }
+
+/* Withdrawal table */
+.wt-wrap { overflow-x: auto; }
+.wt {
+width: 100%;
+border-collapse: collapse;
+font-size: 11.5px;
+min-width: 600px;
+}
+.wt th {
+background: rgba(30,48,80,0.6);
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 9px;
+letter-spacing: 1px;
+color: var(–text-dim);
+text-transform: uppercase;
+padding: 7px 10px;
+text-align: left;
+border-bottom: 1px solid var(–border);
+}
+.wt td {
+padding: 6px 10px;
+border-bottom: 1px solid var(–border-lite);
+vertical-align: top;
+line-height: 1.45;
+}
+.wt tr:last-child td { border-bottom: none; }
+.wt td:first-child { color: var(–text); font-weight: 600; }
+.wt td:nth-child(2) { font-family:‘IBM Plex Mono’,monospace; color: var(–gold); font-size: 11px; }
+.wt td:nth-child(3) { color: var(–text-mid); }
+.wt td:nth-child(4) { color: var(–text-dim); font-size: 11px; font-family:‘Hind Siliguri’,sans-serif; }
+.banned { color: var(–ban-txt) !important; }
+
+/* ═══════════════════════════════════════════
+FOOTER
+═══════════════════════════════════════════ */
+footer {
+text-align: center;
+margin-top: 42px;
+font-size: 11px;
+color: var(–text-dim);
+line-height: 1.9;
+}
+footer strong { color: var(–text-mid); }
+footer .bn { font-family:‘Hind Siliguri’,sans-serif; font-size:12px; display:block; }
+footer .legal {
+margin-top: 10px;
+color: #2a4a6a;
+font-size: 10.5px;
+}
+
+/* ═══════════════════════════════════════════
+RESPONSIVE
+═══════════════════════════════════════════ */
+@media (max-width: 700px) {
+.pair { grid-template-columns: 1fr; }
+.seasons { grid-template-columns: 1fr 1fr; }
+.adv-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 440px) {
+.seasons { grid-template-columns: 1fr; }
+.adv-grid { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════
+PRINT BUTTON (screen only)
+═══════════════════════════════════════════ */
+.print-bar {
+position: fixed;
+bottom: 24px;
+right: 24px;
+display: flex;
+flex-direction: column;
+gap: 8px;
+z-index: 999;
+}
+.print-btn {
+display: flex;
+align-items: center;
+gap: 7px;
+padding: 10px 18px;
+border-radius: 8px;
+border: none;
+cursor: pointer;
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 12px;
+font-weight: 700;
+letter-spacing: 1px;
+transition: all 0.15s ease;
+box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.print-btn.a4 {
+background: var(–teal);
+color: #fff;
+}
+.print-btn.a5 {
+background: var(–gold);
+color: #000;
+}
+.print-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+.print-btn:active { transform: translateY(0); }
+.print-label {
+font-family: ‘IBM Plex Mono’, monospace;
+font-size: 9px;
+letter-spacing: 2px;
+color: var(–text-dim);
+text-align: center;
+text-transform: uppercase;
+margin-bottom: 4px;
+}
+
+/* ═══════════════════════════════════════════
+PAGE SIZE RULES
+═══════════════════════════════════════════ */
+@page { margin: 12mm 10mm; }
+body[data-print=“a4”] { –page-size: A4; }
+body[data-print=“a5”] { –page-size: A5; }
+
+/* ═══════════════════════════════════════════
+PRINT STYLES
+═══════════════════════════════════════════ */
+@media print {
+/* ── Page setup ── */
+@page          { size: A4 portrait; margin: 10mm 9mm; }
+@page :first   { margin-top: 8mm; }
+body[data-print=“a5”] { font-size: 11px !important; }
+@page.a5-page  { size: A5 portrait; margin: 8mm 7mm; }
+
+/* ── Guarantee background printing ── */
+*, *::before, *::after {
+-webkit-print-color-adjust: exact !important;
+print-color-adjust: exact !important;
+}
+
+/* ── Light theme override ── */
+:root {
+–bg:           #ffffff;
+–panel:        #f5f7fa;
+–panel2:       #eef1f6;
+–border:       #c8d4e0;
+–border-lite:  #dde6ef;
+–teal:         #0a7f88;
+–gold:         #a07800;
+–red:          #c0392b;
+–green:        #1a7a4a;
+–orange:       #b85c10;
+–purple:       #6033b0;
+–sky:          #1a6fa0;
+–text:         #1a2533;
+–text-dim:     #4a6070;
+–text-mid:     #3a5060;
+–warn-bg:      #fffbea;
+–warn-bdr:     #c87000;
+–warn-txt:     #7a4500;
+–ban-bg:       #fff0f0;
+–ban-bdr:      #c03030;
+–ban-txt:      #8a1010;
+–tip-bg:       #edfafa;
+–tip-bdr:      #0a8888;
+–tip-txt:      #085858;
+–bn-accent:    #0a6a70;
+–bn-panel:     #f0f7fa;
+}
+
+/* ── Hide screen-only elements ── */
+.print-bar { display: none !important; }
+
+/* ── Body ── */
+body {
+background: #fff !important;
+color: #1a2533 !important;
+padding: 0 !important;
+font-size: 10.5px;
+line-height: 1.55;
+}
+
+/* ── Document header ── */
+.header { margin-bottom: 14px; }
+.header-rule {
+background: linear-gradient(90deg, transparent, #0a7f88 40%, #a07800 60%, transparent) !important;
+height: 2px;
+margin-bottom: 12px;
+}
+.header h1 { font-size: 16px; color: #1a2533 !important; }
+.header h1 .bn-title { font-size: 14px; color: #0a6a70 !important; }
+.eyebrow { color: #0a7f88 !important; }
+.header .sub { color: #4a6070 !important; }
+.header-rule-bottom { background: #c8d4e0 !important; }
+.sp-tag {
+background: #edfafa !important;
+border-color: #0a8888 !important;
+color: #085858 !important;
+}
+.sp-tag .bn { color: #0a6a70 !important; }
+
+/* ── Season bar ── */
+.season-wrap {
+background: #eef1f6 !important;
+border-color: #c8d4e0 !important;
+margin-bottom: 12px;
+padding: 10px 14px;
+}
+.season-head { color: #4a6070 !important; margin-bottom: 8px; }
+.season-head .bn { color: #4a6070 !important; }
+.s-item {
+background: #f5f7fa !important;
+padding: 7px 9px;
+}
+.s-item.eus  { border-left-color: #c0392b !important; }
+.s-item.arg  { border-left-color: #b85c10 !important; }
+.s-item.gill { border-left-color: #6033b0 !important; }
+.s-item.gen  { border-left-color: #1a7a4a !important; }
+.eus  .s-label { color: #c0392b !important; }
+.arg  .s-label { color: #b85c10 !important; }
+.gill .s-label { color: #6033b0 !important; }
+.gen  .s-label { color: #1a7a4a !important; }
+.s-name       { color: #1a2533 !important; }
+.s-name .bn   { color: #0a6a70 !important; }
+.s-months     { color: #4a6070 !important; }
+.s-months .bn { color: #4a6070 !important; }
+
+/* ── Section labels ── */
+.sec-label { margin: 12px 0 8px; }
+.sec-label-text { color: #4a6070 !important; }
+.sec-label-text .bn { color: #4a6070 !important; }
+.sec-label::after { background: #c8d4e0 !important; }
+
+/* ── Pair layout ── */
+.pair {
+display: grid !important;
+grid-template-columns: 1fr 1fr !important;
+gap: 8px !important;
+margin-bottom: 8px !important;
+page-break-inside: avoid;
+break-inside: avoid;
+}
+
+/* ── Cards ── */
+.card {
+background: #f5f7fa !important;
+border-color: #c8d4e0 !important;
+border-radius: 6px !important;
+page-break-inside: avoid;
+break-inside: avoid;
+}
+.card.bn-card {
+background: #f0f7fa !important;
+border-color: #7bbfc8 !important;
+}
+
+/* Card head colour bands */
+.ch { border-bottom-color: #dde6ef !important; padding: 6px 10px 5px; }
+.bn-card .ch { border-bottom-color: #9acfd8 !important; }
+
+.cc-red    .ch { background: #fff0f0 !important; }
+.cc-red    .ch-title { color: #9b1c1c !important; }
+.cc-orange .ch { background: #fff7ed !important; }
+.cc-orange .ch-title { color: #8a3c00 !important; }
+.cc-purple .ch { background: #f5f0ff !important; }
+.cc-purple .ch-title { color: #4c1d95 !important; }
+.cc-teal   .ch { background: #edfafa !important; }
+.cc-teal   .ch-title { color: #065f70 !important; }
+.cc-green  .ch { background: #f0faf5 !important; }
+.cc-green  .ch-title { color: #145239 !important; }
+.cc-gold   .ch { background: #fffbeb !important; }
+.cc-gold   .ch-title { color: #78510a !important; }
+.cc-sky    .ch { background: #eff8ff !important; }
+.cc-sky    .ch-title { color: #1a4f7a !important; }
+
+.ch-title { font-size: 10px !important; }
+.bn-card .ch-title { font-size: 11.5px !important; color: #085868 !important; }
+
+/* Badges */
+.b-bact  { background: #fff0f0 !important; border-color: #c0392b !important; color: #8a1010 !important; }
+.b-para  { background: #fff7ed !important; border-color: #b85c10 !important; color: #8a3c00 !important; }
+.b-fung  { background: #f5f0ff !important; border-color: #6033b0 !important; color: #4c1d95 !important; }
+.b-water { background: #edfafa !important; border-color: #0a8888 !important; color: #065f70 !important; }
+.b-nut   { background: #f0faf5 !important; border-color: #1a7a4a !important; color: #145239 !important; }
+.b-crit  { background: #ffe4e4 !important; border-color: #9b1c1c !important; color: #7b0000 !important; }
+.b-myx   { background: #f5f0ff !important; border-color: #6033b0 !important; color: #4c1d95 !important; }
+
+/* Card body */
+.cb { padding: 8px 10px; }
+
+/* Causative agent */
+.cause {
+color: #3a5060 !important;
+border-bottom-color: #dde6ef !important;
+font-size: 10px !important;
+margin-bottom: 6px;
+padding-bottom: 6px;
+}
+.cause strong { color: #1a3a50 !important; }
+.bn-card .cause { color: #3a5060 !important; }
+.bn-card .cause strong { color: #1a3a50 !important; }
+
+/* Symptom box */
+.symp {
+background: #edf2f7 !important;
+border-left-color: #9ab0c4 !important;
+font-size: 10px !important;
+color: #2a4050 !important;
+padding: 5px 8px;
+margin-bottom: 6px;
+}
+.symp-head { color: #4a6070 !important; }
+
+/* Step labels */
+.step { color: #4a6070 !important; font-size: 8px !important; margin: 6px 0 3px; }
+
+/* Dose list */
+.dl li {
+border-bottom-color: #dde6ef !important;
+padding: 3px 0;
+font-size: 10px !important;
+}
+.dl-chem { color: #1a2533 !important; font-size: 10px !important; }
+.dl-qty  { color: #7a5500 !important; font-size: 9.5px !important; }
+.dl-note { color: #4a6070 !important; font-size: 9px !important; }
+.bn-card .dl-chem { font-size: 11px !important; color: #1a2533 !important; }
+.bn-card .dl-note { font-size: 10px !important; }
+
+/* Info boxes */
+.warn-box {
+background: #fffbea !important;
+border-color: #c87000 !important;
+color: #7a4500 !important;
+font-size: 10px !important;
+padding: 5px 8px;
+margin-top: 6px;
+}
+.warn-box .bx-head { font-size: 9px !important; color: #8a4500 !important; }
+.ban-box {
+background: #fff0f0 !important;
+border-color: #c03030 !important;
+color: #8a1010 !important;
+font-size: 10px !important;
+padding: 5px 8px;
+margin-top: 6px;
+}
+.ban-box .bx-head { font-size: 9px !important; color: #7a0000 !important; }
+.tip-box {
+background: #edfafa !important;
+border-color: #0a8888 !important;
+color: #075050 !important;
+font-size: 10px !important;
+padding: 5px 8px;
+margin-top: 6px;
+}
+.tip-box .bx-head { color: #065f70 !important; font-size: 8px !important; }
+
+/* Advisory panel */
+.advisory {
+background: #eef1f6 !important;
+border-color: #c8d4e0 !important;
+padding: 12px 14px;
+margin-top: 12px;
+page-break-inside: avoid;
+break-inside: avoid;
+}
+.advisory-head { color: #7a5500 !important; font-size: 9px !important; margin-bottom: 10px; }
+.advisory-head .bn { color: #7a5500 !important; font-size: 11px !important; }
+.adv-grid { gap: 7px; margin-bottom: 14px; }
+.adv-item {
+background: #f5f7fa !important;
+border-color: #c8d4e0 !important;
+padding: 8px 10px;
+}
+.adv-head { color: #4a6070 !important; font-size: 8px !important; }
+.adv-head .bn { color: #085868 !important; font-size: 10px !important; }
+.adv-item p { color: #3a5060 !important; font-size: 10px !important; }
+.adv-item p strong { color: #1a2533 !important; }
+.adv-item p .bn { color: #3a5060 !important; font-size: 11px !important; }
+
+/* Withdrawal table */
+.wt-wrap { overflow: visible !important; }
+.wt { font-size: 9.5px !important; min-width: unset !important; }
+.wt th {
+background: #e0e8f0 !important;
+color: #3a5060 !important;
+font-size: 8px !important;
+padding: 5px 7px;
+border-bottom-color: #b0c4d4 !important;
+}
+.wt td {
+padding: 4px 7px;
+border-bottom-color: #dde6ef !important;
+color: #2a4050 !important;
+font-size: 9.5px !important;
+}
+.wt td:first-child { color: #1a2533 !important; }
+.wt td:nth-child(2) { color: #7a5500 !important; }
+.wt td:nth-child(3) { color: #3a5060 !important; }
+.wt td:nth-child(4) { color: #4a6070 !important; }
+.banned { color: #8a1010 !important; }
+
+/* Footer */
+footer {
+color: #4a6070 !important;
+font-size: 9px !important;
+margin-top: 14px;
+padding-top: 8px;
+border-top: 1px solid #c8d4e0;
+}
+footer strong { color: #1a2533 !important; }
+footer .legal { color: #4a6070 !important; font-size: 8.5px !important; }
+footer .bn { color: #4a6070 !important; }
+
+/* Page break helpers */
+.sec-label { page-break-before: auto; }
+.advisory  { page-break-before: auto; }
+}
+
+/* ── A5 override (set via JS data attribute before print) ── */
+body[data-print=“a5”] * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+@media print {
+body[data-print=“a5”] { font-size: 9.5px !important; }
+body[data-print=“a5”] .pair { gap: 5px !important; }
+body[data-print=“a5”] .pair,
+body[data-print=“a5”] .card,
+body[data-print=“a5”] .advisory { page-break-inside: avoid; break-inside: avoid; }
+}
+</style>
+
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     HEADER
+════════════════════════════════════════ -->
+
+<div class="header">
+  <div class="header-rule"></div>
+  <div class="eyebrow">Field Reference · Bengal Zone Aquaculture · পশ্চিমবঙ্গ জলজ চাষ</div>
+  <h1>
+    IMC Disease &amp; Health Management<br>
+    <span class="bn bn-title">আইএমসি রোগ ও স্বাস্থ্য ব্যবস্থাপনা</span>
+  </h1>
+  <p class="sub">Research-backed guide for composite carp culture — West Bengal &amp; adjoining regions<br>
+  <span class="bn" style="font-size:12px;color:var(--text-dim);">গবেষণা-ভিত্তিক নির্দেশিকা · মিশ্র কার্প চাষ</span></p>
+  <div class="species-row">
+    <span class="sp-tag">Catla catla · <span class="bn">কাতলা</span></span>
+    <span class="sp-tag">Labeo rohita · <span class="bn">রুই</span></span>
+    <span class="sp-tag">Cirrhinus mrigala · <span class="bn">মৃগেল</span></span>
+  </div>
+  <div class="header-rule-bottom"></div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SEASON CALENDAR
+════════════════════════════════════════ -->
+
+<div class="season-wrap">
+  <div class="season-head">
+    <span>Bengal Disease Seasonal Calendar</span>
+    <span class="bn">বাংলা রোগ-কাল ক্যালেন্ডার</span>
+  </div>
+  <div class="seasons">
+    <div class="s-item eus">
+      <div class="s-label">⚠ CRITICAL RISK</div>
+      <div class="s-name">EUS / Ulcers <span class="bn">ইইউএস / ক্ষত রোগ</span></div>
+      <div class="s-months">Oct – Feb <span class="bn">অক্টোবর – ফেব্রুয়ারি (শীতকাল)</span></div>
+    </div>
+    <div class="s-item arg">
+      <div class="s-label">⚠ PEAK SEASON</div>
+      <div class="s-name">Argulus Lice <span class="bn">আরগুলাস উকুন</span></div>
+      <div class="s-months">Mar – May <span class="bn">মার্চ – মে (প্রাক-বর্ষা)</span></div>
+    </div>
+    <div class="s-item gill">
+      <div class="s-label">⚠ WATCH</div>
+      <div class="s-name">Gill Rot · BGA Blooms <span class="bn">কানকোর পচন · শেওলা</span></div>
+      <div class="s-months">Jun – Sep <span class="bn">জুন – সেপ্টেম্বর (বর্ষা)</span></div>
+    </div>
+    <div class="s-item gen">
+      <div class="s-label">✓ ROUTINE</div>
+      <div class="s-name">Water &amp; Health Checks <span class="bn">জল ও স্বাস্থ্য পরীক্ষা</span></div>
+      <div class="s-months">Year-round monthly <span class="bn">সারা বছর — প্রতি মাসে</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SECTION 1: BACTERIAL / ULCERATIVE
+════════════════════════════════════════ -->
+
+<div class="sec-label">
+  <span class="sec-label-text">Bacterial &amp; Ulcerative Diseases<span class="bn">ব্যাকটেরিয়াজনিত ও ক্ষত রোগ</span></span>
+</div>
+
+<!-- ── PAIR 1: EUS ── -->
+
+<div class="pair">
+  <!-- EN -->
+  <div class="card cc-red">
+    <div class="ch">
+      <span class="ch-icon">🔴</span>
+      <span class="ch-title">EUS — Epizootic Ulcerative Syndrome</span>
+      <span class="ch-badge b-crit">CRITICAL · BENGAL</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>Causative Agent:</strong> Aphanomyces invadans (oomycete). Bengal's #1 seasonal killer. Peaks Oct–Feb when water temp drops below 25°C. Mrigal &gt; Catla &gt; Rohu susceptibility.</div>
+      <div class="symp"><span class="symp-head">Symptoms</span>Small red spots → large coin-sized grey-centred necrotic ulcers on head, dorsal &amp; mid-body. Fish spin erratically &amp; surface frequently. High mortality if untreated.</div>
+      <div class="step">Prevention — Apply at start of October</div>
+      <ul class="dl">
+        <li><span class="dl-chem">CIFAX (ICAR-CIFA formulation)</span><span class="dl-qty">150 ml / bigha</span></li>
+        <li><span class="dl-chem">Potassium Permanganate (KMnO₄)</span><span class="dl-qty">350–600 g / bigha</span></li>
+        <li><span class="dl-chem">Agricultural Quicklime (CaO)</span><span class="dl-qty">200–250 kg / acre<span class="dl-note">Maintain pH 7.5–8.0 throughout winter. Apply lime fortnightly.</span></span></li>
+      </ul>
+      <div class="step">Treatment — Active Outbreak</div>
+      <ul class="dl">
+        <li><span class="dl-chem">CIFAX — dilute in water, spray evenly</span><span class="dl-qty">150–200 ml / bigha</span></li>
+        <li><span class="dl-chem">KMnO₄ — pond water treatment</span><span class="dl-qty">1 ppm (1g / 1000 L)</span></li>
+        <li><span class="dl-chem">KMnO₄ — individual fish dip</span><span class="dl-qty">5 ppm · 2 min</span></li>
+        <li><span class="dl-chem">Bleaching Powder — surface only</span><span class="dl-qty">Single use only<span class="dl-note">⚠ Do NOT repeat. Aererate pond immediately after to prevent oxygen crash.</span></span></li>
+      </ul>
+      <div class="warn-box"><span class="bx-head">⚠ BIOSECURITY</span>Remove &amp; bury dead fish with quicklime far from pond. Never share nets between EUS-positive and healthy ponds — zoospores transmit via equipment.</div>
+    </div>
+  </div>
+  <!-- BN -->
+  <div class="card cc-red bn-card">
+    <div class="ch">
+      <span class="ch-icon">🔴</span>
+      <span class="ch-title bn">ইইউএস — ক্ষত মহামারী রোগ</span>
+      <span class="ch-badge b-crit">সংকটজনক</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>কারণকারী জীবাণু:</strong> অ্যাফানোমাইসেস ইনভেডানস (ওমাইসেট)। বাংলার সবচেয়ে বিপজ্জনক মৌসুমি রোগ। অক্টোবর–ফেব্রুয়ারি সর্বোচ্চ প্রকোপ — জলের তাপমাত্রা ২৫°C-এর নিচে নামলে। মৃগেল &gt; কাতলা &gt; রুই ঝুঁকিতে।</div>
+      <div class="symp"><span class="symp-head">Symptoms / লক্ষণ</span>ছোট লাল দাগ → বড় ধূসর কেন্দ্রযুক্ত পচা ঘা (মাথা, পিঠ ও মধ্যদেহে)। মাছ চক্রাকারে ঘোরে ও ঘনঘন ভাসে। চিকিৎসা না হলে মৃত্যু হার বেশি।</div>
+      <div class="step">প্রতিরোধ — অক্টোবরের শুরুতে প্রয়োগ করুন</div>
+      <ul class="dl">
+        <li><span class="dl-chem">সিফ্যাক্স (আইসিএআর-সিফা)</span><span class="dl-qty">১৫০ মিলি / বিঘা</span></li>
+        <li><span class="dl-chem">পটাশিয়াম পারম্যাঙ্গানেট (KMnO₄)</span><span class="dl-qty">৩৫০–৬০০ গ্রাম / বিঘা</span></li>
+        <li><span class="dl-chem">কৃষি চুন (CaO)</span><span class="dl-qty">২০০–২৫০ কেজি / একর<span class="dl-note">শীতকাল জুড়ে pH ৭.৫–৮.০ বজায় রাখুন। পক্ষে পক্ষে চুন দিন।</span></span></li>
+      </ul>
+      <div class="step">চিকিৎসা — সক্রিয় প্রাদুর্ভাবে</div>
+      <ul class="dl">
+        <li><span class="dl-chem">সিফ্যাক্স — জলে মিশিয়ে সমানভাবে স্প্রে</span><span class="dl-qty">১৫০–২০০ মিলি / বিঘা</span></li>
+        <li><span class="dl-chem">KMnO₄ — পুকুরের জল জীবাণুমুক্ত</span><span class="dl-qty">১ পিপিএম (১ গ্রাম / ১০০০ লি)</span></li>
+        <li><span class="dl-chem">KMnO₄ — আক্রান্ত মাছ ডুবিয়ে চিকিৎসা</span><span class="dl-qty">৫ পিপিএম · ২ মিনিট</span></li>
+        <li><span class="dl-chem">ব্লিচিং পাউডার — শুধু সারফেসে</span><span class="dl-qty">একবারই ব্যবহার করুন<span class="dl-note">⚠ পুনরায় দেবেন না। প্রয়োগের পর অবিলম্বে বায়ু সরবরাহ করুন।</span></span></li>
+      </ul>
+      <div class="warn-box"><span class="bx-head">⚠ জৈব নিরাপত্তা</span>মৃত মাছ দূরে নিয়ে চুন মিশিয়ে পুঁতুন। সুস্থ ও আক্রান্ত পুকুরের মধ্যে জাল ভাগ করবেন না — সরঞ্জামের মাধ্যমে রোগ ছড়ায়।</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAIR 2: Bacterial Ulcers ── -->
+
+<div class="pair">
+  <!-- EN -->
+  <div class="card cc-red">
+    <div class="ch">
+      <span class="ch-icon">🩸</span>
+      <span class="ch-title">Bacterial Ulcers &amp; Hemorrhagic Septicaemia</span>
+      <span class="ch-badge b-bact">BACTERIAL</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>Causative Agent:</strong> Aeromonas hydrophila, A. veronii, Pseudomonas fluorescens. Secondary infections follow EUS or physical injury. Distinguish from EUS: no grey necrotic centre; red-margined ulcers.</div>
+      <div class="symp"><span class="symp-head">Symptoms</span>Reddening at fin bases &amp; belly; scale loss; red-margined ulcers. Advanced: pop-eye (exophthalmia), fin erosion.</div>
+      <div class="step">Water Disinfection</div>
+      <ul class="dl">
+        <li><span class="dl-chem">BKC 80% (Benzalkonium Chloride)</span><span class="dl-qty">500 ml / acre</span></li>
+        <li><span class="dl-chem">Acriflavine</span><span class="dl-qty">25 g / acre</span></li>
+        <li><span class="dl-chem">Lime + Crystal Salt (preventive)</span><span class="dl-qty">50 + 50 kg / acre<span class="dl-note">Every 10–15 days during outbreak season.</span></span></li>
+      </ul>
+      <div class="step">Post-Antibiotic Recovery (vet-prescribed)</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Steridol 20% — morning application</span><span class="dl-qty">500 ml / acre</span></li>
+        <li><span class="dl-chem">Acriflavine</span><span class="dl-qty">25 g / acre</span></li>
+        <li><span class="dl-chem">BKC 80%</span><span class="dl-qty">500 ml / acre</span></li>
+        <li><span class="dl-chem">Fish Magic / Liver Tonic (mandatory)</span><span class="dl-qty">1–2 kg / ton · 10–15 days<span class="dl-note">All chemical/antibiotic use hardens the liver. Liver support after every course.</span></span></li>
+      </ul>
+      <div class="warn-box"><span class="bx-head">⚠ ANTIBIOTIC CAUTION</span>Antibiotics must be prescribed by a registered fish health veterinarian. Never use within 3–4 weeks of harvest. Overuse drives antimicrobial resistance (AMR).</div>
+    </div>
+  </div>
+  <!-- BN -->
+  <div class="card cc-red bn-card">
+    <div class="ch">
+      <span class="ch-icon">🩸</span>
+      <span class="ch-title bn">ব্যাকটেরিয়াজনিত ক্ষত ও রক্তক্ষরণ পচন রোগ</span>
+      <span class="ch-badge b-bact">ব্যাকটেরিয়া</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>কারণকারী জীবাণু:</strong> অ্যারোমোনাস হাইড্রোফিলা, এ. ভেরোনাই, সিউডোমোনাস ফ্লুরেসেন্স। ইইউএস বা শারীরিক আঘাতের পর দ্বিতীয় সংক্রমণ। ইইউএস থেকে পার্থক্য: ধূসর কেন্দ্র নেই — লাল প্রান্তের ঘা।</div>
+      <div class="symp"><span class="symp-head">লক্ষণ</span>পাখনার গোড়া ও পেটে লাল হওয়া; আঁশ উঠে যাওয়া; লাল প্রান্তের ঘা। উন্নত পর্যায়ে: চোখ ফুলে ওঠা, পাখনা ক্ষয়।</div>
+      <div class="step">জল জীবাণুমুক্তকরণ</div>
+      <ul class="dl">
+        <li><span class="dl-chem">বিকেসি ৮০% (বেনজালকোনিয়াম ক্লোরাইড)</span><span class="dl-qty">৫০০ মিলি / একর</span></li>
+        <li><span class="dl-chem">অ্যাক্রিফ্লেভিন</span><span class="dl-qty">২৫ গ্রাম / একর</span></li>
+        <li><span class="dl-chem">চুন + ক্রিস্টাল লবণ (প্রতিরোধক)</span><span class="dl-qty">৫০ + ৫০ কেজি / একর<span class="dl-note">প্রাদুর্ভাবের মৌসুমে প্রতি ১০–১৫ দিনে।</span></span></li>
+      </ul>
+      <div class="step">অ্যান্টিবায়োটিক পরবর্তী পুনরুদ্ধার (পশু চিকিৎসকের পরামর্শে)</div>
+      <ul class="dl">
+        <li><span class="dl-chem">স্টেরিডল ২০% — সকালে প্রয়োগ</span><span class="dl-qty">৫০০ মিলি / একর</span></li>
+        <li><span class="dl-chem">অ্যাক্রিফ্লেভিন</span><span class="dl-qty">২৫ গ্রাম / একর</span></li>
+        <li><span class="dl-chem">বিকেসি ৮০%</span><span class="dl-qty">৫০০ মিলি / একর</span></li>
+        <li><span class="dl-chem">ফিশ ম্যাজিক / লিভার টনিক (অবশ্যই)</span><span class="dl-qty">১–২ কেজি / টন · ১০–১৫ দিন<span class="dl-note">সব ওষুধ মাছের যকৃত শক্ত করে। প্রতিটি কোর্সের পরে যকৃত সহায়ক খাদ্য দিন।</span></span></li>
+      </ul>
+      <div class="warn-box"><span class="bx-head">⚠ অ্যান্টিবায়োটিক সতর্কতা</span>নিবন্ধিত মৎস্য পশু চিকিৎসকের পরামর্শ ছাড়া অ্যান্টিবায়োটিক দেবেন না। ধরা ও বিক্রির ৩–৪ সপ্তাহ আগে ব্যবহার বন্ধ করুন।</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAIR 3: Tail & Fin Rot + Red Disease/Dropsy ── -->
+
+<div class="pair">
+  <!-- EN: Tail & Fin Rot -->
+  <div class="card cc-orange">
+    <div class="ch">
+      <span class="ch-icon">🐟</span>
+      <span class="ch-title">Tail &amp; Fin Rot</span>
+      <span class="ch-badge b-bact">BACTERIAL</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>Causative Agent:</strong> Flavobacterium columnare (Columnaris), Aeromonas spp. Triggered by poor water quality, overcrowding, physical injury, low DO. Common in dense Bengal polyculture ponds.</div>
+      <div class="symp"><span class="symp-head">Symptoms</span>Fraying &amp; whitening of fin rays; progressive tail erosion. "Saddleback" lesion at dorsal in Columnaris. Check for predatory catfish causing physical bite injury before medicating.</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Steridol 20% — morning</span><span class="dl-qty">500 ml / acre</span></li>
+        <li><span class="dl-chem">Acriflavine</span><span class="dl-qty">25 g / acre</span></li>
+        <li><span class="dl-chem">KMnO₄ dip — before releasing netted fish</span><span class="dl-qty">1 ppm · 1 min</span></li>
+        <li><span class="dl-chem">Check phosphorus — pond water</span><span class="dl-qty">Target &lt;0.5 mg/L<span class="dl-note">Excess phosphorus fuels bacterial growth. Reduce manure / fertiliser input.</span></span></li>
+      </ul>
+      <div class="tip-box"><span class="bx-head">DIAGNOSIS TIP</span>Net-check for predatory catfish (Clarias, Heteropneustes) — bites are often misread as fin rot. Remove predators before medicating.</div>
+    </div>
+  </div>
+  <!-- BN: Tail & Fin Rot -->
+  <div class="card cc-orange bn-card">
+    <div class="ch">
+      <span class="ch-icon">🐟</span>
+      <span class="ch-title bn">লেজ ও পাখনা পচা রোগ</span>
+      <span class="ch-badge b-bact">ব্যাকটেরিয়া</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>কারণকারী জীবাণু:</strong> ফ্ল্যাভোব্যাকটেরিয়াম কলামনারে, অ্যারোমোনাস। খারাপ জলমান, ঘনবসতি, শারীরিক আঘাত বা কম অক্সিজেনে হয়। বাংলার মিশ্র কার্প পুকুরে সাধারণ।</div>
+      <div class="symp"><span class="symp-head">লক্ষণ</span>পাখনার শিরা ছিঁড়ে সাদা হওয়া; লেজ ক্রমশ ক্ষয়। কলামনারিসে পিঠে "স্যাডলব্যাক" দাগ। ওষুধ দেওয়ার আগে শিকারি মাছের কামড়ের সম্ভাবনা যাচাই করুন।</div>
+      <ul class="dl">
+        <li><span class="dl-chem">স্টেরিডল ২০% — সকালে প্রয়োগ</span><span class="dl-qty">৫০০ মিলি / একর</span></li>
+        <li><span class="dl-chem">অ্যাক্রিফ্লেভিন</span><span class="dl-qty">২৫ গ্রাম / একর</span></li>
+        <li><span class="dl-chem">KMnO₄ স্নান — জাল টানার পর ছাড়ার আগে</span><span class="dl-qty">১ পিপিএম · ১ মিনিট</span></li>
+        <li><span class="dl-chem">ফসফরাস পরীক্ষা</span><span class="dl-qty">লক্ষ্যমাত্রা &lt;০.৫ মিগ্রা/লি<span class="dl-note">অতিরিক্ত ফসফরাস ব্যাকটেরিয়া বাড়ায়। সার ও গোবর কমান।</span></span></li>
+      </ul>
+      <div class="tip-box"><span class="bx-head">রোগ নির্ণয় পরামর্শ</span>পুকুরে শিকারি মাছ (ক্লারিয়াস, মাগুর) আছে কিনা জাল টেনে দেখুন — কামড়ের ক্ষতকে প্রায়ই পাখনা পচা ভাবা হয়। ওষুধ দেওয়ার আগে শিকারি মাছ সরান।</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAIR 4: Red Disease / Dropsy ── -->
+
+<div class="pair">
+  <!-- EN -->
+  <div class="card cc-red">
+    <div class="ch">
+      <span class="ch-icon">💧</span>
+      <span class="ch-title">Red Disease &amp; Dropsy (Ascites)</span>
+      <span class="ch-badge b-bact">BACTERIAL · SYSTEMIC</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>Causative Agent:</strong> Aeromonas hydrophila systemic septicaemia. Red Disease = acute phase. Dropsy (ascites — body cavity fluid) = late/chronic terminal stage indicating kidney failure. Dropsy prognosis is very poor.</div>
+      <div class="symp"><span class="symp-head">Symptoms</span><em>Red Disease:</em> reddening of fins, belly &amp; operculum; haemorrhagic spots; erratic swimming. <em>Dropsy:</em> pinecone scale protrusion, bloated belly, bilateral pop-eye. Fish near death.</div>
+      <div class="step">Early Intervention — Red Disease Phase</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Ivermectin 1% in feed (if co-parasitism)</span><span class="dl-qty">100 g / ton · 7 days</span></li>
+        <li><span class="dl-chem">BKC 80%</span><span class="dl-qty">500 ml / acre</span></li>
+        <li><span class="dl-chem">Steridol 20%</span><span class="dl-qty">500 ml / acre</span></li>
+        <li><span class="dl-chem">Fish Magic / Liver Tonic</span><span class="dl-qty">1–2 kg / ton · 10–15 days</span></li>
+      </ul>
+      <div class="ban-box"><span class="bx-head">✖ DROPSY — PROGNOSIS NOTE</span>Dropsy fish rarely recover. Remove immediately to prevent horizontal spread. Bury with quicklime. Protect remaining healthy fish with prophylactic BKC + KMnO₄ treatment.</div>
+    </div>
+  </div>
+  <!-- BN -->
+  <div class="card cc-red bn-card">
+    <div class="ch">
+      <span class="ch-icon">💧</span>
+      <span class="ch-title bn">লাল রোগ ও জলোদর (ড্রপসি)</span>
+      <span class="ch-badge b-bact">ব্যাকটেরিয়া · সিস্টেমিক</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>কারণকারী জীবাণু:</strong> অ্যারোমোনাস হাইড্রোফিলা (সিস্টেমিক সেপ্টিসেমিয়া)। লাল রোগ = তীব্র প্রাথমিক পর্যায়। ড্রপসি (জলোদর) = চূড়ান্ত দীর্ঘমেয়াদি পর্যায় — বৃক্ক বিকল হওয়ার লক্ষণ। ড্রপসিতে আক্রান্ত মাছ প্রায়ই মারা যায়।</div>
+      <div class="symp"><span class="symp-head">লক্ষণ</span><em>লাল রোগ:</em> পাখনা, পেট ও কানকোয় লাল ভাব; রক্তক্ষরণের দাগ; এলোমেলো সাঁতার। <em>ড্রপসি:</em> আঁশ পাইনকোনের মতো খাড়া; ফোলা পেট; উভয় চোখ বেরিয়ে আসা।</div>
+      <div class="step">প্রাথমিক হস্তক্ষেপ — লাল রোগের পর্যায়ে</div>
+      <ul class="dl">
+        <li><span class="dl-chem">আইভারমেকটিন ১% খাদ্যে (পরজীবী সহাবস্থানে)</span><span class="dl-qty">১০০ গ্রাম / টন · ৭ দিন</span></li>
+        <li><span class="dl-chem">বিকেসি ৮০%</span><span class="dl-qty">৫০০ মিলি / একর</span></li>
+        <li><span class="dl-chem">স্টেরিডল ২০%</span><span class="dl-qty">৫০০ মিলি / একর</span></li>
+        <li><span class="dl-chem">ফিশ ম্যাজিক / লিভার টনিক</span><span class="dl-qty">১–২ কেজি / টন · ১০–১৫ দিন</span></li>
+      </ul>
+      <div class="ban-box"><span class="bx-head">✖ ড্রপসি — রোগ পূর্বাভাস</span>ড্রপসি মাছ খুব কমই সুস্থ হয়। অবিলম্বে সরিয়ে চুন মিশিয়ে পুঁতুন। সুস্থ মাছকে বাঁচাতে বিকেসি + KMnO₄ দিয়ে পুকুর পরিষ্কার করুন।</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SECTION 2: PARASITIC
+════════════════════════════════════════ -->
+
+<div class="sec-label">
+  <span class="sec-label-text">Parasitic Diseases<span class="bn">পরজীবী রোগ</span></span>
+</div>
+
+<!-- ── PAIR 5: Argulus ── -->
+
+<div class="pair">
+  <!-- EN -->
+  <div class="card cc-orange">
+    <div class="ch">
+      <span class="ch-icon">🦠</span>
+      <span class="ch-title">Argulus — Fish Lice (Argulosis)</span>
+      <span class="ch-badge b-para">ECTOPARASITE</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>Causative Agent:</strong> Argulus siamensis (dominant in Bengal), A. japonicus. Crustacean branchiuran ectoparasite. Peak: Mar–May. Estimated loss ₹40,000+/ha in Bengal. Secondary bacterial &amp; fungal infections at bite sites.</div>
+      <div class="symp"><span class="symp-head">Symptoms</span>Fish jump &amp; flash against pond edges. Pinpoint haemorrhages; scale loss; appetite reduction; visible disc-shaped lice on skin under bright light.</div>
+      <div class="step">Prevention — Fortnightly</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Deltamethrin 1.8% EC</span><span class="dl-qty">100 ml / acre<span class="dl-note">Every 15 days for mucus &amp; Argulus control. Reduce fish mucus first for better efficacy.</span></span></li>
+        <li><span class="dl-chem">Amitraz 12% — pond border vegetation</span><span class="dl-qty">100 ml / acre<span class="dl-note">Cut grass before spraying. Targets Argulus refuging on terrestrial plants.</span></span></li>
+      </ul>
+      <div class="step">Treatment — Active Infestation</div>
+      <ul class="dl">
+        <li><span class="dl-chem">CIFA M-Check (ICAR-CIFA validated)</span><span class="dl-qty">As label — single application<span class="dl-note">Tested in 20+ Bengal farmer ponds. Controls Argulus &amp; secondary wound infections.</span></span></li>
+        <li><span class="dl-chem">Ivermectin 1% in feed (early stage)</span><span class="dl-qty">100 g / ton · 7 days</span></li>
+        <li><span class="dl-chem">NaCl Salt Dip — fingerlings</span><span class="dl-qty">25–30 g/L · 10 min<span class="dl-note">Food-safe, no withdrawal period. Kills surface Argulus. Rinse in clean water after.</span></span></li>
+      </ul>
+      <div class="ban-box"><span class="bx-head">✖ RESTRICTED — DO NOT USE</span><strong>Ekalux (Quinalphos 25% EC)</strong> — Aquaculture use restricted/banned in multiple states. No defined withdrawal period. Food safety hazard.<br><strong>Nuvan (Dichlorvos 76 EC)</strong> — Not approved for food fish production.</div>
+      <div class="tip-box"><span class="bx-head">EFFICACY TIP</span>Lower fish mucus first (Deltamethrin 50 ml/acre), wait 3 days, then apply lice medication — thinner mucus allows better chemical contact with parasites.</div>
+    </div>
+  </div>
+  <!-- BN -->
+  <div class="card cc-orange bn-card">
+    <div class="ch">
+      <span class="ch-icon">🦠</span>
+      <span class="ch-title bn">আরগুলাস — মাছের উকুন (আরগুলোসিস)</span>
+      <span class="ch-badge b-para">বহিঃপরজীবী</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>কারণকারী জীবাণু:</strong> আরগুলাস সিয়ামেনসিস (বাংলায় প্রধান), এ. জাপোনিকাস। ক্রাসটেশিয়ান শ্রেণির বহিঃপরজীবী। মার্চ–মে সর্বোচ্চ। বাংলায় প্রতি হেক্টরে ₹৪০,০০০+ ক্ষতি। কামড়ের জায়গায় দ্বিতীয় ব্যাকটেরিয়া ও ছত্রাক সংক্রমণ।</div>
+      <div class="symp"><span class="symp-head">লক্ষণ</span>মাছ লাফায় ও পুকুরের কিনারায় ঘষে। সূক্ষ্ম রক্তক্ষরণের দাগ; আঁশ খসে পড়া; খাওয়া কমে যাওয়া; উজ্জ্বল আলোয় ত্বকে চাকতির মতো উকুন দেখা যায়।</div>
+      <div class="step">প্রতিরোধ — পক্ষে পক্ষে</div>
+      <ul class="dl">
+        <li><span class="dl-chem">ডেলটামেথ্রিন ১.৮% ইসি</span><span class="dl-qty">১০০ মিলি / একর<span class="dl-note">প্রতি ১৫ দিনে একবার। কার্যকারিতার জন্য আগে শ্লেষ্মা কমান।</span></span></li>
+        <li><span class="dl-chem">অ্যামিট্রাজ ১২% — পুকুরের আল ও ঘাসে</span><span class="dl-qty">১০০ মিলি / একর<span class="dl-note">স্প্রে করার আগে ঘাস কেটে নিন।</span></span></li>
+      </ul>
+      <div class="step">চিকিৎসা — সক্রিয় সংক্রমণে</div>
+      <ul class="dl">
+        <li><span class="dl-chem">সিফা এম-চেক (আইসিএআর-সিফা পরীক্ষিত)</span><span class="dl-qty">লেবেল অনুযায়ী — একবার<span class="dl-note">বাংলার ২০টিরও বেশি কৃষক পুকুরে পরীক্ষিত ও কার্যকর।</span></span></li>
+        <li><span class="dl-chem">আইভারমেকটিন ১% খাদ্যে (প্রাথমিক পর্যায়ে)</span><span class="dl-qty">১০০ গ্রাম / টন · ৭ দিন</span></li>
+        <li><span class="dl-chem">সাধারণ লবণ স্নান — পোনার জন্য</span><span class="dl-qty">২৫–৩০ গ্রাম/লি · ১০ মিনিট<span class="dl-note">খাদ্য-নিরাপদ। কোনো বিরতি সময় নেই। পরে পরিষ্কার জলে ধুয়ে দিন।</span></span></li>
+      </ul>
+      <div class="ban-box"><span class="bx-head">✖ নিষিদ্ধ — ব্যবহার করবেন না</span><strong>একালাক্স (কুইনালফস ২৫% ইসি)</strong> — একাধিক রাজ্যে নিষিদ্ধ। খাদ্য নিরাপত্তা ঝুঁকি।<br><strong>নুভান (ডিক্লোরভস ৭৬ ইসি)</strong> — খাদ্য মাছে অনুমোদিত নয়।</div>
+      <div class="tip-box"><span class="bx-head">কার্যকারিতার পরামর্শ</span>আগে শ্লেষ্মা কমান (ডেলটামেথ্রিন ৫০ মিলি/একর), ৩ দিন পর উকুনের ওষুধ দিন — পাতলা শ্লেষ্মায় ওষুধ বেশি কার্যকর।</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAIR 6: Myxobolus ── -->
+
+<div class="pair">
+  <!-- EN -->
+  <div class="card cc-purple">
+    <div class="ch">
+      <span class="ch-icon">🔬</span>
+      <span class="ch-title">Myxobolus / Myxozoan Infections</span>
+      <span class="ch-badge b-myx">MYXOZOAN SPORE</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>Causative Agent:</strong> Myxobolus spp., Thelohanellus spp. — spore-forming endoparasites. Prevalent in Bengal community ponds. Rohu most affected by Thelohanellus; Catla by Dactylogyrus co-infection. Worse in overcrowded, low-chloride ponds.</div>
+      <div class="symp"><span class="symp-head">Symptoms</span>White firm cysts on fins, gills &amp; muscle. Gill form causes respiratory distress &amp; anaemia. General weakness, emaciation, scale deformity. <em>NOT soft white pustules — see Ich card.</em></div>
+      <ul class="dl">
+        <li><span class="dl-chem">NaCl Saline Dip</span><span class="dl-qty">2–3% · 10 min<span class="dl-note">Repeat on alternate days × 3 cycles. Controls Myxobolus mrigalae &amp; gill parasites.</span></span></li>
+        <li><span class="dl-chem">Yeast in feed (ICAR validated)</span><span class="dl-qty">1 g/kg feed · 15 days<span class="dl-note">Improves immunity; reduces myxosporidian burden in overstocked ponds.</span></span></li>
+        <li><span class="dl-chem">Reduce stocking density</span><span class="dl-qty">Target ≤ 3,500 fish/ha<span class="dl-note">Overcrowding is the primary risk factor. Thin population at first sign.</span></span></li>
+        <li><span class="dl-chem">KMnO₄ — pond disinfection</span><span class="dl-qty">1 ppm</span></li>
+      </ul>
+      <div class="warn-box"><span class="bx-head">⚠ DO NOT CONFUSE WITH ICH</span>Myxobolus = firm embedded spore cysts. Ich = soft raised white pustules ("sprinkled salt" appearance). Completely different treatments. Microscopy recommended.</div>
+    </div>
+  </div>
+  <!-- BN -->
+  <div class="card cc-purple bn-card">
+    <div class="ch">
+      <span class="ch-icon">🔬</span>
+      <span class="ch-title bn">মিক্সোবোলাস / মিক্সোজোয়ান স্পোর সংক্রমণ</span>
+      <span class="ch-badge b-myx">মিক্সোজোয়ান</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>কারণকারী জীবাণু:</strong> মিক্সোবোলাস প্রজাতি, থেলোহানেলাস প্রজাতি — স্পোর গঠনকারী অন্তঃপরজীবী। বাংলার সাধারণ পুকুরে ব্যাপক। রুই — থেলোহানেলাসে বেশি আক্রান্ত। ঘনবসতি ও কম ক্লোরাইডের জলে ঝুঁকি বেশি।</div>
+      <div class="symp"><span class="symp-head">লক্ষণ</span>পাখনা, কানকো ও মাংসে শক্ত সাদা সিস্ট। কানকোর রূপে শ্বাসকষ্ট ও রক্তাল্পতা। সাধারণ দুর্বলতা, শীর্ণতা। <em>নরম সাদা ফুসকুড়ি নয় — সেটি আইকে রোগ।</em></div>
+      <ul class="dl">
+        <li><span class="dl-chem">সাধারণ লবণ স্নান</span><span class="dl-qty">২–৩% · ১০ মিনিট<span class="dl-note">একদিন অন্তর × ৩ চক্র পুনরাবৃত্তি করুন।</span></span></li>
+        <li><span class="dl-chem">ইস্ট খাদ্যে (আইসিএআর পরীক্ষিত)</span><span class="dl-qty">১ গ্রাম/কেজি খাবার · ১৫ দিন<span class="dl-note">রোগ প্রতিরোধ ক্ষমতা বাড়ায়; ঘনবসতি পুকুরে স্পোরের ভার কমায়।</span></span></li>
+        <li><span class="dl-chem">মজুদ ঘনত্ব কমান</span><span class="dl-qty">লক্ষ্যমাত্রা ≤ ৩,৫০০ মাছ/হেক্টর<span class="dl-note">ঘনবসতি প্রধান ঝুঁকি। প্রথম লক্ষণেই পাতলা করুন।</span></span></li>
+        <li><span class="dl-chem">KMnO₄ — পুকুর জীবাণুমুক্তকরণ</span><span class="dl-qty">১ পিপিএম</span></li>
+      </ul>
+      <div class="warn-box"><span class="bx-head">⚠ আইকে রোগের সাথে গুলিয়ে ফেলবেন না</span>মিক্সোবোলাস = শক্ত সিস্ট। আইকে = নরম সাদা ফুসকুড়ি ("লবণ ছেটানোর" মতো দেখতে)। চিকিৎসা সম্পূর্ণ আলাদা। মাইক্রোস্কোপি পরামর্শযোগ্য।</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAIR 7: Ich + Gill Rot ── -->
+
+<div class="pair">
+  <!-- EN: Ich -->
+  <div class="card cc-purple">
+    <div class="ch">
+      <span class="ch-icon">⚪</span>
+      <span class="ch-title">Ich — White Spot Disease (Ichthyophthirius)</span>
+      <span class="ch-badge b-para">CILIATE PROTOZOAN</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>Causative Agent:</strong> Ichthyophthirius multifiliis — ciliate protozoan. Penetrates skin &amp; gills. Highly contagious; triggered by sudden temperature drop or transport stress. Distinct from Myxobolus.</div>
+      <div class="symp"><span class="symp-head">Symptoms</span>"Salt-sprinkled" soft white pustules across body &amp; fins; fish flash (rub against surfaces); heavy mucus; clamped fins; laboured breathing.</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Formalin 37% — pond treatment</span><span class="dl-qty">25 ppm<span class="dl-note">Most effective. Apply morning. Aerate well; monitor DO closely. Toxic at high dose &amp; high temperature.</span></span></li>
+        <li><span class="dl-chem">NaCl Salt Bath</span><span class="dl-qty">3% · 10–15 min<span class="dl-note">Repeat × 3 days. Kills free-swimming theronts. Safe for food fish.</span></span></li>
+        <li><span class="dl-chem">KMnO₄ Dip</span><span class="dl-qty">5 ppm · 2 min</span></li>
+        <li><span class="dl-chem">Malachite Green (nursery/fry ONLY)</span><span class="dl-qty">25 g / acre · daytime<span class="dl-note">⚠ BANNED for food fish &gt;fingerling stage. 60-day withdrawal minimum.</span></span></li>
+      </ul>
+      <div class="tip-box"><span class="bx-head">LIFECYCLE NOTE</span>Ich is only treatable in free-swimming theront stage. Repeat every 3–4 days × 3 cycles to break lifecycle. Raising water temperature above 25°C speeds lifecycle for faster kill.</div>
+    </div>
+  </div>
+  <!-- BN: Ich -->
+  <div class="card cc-purple bn-card">
+    <div class="ch">
+      <span class="ch-icon">⚪</span>
+      <span class="ch-title bn">আইকে — সাদা দাগ রোগ (ইকথিওফথিরিয়াস)</span>
+      <span class="ch-badge b-para">সিলিয়েট প্রোটোজোয়া</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>কারণকারী জীবাণু:</strong> ইকথিওফথিরিয়াস মাল্টিফিলিস — সিলিয়েট প্রোটোজোয়া। ত্বক ও কানকোয় প্রবেশ করে। অত্যন্ত সংক্রামক; হঠাৎ তাপমাত্রা হ্রাস বা পরিবহন চাপে হয়। মিক্সোবোলাস থেকে আলাদা।</div>
+      <div class="symp"><span class="symp-head">লক্ষণ</span>সারা শরীর ও পাখনায় "লবণ ছেটানোর" মতো নরম সাদা ফুসকুড়ি; মাছ পুকুরের কিনারায় ঘষে; বেশি শ্লেষ্মা; পাখনা সংকুচিত; শ্বাসকষ্ট।</div>
+      <ul class="dl">
+        <li><span class="dl-chem">ফর্মালিন ৩৭% — পুকুর চিকিৎসা</span><span class="dl-qty">২৫ পিপিএম<span class="dl-note">সবচেয়ে কার্যকর। সকালে দিন। বায়ু সরবরাহ করুন; DO নিবিড়ভাবে পর্যবেক্ষণ করুন।</span></span></li>
+        <li><span class="dl-chem">সাধারণ লবণ স্নান</span><span class="dl-qty">৩% · ১০–১৫ মিনিট<span class="dl-note">× ৩ দিন পুনরাবৃত্তি। মুক্ত-সাঁতারু থেরন্ট মারে। খাদ্য মাছে নিরাপদ।</span></span></li>
+        <li><span class="dl-chem">KMnO₄ স্নান</span><span class="dl-qty">৫ পিপিএম · ২ মিনিট</span></li>
+        <li><span class="dl-chem">ম্যালাকাইট গ্রিন (শুধু নার্সারি/পোনা পুকুরে)</span><span class="dl-qty">২৫ গ্রাম / একর · দিনের বেলায়<span class="dl-note">⚠ বড় মাছে নিষিদ্ধ। ন্যূনতম ৬০ দিন বিরতি সময়।</span></span></li>
+      </ul>
+      <div class="tip-box"><span class="bx-head">জীবনচক্র নোট</span>আইকে শুধু মুক্ত-সাঁতারু পর্যায়ে মারা যায়। জীবনচক্র ভাঙতে প্রতি ৩–৪ দিনে × ৩ চক্র চিকিৎসা দিন। জলের তাপমাত্রা ২৫°C-এর উপরে রাখলে জীবনচক্র দ্রুত হয়।</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAIR 8: Gill Rot ── -->
+
+<div class="pair">
+  <!-- EN -->
+  <div class="card cc-purple">
+    <div class="ch">
+      <span class="ch-icon">🫁</span>
+      <span class="ch-title">Gill Rot — Branchiomycosis</span>
+      <span class="ch-badge b-fung">FUNGAL</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>Causative Agent:</strong> Branchiomyces sanguinis — feeds on blood in gill capillaries. Occurs during Bengal monsoon (Jun–Sep): warm water, high organic load, low DO. Often follows algal bloom collapse.</div>
+      <div class="symp"><span class="symp-head">Symptoms</span>Fish gasp at surface; erratic swimming; gills mottled grey-white or brown ("marbled" appearance); gill necrosis. Rapid mortality — can kill within 24–72 hrs.</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Emergency Aeration — FIRST ACTION</span><span class="dl-qty">Immediate<span class="dl-note">Fish gasping = critical hypoxia. Aerate FIRST, medicate second. Stop all feeding.</span></span></li>
+        <li><span class="dl-chem">Quicklime (CaO)</span><span class="dl-qty">150–200 kg / acre<span class="dl-note">Raises pH rapidly — creates unfavourable environment for Branchiomyces.</span></span></li>
+        <li><span class="dl-chem">KMnO₄</span><span class="dl-qty">1 ppm</span></li>
+        <li><span class="dl-chem">Water exchange (20–30%)</span><span class="dl-qty">Fresh clean water only<span class="dl-note">Do not introduce water from other potentially affected ponds.</span></span></li>
+      </ul>
+    </div>
+  </div>
+  <!-- BN -->
+  <div class="card cc-purple bn-card">
+    <div class="ch">
+      <span class="ch-icon">🫁</span>
+      <span class="ch-title bn">কানকোর পচন — ব্রাংকিওমাইকোসিস</span>
+      <span class="ch-badge b-fung">ছত্রাক</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>কারণকারী জীবাণু:</strong> ব্রাংকিওমাইসেস স্যাঙ্গুইনিস — কানকোর কৈশিক নালিতে রক্ত খায়। বর্ষায় (জুন–সেপ্টেম্বর) হয়: উষ্ণ জল, বেশি জৈব পদার্থ, কম অক্সিজেন। শেওলা বিপর্যয়ের পরে প্রায়ই দেখা যায়।</div>
+      <div class="symp"><span class="symp-head">লক্ষণ</span>মাছ জলের উপরে শ্বাস নেয়; এলোমেলো সাঁতার; কানকো ধূসর-সাদা বা বাদামী মেঘলা দেখায়; কানকো পচন। দ্রুত মৃত্যু — ২৪–৭২ ঘণ্টার মধ্যে হতে পারে।</div>
+      <ul class="dl">
+        <li><span class="dl-chem">জরুরি বায়ু সরবরাহ — প্রথম পদক্ষেপ</span><span class="dl-qty">তৎক্ষণাৎ<span class="dl-note">মাছ ভাসছে = মারাত্মক অক্সিজেন সংকট। আগে বায়ু দিন, তারপর ওষুধ। সব খাওয়ানো বন্ধ।</span></span></li>
+        <li><span class="dl-chem">তীব্র চুন (CaO)</span><span class="dl-qty">১৫০–২০০ কেজি / একর<span class="dl-note">দ্রুত pH বাড়ায় — ব্রাংকিওমাইসেসের প্রতিকূল পরিবেশ তৈরি।</span></span></li>
+        <li><span class="dl-chem">KMnO₄</span><span class="dl-qty">১ পিপিএম</span></li>
+        <li><span class="dl-chem">জল পরিবর্তন (২০–৩০%)</span><span class="dl-qty">শুধু পরিষ্কার জল<span class="dl-note">অন্য আক্রান্ত পুকুরের জল আনবেন না।</span></span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SECTION 3: WATER QUALITY
+════════════════════════════════════════ -->
+
+<div class="sec-label">
+  <span class="sec-label-text">Water Quality &amp; Algae Management<span class="bn">জলমান ও শেওলা ব্যবস্থাপনা</span></span>
+</div>
+
+<!-- ── PAIR 9: Blue-Green Algae ── -->
+
+<div class="pair">
+  <!-- EN -->
+  <div class="card cc-teal">
+    <div class="ch">
+      <span class="ch-icon">🟢</span>
+      <span class="ch-title">Blue-Green Algae (BGA / Cyanobacteria)</span>
+      <span class="ch-badge b-water">WATER QUALITY</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>Toxic species:</strong> Microcystis aeruginosa (produces microcystin — liver toxin). Also Anabaena, Oscillatoria. Distinguish from Spirulina (beneficial, filamentous, blue-green — do not treat). Favoured by warm water &gt;27°C, high phosphorus, calm surface.</div>
+      <div class="symp"><span class="symp-head">Identify Microcystis</span>"Pea soup" surface scum; small granular spherical "gus-gus" colonies floating. Confirm with plankton net. Microcystin damages fish liver, kidneys &amp; causes haemorrhage even at sub-bloom levels.</div>
+      <div class="step">Step 1 — Identify bloom type first</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Spirulina / Beneficial BGA → no action</span><span class="dl-qty">Do not treat</span></li>
+        <li><span class="dl-chem">Microcystis (granular colonies) → treat below</span><span class="dl-qty">Act immediately</span></li>
+      </ul>
+      <div class="step">Treatment — Microcystis</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Copper Sulphate (CuSO₄) — <em>not for Catla ponds</em></span><span class="dl-qty">1 kg / acre<span class="dl-note">⚠ Only effective at pH &lt;8.6. Aerate immediately after — sudden bloom kill depletes DO.</span></span></li>
+        <li><span class="dl-chem">Bleaching Powder — surface scum only, <em>not for Catla</em></span><span class="dl-qty">Single application only</span></li>
+        <li><span class="dl-chem">KMnO₄</span><span class="dl-qty">1 kg / acre</span></li>
+        <li><span class="dl-chem">Ferric Chloride (next day after KMnO₄)</span><span class="dl-qty">500 g / acre</span></li>
+      </ul>
+      <div class="step">Prevention — Every 10 Days</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Pond Life / Probiotic (beneficial bacteria)</span><span class="dl-qty">1 kg / acre<span class="dl-note">Competes with Microcystis; improves overall pond ecology.</span></span></li>
+      </ul>
+    </div>
+  </div>
+  <!-- BN -->
+  <div class="card cc-teal bn-card">
+    <div class="ch">
+      <span class="ch-icon">🟢</span>
+      <span class="ch-title bn">নীলাভ-সবুজ শেওলা (সায়ানোব্যাকটেরিয়া)</span>
+      <span class="ch-badge b-water">জলমান</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>বিষাক্ত প্রজাতি:</strong> মাইক্রোসিস্টিস অ্যারুজিনোসা (মাইক্রোসিস্টিন — যকৃত বিষ তৈরি করে)। আনাবেনা, অসিলেটোরিয়াও ক্ষতিকর। স্পাইরুলিনা (উপকারী, সুতার মতো, নীলাভ-সবুজ) থেকে আলাদা করুন — চিকিৎসার দরকার নেই। ২৭°C-এর বেশি তাপমাত্রা ও বেশি ফসফরাসে হয়।</div>
+      <div class="symp"><span class="symp-head">মাইক্রোসিস্টিস চেনার উপায়</span>"মটরশুটি স্যুপের" মতো সবুজ আস্তরণ; ছোট গোলাকার দানাদার "গুস-গুস" কলোনি ভাসে। প্ল্যাংকটন জাল দিয়ে নিশ্চিত করুন। মাইক্রোসিস্টিন কম মাত্রাতেও মাছের যকৃত ও বৃক্ক ক্ষতি করে।</div>
+      <div class="step">ধাপ ১ — আগে শেওলার ধরন চিহ্নিত করুন</div>
+      <ul class="dl">
+        <li><span class="dl-chem">স্পাইরুলিনা / উপকারী শেওলা → কোনো ব্যবস্থা নয়</span><span class="dl-qty">চিকিৎসা করবেন না</span></li>
+        <li><span class="dl-chem">মাইক্রোসিস্টিস (দানাদার কলোনি) → নিচের চিকিৎসা</span><span class="dl-qty">অবিলম্বে ব্যবস্থা নিন</span></li>
+      </ul>
+      <div class="step">চিকিৎসা — মাইক্রোসিস্টিসে</div>
+      <ul class="dl">
+        <li><span class="dl-chem">কপার সালফেট — <em>কাতলা পুকুরে দেবেন না</em></span><span class="dl-qty">১ কেজি / একর<span class="dl-note">⚠ pH ৮.৬-এর নিচে কার্যকর। প্রয়োগের পর অবিলম্বে বায়ু দিন।</span></span></li>
+        <li><span class="dl-chem">ব্লিচিং পাউডার — শুধু উপরের আস্তরণে, <em>কাতলা ছাড়া</em></span><span class="dl-qty">একবারই প্রয়োগ</span></li>
+        <li><span class="dl-chem">KMnO₄</span><span class="dl-qty">১ কেজি / একর</span></li>
+        <li><span class="dl-chem">ফেরিক ক্লোরাইড (KMnO₄-এর পরের দিন)</span><span class="dl-qty">৫০০ গ্রাম / একর</span></li>
+      </ul>
+      <div class="step">প্রতিরোধ — প্রতি ১০ দিনে</div>
+      <ul class="dl">
+        <li><span class="dl-chem">পন্ড লাইফ / প্রোবায়োটিক (উপকারী ব্যাকটেরিয়া)</span><span class="dl-qty">১ কেজি / একর<span class="dl-note">মাইক্রোসিস্টিসের সাথে প্রতিযোগিতা করে; পুকুরের পরিবেশ উন্নত করে।</span></span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAIR 10: Water Problems ── -->
+
+<div class="pair">
+  <!-- EN -->
+  <div class="card cc-sky">
+    <div class="ch">
+      <span class="ch-icon">💧</span>
+      <span class="ch-title">Turbid, Black, Red-Brown &amp; Red Algae Water</span>
+      <span class="ch-badge b-water">WATER QUALITY</span>
+    </div>
+    <div class="cb">
+      <div class="step">Turbid Green Water — clay/particle suspension</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Aqua Floc or Poly Aluminium Chloride (PAC)</span><span class="dl-qty">1 kg / acre<span class="dl-note">Apply morning; allow to settle. Check colour next day.</span></span></li>
+      </ul>
+      <div class="step">Black Water — severe organic load / H₂S</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Magnesium Sulphate (MgSO₄)</span><span class="dl-qty">5 kg / acre</span></li>
+        <li><span class="dl-chem">Agricultural Lime Ca(OH)₂</span><span class="dl-qty">50 kg / acre</span></li>
+        <li><span class="dl-chem">Deoiled Groundnut Cake (soaked 4 hrs)</span><span class="dl-qty">5–10 kg / acre<span class="dl-note">Apply 10–11 AM. Reduce feeding by 50% immediately.</span></span></li>
+      </ul>
+      <div class="step">Red-Brown Water — tannins / iron / diatom bloom</div>
+      <ul class="dl">
+        <li><span class="dl-chem">BKC 80%</span><span class="dl-qty">1 L / acre (&gt;4 ft depth)<br>500 ml / acre (≤4 ft)</span></li>
+        <li><span class="dl-chem">Agricultural Lime</span><span class="dl-qty">100 kg / acre</span></li>
+      </ul>
+      <div class="step">Red Algae — Euglena/organic overload indicator</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Reduce feeding immediately</span><span class="dl-qty">50% cut × 5 days</span></li>
+        <li><span class="dl-chem">Water exchange (15–20%)</span><span class="dl-qty">Fresh water only</span></li>
+        <li><span class="dl-chem">Agricultural Lime + aeration</span><span class="dl-qty">100 kg / acre<span class="dl-note">Do NOT apply algaecide — bloom crash will crash oxygen. Address organic overload at root cause.</span></span></li>
+      </ul>
+    </div>
+  </div>
+  <!-- BN -->
+  <div class="card cc-sky bn-card">
+    <div class="ch">
+      <span class="ch-icon">💧</span>
+      <span class="ch-title bn">ঘোলা, কালো, লাল-বাদামী ও লাল শেওলার জল</span>
+      <span class="ch-badge b-water">জলমান</span>
+    </div>
+    <div class="cb">
+      <div class="step">ঘোলা সবুজ জল — কাদা/কণা ভাসমান</div>
+      <ul class="dl">
+        <li><span class="dl-chem">অ্যাকুয়া ফ্লক বা পলি অ্যালুমিনিয়াম ক্লোরাইড</span><span class="dl-qty">১ কেজি / একর<span class="dl-note">সকালে দিন; থিতু হতে দিন। পরের দিন রং দেখুন।</span></span></li>
+      </ul>
+      <div class="step">কালো জল — মারাত্মক জৈব ভার / H₂S</div>
+      <ul class="dl">
+        <li><span class="dl-chem">ম্যাগনেশিয়াম সালফেট</span><span class="dl-qty">৫ কেজি / একর</span></li>
+        <li><span class="dl-chem">কৃষি চুন Ca(OH)₂</span><span class="dl-qty">৫০ কেজি / একর</span></li>
+        <li><span class="dl-chem">তৈলমুক্ত চিনাবাদামের খোল (৪ ঘণ্টা ভেজানো)</span><span class="dl-qty">৫–১০ কেজি / একর<span class="dl-note">সকাল ১০–১১টায় দিন। অবিলম্বে খাওয়ানো ৫০% কমান।</span></span></li>
+      </ul>
+      <div class="step">লাল-বাদামী জল — ট্যানিন / আয়রন / ডায়াটম শেওলা</div>
+      <ul class="dl">
+        <li><span class="dl-chem">বিকেসি ৮০%</span><span class="dl-qty">১ লিটার / একর (&gt;৪ ফুট গভীরতায়)<br>৫০০ মিলি / একর (≤৪ ফুট)</span></li>
+        <li><span class="dl-chem">কৃষি চুন</span><span class="dl-qty">১০০ কেজি / একর</span></li>
+      </ul>
+      <div class="step">লাল শেওলা — ইউগ্লেনা / জৈব অতিরিক্তের সংকেত</div>
+      <ul class="dl">
+        <li><span class="dl-chem">খাওয়ানো অবিলম্বে কমান</span><span class="dl-qty">৫০% হ্রাস × ৫ দিন</span></li>
+        <li><span class="dl-chem">জল পরিবর্তন (১৫–২০%)</span><span class="dl-qty">শুধু পরিষ্কার জল</span></li>
+        <li><span class="dl-chem">কৃষি চুন + বায়ু সরবরাহ</span><span class="dl-qty">১০০ কেজি / একর<span class="dl-note">শেওলানাশক দেবেন না — মৃত শেওলায় অক্সিজেন সংকট হবে। জৈব ভার কমানই সমাধান।</span></span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SECTION 4: MUCUS, NUTRITION, FUNGAL
+════════════════════════════════════════ -->
+
+<div class="sec-label">
+  <span class="sec-label-text">Mucus, Nutrition &amp; Fungal Management<span class="bn">শ্লেষ্মা, পুষ্টি ও ছত্রাক ব্যবস্থাপনা</span></span>
+</div>
+
+<!-- ── PAIR 11: Mucus ── -->
+
+<div class="pair">
+  <!-- EN -->
+  <div class="card cc-teal">
+    <div class="ch">
+      <span class="ch-icon">🫧</span>
+      <span class="ch-title">Fish Gill &amp; Body Mucus (Gel) Management</span>
+      <span class="ch-badge b-water">HEALTH INDICATOR</span>
+    </div>
+    <div class="cb">
+      <div class="cause">Mucus is the fish's primary external immune barrier. Always assess after any chemical treatment. Low mucus = mineral depletion. High mucus = parasite/irritant pressure.</div>
+      <div class="step">Low Mucus — Post-Chemical Stress</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Agriculture Super (dolomite/mineral blend)</span><span class="dl-qty">50 kg / acre<span class="dl-note">Replenishes mineral balance after chemical exposure.</span></span></li>
+      </ul>
+      <div class="step">High Mucus — Parasite / Irritant</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Deltamethrin 1.8% EC</span><span class="dl-qty">50 ml / acre</span></li>
+        <li><span class="dl-chem">Formalin (if protozoan cause confirmed)</span><span class="dl-qty">25 ppm</span></li>
+      </ul>
+      <div class="step">Routine Maintenance — Every 15 Days</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Deltamethrin 1.8% EC</span><span class="dl-qty">100 ml / acre</span></li>
+      </ul>
+    </div>
+  </div>
+  <!-- BN -->
+  <div class="card cc-teal bn-card">
+    <div class="ch">
+      <span class="ch-icon">🫧</span>
+      <span class="ch-title bn">মাছের কানকো ও শরীরের শ্লেষ্মা ব্যবস্থাপনা</span>
+      <span class="ch-badge b-water">স্বাস্থ্য সূচক</span>
+    </div>
+    <div class="cb">
+      <div class="cause">শ্লেষ্মা মাছের প্রথম বহিরাগত রোগ প্রতিরোধ বাধা। যেকোনো রাসায়নিক প্রয়োগের পর সবসময় পরীক্ষা করুন। কম শ্লেষ্মা = খনিজ ঘাটতি। বেশি শ্লেষ্মা = পরজীবী/বিরক্তিকর চাপ।</div>
+      <div class="step">কম শ্লেষ্মা — রাসায়নিক পরবর্তী চাপে</div>
+      <ul class="dl">
+        <li><span class="dl-chem">অ্যাগ্রিকালচার সুপার (ডলোমাইট/খনিজ মিশ্রণ)</span><span class="dl-qty">৫০ কেজি / একর<span class="dl-note">রাসায়নিক প্রয়োগের পর খনিজ ভারসাম্য পুনরুদ্ধার করে।</span></span></li>
+      </ul>
+      <div class="step">বেশি শ্লেষ্মা — পরজীবী / বিরক্তিকর চাপে</div>
+      <ul class="dl">
+        <li><span class="dl-chem">ডেলটামেথ্রিন ১.৮% ইসি</span><span class="dl-qty">৫০ মিলি / একর</span></li>
+        <li><span class="dl-chem">ফর্মালিন (প্রোটোজোয়া নিশ্চিত হলে)</span><span class="dl-qty">২৫ পিপিএম</span></li>
+      </ul>
+      <div class="step">নিয়মিত রক্ষণাবেক্ষণ — প্রতি ১৫ দিনে</div>
+      <ul class="dl">
+        <li><span class="dl-chem">ডেলটামেথ্রিন ১.৮% ইসি</span><span class="dl-qty">১০০ মিলি / একর</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAIR 12: Malnutrition + Fish Hard ── -->
+
+<div class="pair">
+  <!-- EN: Malnutrition -->
+  <div class="card cc-green">
+    <div class="ch">
+      <span class="ch-icon">🌾</span>
+      <span class="ch-title">Malnutrition &amp; Poor Growth</span>
+      <span class="ch-badge b-nut">NUTRITION</span>
+    </div>
+    <div class="cb">
+      <div class="cause">Net-sample 20 fish monthly. Weigh &amp; compare to expected SGR. Bengal ponds relying solely on rice bran (DOB) without protein supplement are high-risk. Rice bran alone provides only 8–10% crude protein — inadequate for grow-out.</div>
+      <div class="step">Feed Composition</div>
+      <ul class="dl">
+        <li><span class="dl-chem">Crude Protein in DOB — minimum</span><span class="dl-qty">12%<span class="dl-note">Pure rice bran = 8–10% CP — insufficient alone. Supplement required.</span></span></li>
+        <li><span class="dl-chem">Soya DOC (40%) + Groundnut DOC — mix with DOB</span><span class="dl-qty">1:1 ratio<span class="dl-note">Target feed protein 28–32% for IMC grow-out. FCR target ≤2.0.</span></span></li>
+        <li><span class="dl-chem">Pellet feed — mix with DOB</span><span class="dl-qty">30–50% of ration<span class="dl-note">ICAR-CIFA Gram-Ca-Feed: FCR 1.47 achieved in Bengal field trials.</span></span></li>
+        <li><span class="dl-chem">Richmin / Vitamin-Mineral Premix</span><span class="dl-qty">1 kg / ton feed<span class="dl-note">Includes Vitamin C (prevents spine deformity) &amp; B-complex. Critical in intensive ponds.</span></span></li>
+      </ul>
+      <div class="tip-box"><span class="bx-head">FEEDING RATE</span>Feed at 2–3% of body weight/day. Stop feeding during disease outbreaks or water quality events. Overfeeding is the #1 cause of water quality deterioration in Bengal ponds.</div>
+    </div>
+  </div>
+  <!-- BN: Malnutrition -->
+  <div class="card cc-green bn-card">
+    <div class="ch">
+      <span class="ch-icon">🌾</span>
+      <span class="ch-title bn">অপুষ্টি ও দুর্বল বৃদ্ধি</span>
+      <span class="ch-badge b-nut">পুষ্টি</span>
+    </div>
+    <div class="cb">
+      <div class="cause">প্রতি মাসে ২০টি মাছ জাল টেনে ওজন করুন। কাঙ্ক্ষিত বৃদ্ধির সাথে তুলনা করুন। শুধু চালের কুঁড়া (ডিওবি) দেওয়া বাংলার পুকুরে বেশি ঝুঁকি। চালের কুঁড়ায় মাত্র ৮–১০% প্রোটিন — একা যথেষ্ট নয়।</div>
+      <div class="step">খাদ্যের গঠন</div>
+      <ul class="dl">
+        <li><span class="dl-chem">ডিওবিতে অপরিশোধিত প্রোটিন — ন্যূনতম</span><span class="dl-qty">১২%<span class="dl-note">খাঁটি চালের কুঁড়া = ৮–১০% — একা অপর্যাপ্ত। সম্পূরক খাদ্য লাগবে।</span></span></li>
+        <li><span class="dl-chem">সয়া খোল (৪০%) + চিনাবাদামের খোল — ডিওবির সাথে মিশিয়ে</span><span class="dl-qty">১:১ অনুপাত<span class="dl-note">আইএমসি বৃদ্ধিতে খাদ্যে লক্ষ্যমাত্রা ২৮–৩২% প্রোটিন। FCR লক্ষ্যমাত্রা ≤২.০।</span></span></li>
+        <li><span class="dl-chem">পিলেট খাদ্য — ডিওবির সাথে মিশিয়ে</span><span class="dl-qty">রেশনের ৩০–৫০%<span class="dl-note">আইসিএআর-সিফা গ্রাম-ক্যা-ফিড: বাংলার মাঠ পরীক্ষায় FCR ১.৪৭ পাওয়া গেছে।</span></span></li>
+        <li><span class="dl-chem">রিচমিন / ভিটামিন-খনিজ প্রিমিক্স</span><span class="dl-qty">১ কেজি / টন খাদ্য<span class="dl-note">ভিটামিন সি (মেরুদণ্ড বিকৃতি রোধ) ও বি-কমপ্লেক্স সহ। নিবিড় পুকুরে অত্যন্ত গুরুত্বপূর্ণ।</span></span></li>
+      </ul>
+      <div class="tip-box"><span class="bx-head">খাওয়ানোর হার</span>শরীরের ওজনের ২–৩% হারে প্রতিদিন দিন। রোগের প্রাদুর্ভাব বা জলমান সমস্যায় খাওয়ানো বন্ধ করুন। অতিরিক্ত খাওয়ানো বাংলার পুকুরে জলমান বিগড়ানোর প্রধান কারণ।</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAIR 13: Fish Hard / Saprolegnia ── -->
+
+<div class="pair">
+  <!-- EN -->
+  <div class="card cc-gold">
+    <div class="ch">
+      <span class="ch-icon">🍄</span>
+      <span class="ch-title">Fish Hard — Saprolegnia (Water Mould)</span>
+      <span class="ch-badge b-fung">FUNGAL</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>Causative Agent:</strong> Saprolegnia parasitica — oomycete water mould. Secondary infection at wound/stress sites. Triggered by cold water, injury, malnutrition, or post-transport stress.</div>
+      <div class="symp"><span class="symp-head">Symptoms</span>White-grey cotton-wool tufts on body, fins or head. Fish feels stiff/hard to touch in advanced cases. Often co-occurs with bacterial ulcers.</div>
+      <ul class="dl">
+        <li><span class="dl-chem">NaCl Salt Dip (grow-out fish — food-safe)</span><span class="dl-qty">3% · 10–15 min<span class="dl-note">Kills surface Saprolegnia. Repeat × 3 days. No withdrawal period.</span></span></li>
+        <li><span class="dl-chem">Yeast supplement in feed</span><span class="dl-qty">1–2 kg / ton · 10–15 days<span class="dl-note">Beta-glucans boost systemic immune response and reduce fungal vulnerability.</span></span></li>
+        <li><span class="dl-chem">KMnO₄ — pond treatment</span><span class="dl-qty">1 ppm</span></li>
+        <li><span class="dl-chem">Malachite Green (nursery/fingerlings ONLY)</span><span class="dl-qty">25 g / acre · daytime only<span class="dl-note">⚠ FSSAI restricted for food fish. 60-day minimum withdrawal. Mix in water during daylight only.</span></span></li>
+      </ul>
+    </div>
+  </div>
+  <!-- BN -->
+  <div class="card cc-gold bn-card">
+    <div class="ch">
+      <span class="ch-icon">🍄</span>
+      <span class="ch-title bn">ফিশ হার্ড — স্যাপ্রোলেগনিয়া (জলের ছত্রাক)</span>
+      <span class="ch-badge b-fung">ছত্রাক</span>
+    </div>
+    <div class="cb">
+      <div class="cause"><strong>কারণকারী জীবাণু:</strong> স্যাপ্রোলেগনিয়া প্যারাসিটিকা — ওমাইসেট জল-ছাঁচ। ক্ষত বা চাপের জায়গায় দ্বিতীয় সংক্রমণ। ঠান্ডা জল, আঘাত, অপুষ্টি বা পরিবহন পরবর্তী চাপে হয়।</div>
+      <div class="symp"><span class="symp-head">লক্ষণ</span>শরীর, পাখনা বা মাথায় সাদা-ধূসর তুলার মতো আঁশ। উন্নত পর্যায়ে মাছ স্পর্শ করলে শক্ত লাগে। প্রায়ই ব্যাকটেরিয়াজনিত ক্ষতের সাথে একসাথে দেখা যায়।</div>
+      <ul class="dl">
+        <li><span class="dl-chem">সাধারণ লবণ স্নান (বড় মাছ — খাদ্য-নিরাপদ)</span><span class="dl-qty">৩% · ১০–১৫ মিনিট<span class="dl-note">স্যাপ্রোলেগনিয়া মারে। × ৩ দিন পুনরাবৃত্তি। কোনো বিরতি সময় নেই।</span></span></li>
+        <li><span class="dl-chem">ইস্ট সম্পূরক খাদ্যে</span><span class="dl-qty">১–২ কেজি / টন · ১০–১৫ দিন<span class="dl-note">বিটা-গ্লুকান রোগ প্রতিরোধ ক্ষমতা বাড়ায়; ছত্রাক সংবেদনশীলতা কমায়।</span></span></li>
+        <li><span class="dl-chem">KMnO₄ — পুকুর চিকিৎসা</span><span class="dl-qty">১ পিপিএম</span></li>
+        <li><span class="dl-chem">ম্যালাকাইট গ্রিন (শুধু নার্সারি/পোনা)</span><span class="dl-qty">২৫ গ্রাম / একর · দিনের বেলায়<span class="dl-note">⚠ এফএসএসএআই দ্বারা খাদ্য মাছে সীমাবদ্ধ। ন্যূনতম ৬০ দিন বিরতি।</span></span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     ADVISORY PANEL
+════════════════════════════════════════ -->
+
+<div class="advisory">
+  <div class="advisory-head">
+    <span>⚠ General Advisory &amp; Post-Chemical Liver Care</span>
+    <span class="bn">সাধারণ নির্দেশিকা ও রাসায়নিক পরবর্তী যকৃত সহায়তা</span>
+  </div>
+  <div class="adv-grid">
+    <div class="adv-item">
+      <div class="adv-head">Post-Chemical Liver Care <span class="bn">রাসায়নিক পরবর্তী যকৃত সহায়তা</span></div>
+      <p>After any insecticide, organophosphate, or prolonged antibiotic — <strong>fish liver hardens (hepatopathy)</strong>. Feed <strong>Fish Magic / liver tonic at 1–2 kg/ton for 10–15 days</strong> after every chemical course. No exceptions.
+      <span class="bn">যেকোনো কীটনাশক, সংগঠিত ফসফেট বা দীর্ঘমেয়াদি অ্যান্টিবায়োটিকের পর — মাছের যকৃত শক্ত হয়। প্রতিটি কোর্সের পর ফিশ ম্যাজিক / লিভার টনিক ১–২ কেজি/টন × ১০–১৫ দিন অবশ্যই দিন।</span></p>
+    </div>
+    <div class="adv-item">
+      <div class="adv-head">DO Monitoring <span class="bn">দ্রবীভূত অক্সিজেন পর্যবেক্ষণ</span></div>
+      <p>Check DO <strong>every morning 5–6 AM</strong> (daily low). Target: <strong>&gt;5 mg/L</strong>. Below 3 mg/L = emergency. Any algaecide or bloom crash depletes DO overnight — have aerators on standby.
+      <span class="bn">প্রতিদিন ভোর ৫–৬টায় DO পরীক্ষা করুন। লক্ষ্য: &gt;৫ মিগ্রা/লি। ৩-এর নিচে = জরুরি। শেওলা মারলে সেই রাতেই অক্সিজেন কমে — বায়ু যন্ত্র প্রস্তুত রাখুন।</span></p>
+    </div>
+    <div class="adv-item">
+      <div class="adv-head">Net Hygiene <span class="bn">জালের স্বাস্থ্যবিধি</span></div>
+      <p>Disinfect nets in <strong>1 ppm KMnO₄ before and after every use</strong>. Dry in sunlight. Never share nets between EUS-positive and healthy ponds — #1 inter-pond disease vector.
+      <span class="bn">প্রতিবার ব্যবহারের আগে ও পরে ১ পিপিএম KMnO₄-এ জাল জীবাণুমুক্ত করুন। রোদে শুকান। আক্রান্ত ও সুস্থ পুকুরের মধ্যে কখনো জাল ভাগ করবেন না।</span></p>
+    </div>
+    <div class="adv-item">
+      <div class="adv-head">Pond pH <span class="bn">পুকুরের pH</span></div>
+      <p>Optimal: <strong>7.5–8.5</strong>. Apply lime fortnightly Oct–Feb at <strong>50–100 kg/acre</strong>. Below 6.8 = high EUS &amp; fungal risk. Above 9.5 = ammonia toxicity risk.
+      <span class="bn">সর্বোত্তম: ৭.৫–৮.৫। অক্টোবর–ফেব্রুয়ারিতে পক্ষে পক্ষে ৫০–১০০ কেজি/একর চুন দিন। ৬.৮-এর নিচে = ইইউএস ও ছত্রাকের উচ্চ ঝুঁকি।</span></p>
+    </div>
+    <div class="adv-item">
+      <div class="adv-head">Stocking Density <span class="bn">মজুদ ঘনত্ব</span></div>
+      <p>Optimal composite culture: <strong>5,000–7,500 fingerlings/ha</strong> at 40–60g. Overcrowding (&gt;10,000/ha without aeration) sharply raises Myxozoan, Argulus &amp; oxygen stress risk.
+      <span class="bn">সর্বোত্তম মিশ্র চাষ: ৪০–৬০ গ্রাম পোনায় ৫,০০০–৭,৫০০টি/হেক্টর। বায়ু সরবরাহ ছাড়া &gt;১০,০০০/হেক্টর মিক্সোজোয়ান, আরগুলাস ও অক্সিজেন সংকটের ঝুঁকি বাড়ায়।</span></p>
+    </div>
+    <div class="adv-item">
+      <div class="adv-head">Catla — Special Notes <span class="bn">কাতলা — বিশেষ নির্দেশ</span></div>
+      <p>Catla is a <strong>surface feeder — most sensitive</strong> to water column chemicals. Avoid bleaching powder, Quinalphos, Dichlorvos, high-dose Copper Sulphate. Catla is the pond's early-warning fish.
+      <span class="bn">কাতলা — সারফেস ফিডার — জলের রাসায়নিকে সবচেয়ে সংবেদনশীল। ব্লিচিং পাউডার, কুইনালফস, ডিক্লোরভস ও অতিরিক্ত কপার সালফেট দেবেন না। কাতলাই পুকুরের প্রথম সতর্কসংকেত।</span></p>
+    </div>
+  </div>
+
+  <!-- Withdrawal Table -->
+
+  <div class="step" style="margin-top:20px;">Chemical Withdrawal Periods &amp; Regulatory Status — ওষুধের বিরতি সময় ও নিয়ন্ত্রণ মান</div>
+  <div class="wt-wrap">
+    <table class="wt">
+      <thead>
+        <tr>
+          <th>Chemical / রাসায়নিক</th>
+          <th>Withdrawal / বিরতি</th>
+          <th>Status / অবস্থা</th>
+          <th>বাংলায় নোট</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Deltamethrin 1.8% EC</td>
+          <td>14–21 days</td>
+          <td>Approved for aquaculture. Toxic to crustaceans — use carefully near prawn ponds.</td>
+          <td>জলজ চাষে অনুমোদিত। চিংড়ি পুকুরের কাছে সতর্কতার সাথে ব্যবহার করুন।</td>
+        </tr>
+        <tr>
+          <td>KMnO₄ (Potassium Permanganate)</td>
+          <td>None required</td>
+          <td>Rapidly degrades. Generally regarded safe at recommended doses.</td>
+          <td>দ্রুত ভেঙে যায়। নির্দেশিত মাত্রায় নিরাপদ।</td>
+        </tr>
+        <tr>
+          <td>Common Salt (NaCl)</td>
+          <td>None</td>
+          <td>Food-safe. No residue concern. Preferred option for food fish.</td>
+          <td>খাদ্য-নিরাপদ। কোনো অবশিষ্টাংশের চিন্তা নেই। খাদ্য মাছে সর্বোত্তম পছন্দ।</td>
+        </tr>
+        <tr>
+          <td>CIFAX (ICAR-CIFA)</td>
+          <td>Consult label</td>
+          <td>ICAR-CIFA approved formulation for EUS. Recommended first-line EUS treatment.</td>
+          <td>ইইউএস-এর জন্য আইসিএআর-সিফা অনুমোদিত। প্রথম পছন্দের ইইউএস চিকিৎসা।</td>
+        </tr>
+        <tr>
+          <td>Formalin 37%</td>
+          <td>7 days minimum</td>
+          <td>Effective for Ich &amp; parasites. Aerate well. Do not exceed 25 ppm. Not harvested within 7 days.</td>
+          <td>আইকে ও পরজীবীতে কার্যকর। বায়ু দিন। ২৫ পিপিএম-এর বেশি নয়।</td>
+        </tr>
+        <tr>
+          <td>Ivermectin 1%</td>
+          <td>28 days</td>
+          <td>Effective for Argulus &amp; internal parasites (ICAR validated). Do not use within 4 weeks of harvest.</td>
+          <td>আরগুলাস ও অন্তঃপরজীবীতে কার্যকর। ধরার ৪ সপ্তাহ আগে বন্ধ করুন।</td>
+        </tr>
+        <tr>
+          <td>Malachite Green</td>
+          <td class="banned">60+ days (fry/fingerlings only)</td>
+          <td class="banned">⛔ FSSAI restricted for food fish above fingerling stage. Suspected carcinogen.</td>
+          <td class="banned">⛔ খাদ্য মাছে নিষিদ্ধ। সন্দেহজনক কার্সিনোজেন।</td>
+        </tr>
+        <tr>
+          <td>Ekalux / Quinalphos 25% EC</td>
+          <td class="banned">BANNED</td>
+          <td class="banned">⛔ Aquaculture use restricted/prohibited in multiple states. Food safety hazard. Do not use.</td>
+          <td class="banned">⛔ একাধিক রাজ্যে নিষিদ্ধ। খাদ্য নিরাপত্তা ঝুঁকি। ব্যবহার করবেন না।</td>
+        </tr>
+        <tr>
+          <td>Nuvan / Dichlorvos 76 EC</td>
+          <td class="banned">Restricted</td>
+          <td class="banned">⛔ Not approved for food fish production. Avoid in IMC grow-out ponds.</td>
+          <td class="banned">⛔ খাদ্য মাছের উৎপাদনে অনুমোদিত নয়। আইএমসি বৃদ্ধি পুকুরে এড়িয়ে চলুন।</td>
+        </tr>
+        <tr>
+          <td>Antibiotics (any)</td>
+          <td>21–30+ days</td>
+          <td>Must be prescribed by registered veterinarian. Never use within 4 weeks of harvest.</td>
+          <td>নিবন্ধিত পশু চিকিৎসকের পরামর্শ ছাড়া দেবেন না। ধরার ৪ সপ্তাহ আগে বন্ধ করুন।</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════ -->
+
+<footer>
+  <p><strong>IMC Disease &amp; Health Management — Bengal Zone Field Reference</strong></p>
+  <p class="bn">আইএমসি রোগ ও স্বাস্থ্য ব্যবস্থাপনা — বাংলা অঞ্চল মাঠ নির্দেশিকা</p>
+  <p style="margin-top:8px;">Research basis: ICAR-CIFA · ICAR-CIFRI Barrackpore · Indian Journal of Animal Sciences 2024 · International Journal of Fisheries &amp; Aquatic Studies 2024 · OIE/WOAH EUS Manual · FAO Aquaculture Health Guidelines</p>
+  <p>Species: Catla catla · Labeo rohita · Cirrhinus mrigala | Composite culture pond systems | West Bengal &amp; adjoining states</p>
+  <p class="legal">⚠ Field reference guide only. Always consult a registered fish health veterinarian for diagnosis and antibiotic prescription. Treatment responses vary by pond condition, season, and pathogen strain.<br>
+  <span class="bn" style="font-size:11px;color:#2a4a6a;">⚠ শুধুমাত্র মাঠ নির্দেশিকা। রোগ নির্ণয় ও অ্যান্টিবায়োটিক ব্যবস্থাপতার জন্য নিবন্ধিত মৎস্য পশু চিকিৎসকের পরামর্শ নিন।</span></p>
+</footer>
+
+<!-- ════════════════════════════════════════
+     PRINT BAR (fixed, screen only)
+════════════════════════════════════════ -->
+
+<div class="print-bar" role="complementary" aria-label="Print options">
+  <div class="print-label">Print / মুদ্রণ</div>
+  <button class="print-btn a4" onclick="triggerPrint('a4')" title="Print full document in A4">
+    🖨 A4 Full Doc
+  </button>
+  <button class="print-btn a5" onclick="triggerPrint('a5')" title="Print A5 Compact">
+    🖨 A5 Compact
+  </button>
+</div>
+
+<script>
+function triggerPrint(size) {
+  const prev = document.getElementById('dyn-page');
+  if (prev) prev.remove();
+
+  const st = document.createElement('style');
+  st.id = 'dyn-page';
+  st.textContent = size === 'a5'
+    ? '@media print { @page { size: A5 portrait; margin: 8mm 7mm; } }'
+    : '@media print { @page { size: A4 portrait; margin: 10mm 9mm; } }';
+  document.head.appendChild(st);
+
+  document.body.setAttribute('data-print', size);
+
+  setTimeout(function() {
+    window.print();
+    setTimeout(function() {
+      document.body.removeAttribute('data-print');
+      st.remove();
+    }, 1500);
+  }, 80);
+}
+
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+    e.preventDefault();
+    triggerPrint('a4');
+  }
+});
+</script>
+
+</body>
+</html>
