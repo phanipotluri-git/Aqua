@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L. vannamei Handbook | চিংড়ি হ্যান্ডবুক | రొయ్య హ్యాండ్‌బుక్</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+html{background:#040c16!important;color:#d8f0ea!important;color-scheme:dark!important;}
+body{background:#040c16!important;color:#d8f0ea!important;}
+:root{
+  --teal:#0cd8c8;--gold:#f0c030;--red:#f05868;--green:#30d888;
+  --orange:#f09040;--purple:#a878ff;--sky:#38d0ff;--pink:#ff80b8;
+  --amber:#ffb040;--cyan:#20e8e8;--lime:#a0e840;
+  --panel:#091822;--border:#143850;--bordlt:rgba(20,56,80,.4);
+  --text:#d8f0ea;--tdim:#3a7068;--tmid:#80b8b0;
+  --en-bg:#091822;--en-bd:#143850;
+  --bn-bg:#06182a;--bn-bd:#1a6870;--bn-ac:#40d8c8;
+  --te-bg:#0a0a28;--te-bd:#5028a8;--te-ac:#b888ff;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:"IBM Plex Sans",sans-serif;font-size:12.5px;line-height:1.6;padding:20px 14px 60px;}
+.fn{font-family:"Hind Siliguri",sans-serif;}
+.ft{font-family:"Noto Sans Telugu",sans-serif;}
+
+/* ─── HANDBOOK HEADER ─── */
+.hbk-header{text-align:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(–border);}
+.hbk-title{font-family:“IBM Plex Mono”,monospace;font-size:18px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:6px;}
+.hbk-title .bn{font-family:“Hind Siliguri”,sans-serif;font-size:16px;color:var(–bn-ac);display:block;}
+.hbk-title .te{font-family:“Noto Sans Telugu”,sans-serif;font-size:16px;color:var(–te-ac);display:block;}
+.hbk-sub{font-size:11px;color:var(–tdim);margin-bottom:10px;}
+.cite-row{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:8px;}
+.cite{font-family:“IBM Plex Mono”,monospace;font-size:8px;color:var(–tdim);
+background:rgba(20,56,80,.4);border:1px solid var(–border);border-radius:3px;padding:2px 6px;}
+.lang-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;}
+.lang-flag{padding:5px 12px;border-radius:4px;font-size:12px;font-weight:700;text-align:center;}
+.lang-flag.en{background:#0c2030!important;border:1px solid var(–border);color:var(–sky);}
+.lang-flag.bn{background:var(–bn-bg)!important;border:1px solid var(–bn-bd);color:var(–bn-ac);}
+.lang-flag.te{background:var(–te-bg)!important;border:1px solid var(–te-bd);color:var(–te-ac);}
+
+/* ─── QUICK REFERENCE PANEL ─── */
+.qr-panel{background:#071628!important;border:1px solid var(–border)!important;
+border-radius:8px;padding:12px 16px;margin-bottom:20px;}
+.qr-h{font-family:“IBM Plex Mono”,monospace;font-size:8.5px;letter-spacing:2px;
+color:var(–teal);text-transform:uppercase;margin-bottom:10px;}
+.qr-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
+.qr-item{background:var(–panel)!important;border-radius:5px;padding:7px 8px;text-align:center;}
+.qr-p{font-family:“IBM Plex Mono”,monospace;font-size:7.5px;letter-spacing:1px;
+color:var(–tdim);text-transform:uppercase;margin-bottom:2px;}
+.qr-v{font-family:“IBM Plex Mono”,monospace;font-size:13px;font-weight:700;color:var(–gold);}
+.qr-u{font-size:8.5px;color:var(–tdim);}
+.qr-v.g{color:var(–green);} .qr-v.r{color:var(–red);}
+
+/* ─── SECTION LABELS ─── */
+.sec{display:flex;align-items:center;gap:10px;margin:24px 0 10px;}
+.sec-txt{font-family:“IBM Plex Mono”,monospace;font-size:9px;letter-spacing:2px;
+color:var(–tdim);text-transform:uppercase;white-space:nowrap;}
+.sec-bn{font-family:“Hind Siliguri”,sans-serif;font-size:11px;letter-spacing:0;color:var(–tdim);margin-left:4px;}
+.sec-te{font-family:“Noto Sans Telugu”,sans-serif;font-size:11px;letter-spacing:0;color:var(–tdim);margin-left:4px;}
+.sec::after{content:””;flex:1;height:1px;background:var(–border)!important;}
+
+/* ─── PROBLEM ROW = 3 COLUMNS ─── */
+.prob-row{margin-bottom:16px;}
+.prob-header{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-bottom:3px;}
+.prob-label{padding:6px 12px;border-radius:5px 5px 0 0;display:flex;align-items:center;gap:8px;}
+.prob-label .num{font-family:“IBM Plex Mono”,monospace;font-size:20px;font-weight:700;opacity:.4;}
+.prob-label .title-en{font-family:“IBM Plex Mono”,monospace;font-size:10px;font-weight:700;
+text-transform:uppercase;line-height:1.3;flex:1;}
+.prob-label .title-bn{font-family:“Hind Siliguri”,sans-serif;font-size:13px;font-weight:700;
+line-height:1.3;flex:1;}
+.prob-label .title-te{font-family:“Noto Sans Telugu”,sans-serif;font-size:13px;font-weight:700;
+line-height:1.3;flex:1;}
+.prob-label .badge{font-family:“IBM Plex Mono”,monospace;font-size:8px;padding:2px 5px;
+border-radius:3px;border:1px solid;letter-spacing:.6px;white-space:nowrap;}
+.prob-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;}
+
+/* ─── CARD BODY ─── */
+.card{padding:10px 12px;border-radius:0 0 6px 6px;border-top:none;
+overflow-wrap:break-word;word-break:break-word;}
+.card.en{background:var(–en-bg)!important;border:1px solid var(–en-bd)!important;}
+.card.bn{background:var(–bn-bg)!important;border:1px solid var(–bn-bd)!important;}
+.card.te{background:var(–te-bg)!important;border:1px solid var(–te-bd)!important;}
+.card.bn *{font-family:“Hind Siliguri”,sans-serif;}
+.card.te *{font-family:“Noto Sans Telugu”,sans-serif;}
+
+/* cause / symptoms */
+.cause{font-size:11px;color:var(–tmid);margin-bottom:8px;padding-bottom:8px;
+border-bottom:1px solid var(–bordlt)!important;line-height:1.5;}
+.cause strong{color:var(–text);font-size:10px;letter-spacing:.3px;}
+.card.bn .cause strong,.card.te .cause strong{font-size:11px;letter-spacing:0;}
+.symp-lbl{font-family:“IBM Plex Mono”,monospace;font-size:8.5px;letter-spacing:1px;
+color:var(–tdim);text-transform:uppercase;margin:8px 0 3px;display:block;}
+.card.bn .symp-lbl,.card.te .symp-lbl{font-family:“IBM Plex Mono”,monospace;}
+.symp{font-size:11px;color:var(–tmid);margin-bottom:8px;padding:5px 8px;
+background:rgba(20,56,80,.3)!important;border-left:2px solid var(–border)!important;
+border-radius:3px;line-height:1.5;}
+
+/* step */
+.step{font-family:“IBM Plex Mono”,monospace;font-size:8.5px;letter-spacing:1px;
+color:var(–tdim);text-transform:uppercase;margin:8px 0 4px;}
+.card.bn .step,.card.te .step{font-family:“IBM Plex Mono”,monospace;}
+
+/* dose list */
+.dl{list-style:none;}
+.dl li{display:flex;gap:6px;padding:3px 0;border-bottom:1px solid var(–bordlt)!important;
+align-items:flex-start;font-size:11px;flex-wrap:wrap;}
+.dl li:last-child{border-bottom:none;}
+.dc{flex:1;color:var(–text);font-weight:600;line-height:1.4;}
+.dq{font-family:“IBM Plex Mono”,monospace;font-size:10px;color:var(–gold);
+flex-shrink:0;text-align:right;line-height:1.4;max-width:45%;white-space:normal;word-break:break-word;}
+.dn{display:block;font-size:10px;color:var(–tdim);font-weight:400;font-style:italic;margin-top:1px;
+font-family:“IBM Plex Sans”,sans-serif;}
+.dn.ok{color:#60d898;font-style:normal;} .dn.dx{color:var(–red);font-style:normal;}
+.card.bn .dc,.card.te .dc{font-size:11.5px;font-weight:600;}
+.card.bn .dn,.card.te .dn{font-size:10.5px;font-style:normal;font-family:inherit;}
+
+/* info boxes */
+.box{border-radius:4px;padding:7px 10px;font-size:11px;margin-top:8px;line-height:1.5;}
+.box .bh{font-weight:700;font-size:9.5px;letter-spacing:.3px;margin-bottom:2px;display:block;}
+.warn{background:#1e1200!important;border:1px solid #b06010!important;color:#ffc850;}
+.ban{background:#1a0000!important;border:1px solid #981028!important;color:#ffb0b0;}
+.tip{background:#061818!important;border:1px solid #0a9898!important;color:#60d8d0;}
+.ok{background:#051812!important;border:1px solid #0a8848!important;color:#60d898;}
+.card.bn .box,.card.te .box{font-family:inherit;}
+
+/* data table */
+.dtbl{width:100%;border-collapse:collapse;font-size:11px;margin:6px 0;}
+.dtbl th{background:rgba(20,56,80,.5)!important;font-family:“IBM Plex Mono”,monospace;
+font-size:8px;letter-spacing:.8px;color:var(–tdim);text-transform:uppercase;
+padding:4px 7px;text-align:left;border-bottom:1px solid var(–border);}
+.dtbl td{padding:3px 7px;border-bottom:1px solid var(–bordlt);line-height:1.4;font-size:10.5px;}
+.dtbl tr:last-child td{border-bottom:none;}
+.dtbl td:first-child{font-family:“IBM Plex Mono”,monospace;font-size:10px;font-weight:700;}
+.dtbl td.g{color:var(–green);} .dtbl td.w{color:var(–amber);} .dtbl td.b{color:var(–red);}
+
+/* boyd citation pill */
+.boyd{font-family:“IBM Plex Mono”,monospace;font-size:8px;color:#08b8b0;
+background:rgba(12,216,200,.08);border:1px solid rgba(12,216,200,.2);
+border-radius:2px;padding:1px 4px;display:inline;margin-left:3px;}
+
+/* ─── COLOUR SCHEMES for problem labels ─── */
+.cc-red   .prob-label{background:#1c0810!important;}
+.cc-red   .title-en{color:#ff7888!important;} .cc-red .badge{border-color:#f05868;color:#f05868;}
+.cc-red   .prob-label.bn-lbl{background:#1c0810!important;} .cc-red .title-bn{color:#ff9898!important;}
+.cc-red   .prob-label.te-lbl{background:#1c0810!important;} .cc-red .title-te{color:#ff9898!important;}
+
+.cc-orange .prob-label{background:#181008!important;}
+.cc-orange .title-en{color:#ffb070!important;} .cc-orange .badge{border-color:#f09040;color:#f09040;}
+.cc-orange .title-bn{color:#ffb070!important;} .cc-orange .title-te{color:#ffb070!important;}
+
+.cc-purple .prob-label{background:#100c22!important;}
+.cc-purple .title-en{color:#c098ff!important;} .cc-purple .badge{border-color:#a878ff;color:#a878ff;}
+.cc-purple .title-bn{color:#c098ff!important;} .cc-purple .title-te{color:#c098ff!important;}
+
+.cc-teal  .prob-label{background:#061a1c!important;}
+.cc-teal  .title-en{color:#30e8e0!important;} .cc-teal .badge{border-color:#0cd8c8;color:#0cd8c8;}
+.cc-teal  .title-bn{color:#30e8e0!important;} .cc-teal .title-te{color:#30e8e0!important;}
+
+.cc-green .prob-label{background:#061810!important;}
+.cc-green .title-en{color:#50f098!important;} .cc-green .badge{border-color:#30d888;color:#30d888;}
+.cc-green .title-bn{color:#50f098!important;} .cc-green .title-te{color:#50f098!important;}
+
+.cc-gold  .prob-label{background:#181408!important;}
+.cc-gold  .title-en{color:#ffd040!important;} .cc-gold .badge{border-color:#f0c030;color:#f0c030;}
+.cc-gold  .title-bn{color:#ffd040!important;} .cc-gold .title-te{color:#ffd040!important;}
+
+.cc-sky   .prob-label{background:#061820!important;}
+.cc-sky   .title-en{color:#60deff!important;} .cc-sky .badge{border-color:#38d0ff;color:#38d0ff;}
+.cc-sky   .title-bn{color:#60deff!important;} .cc-sky .title-te{color:#60deff!important;}
+
+.cc-pink  .prob-label{background:#180818!important;}
+.cc-pink  .title-en{color:#ff90c0!important;} .cc-pink .badge{border-color:#ff80b8;color:#ff80b8;}
+.cc-pink  .title-bn{color:#ff90c0!important;} .cc-pink .title-te{color:#ff90c0!important;}
+
+.cc-cyan  .prob-label{background:#041818!important;}
+.cc-cyan  .title-en{color:#40f0f0!important;} .cc-cyan .badge{border-color:#20e8e8;color:#20e8e8;}
+.cc-cyan  .title-bn{color:#40f0f0!important;} .cc-cyan .title-te{color:#40f0f0!important;}
+
+/* ─── ADVISORY ─── */
+.adv{background:#071628!important;border:1px solid var(–border)!important;
+border-radius:8px;padding:16px 18px;margin-top:24px;}
+.adv-h{font-family:“IBM Plex Mono”,monospace;font-size:9px;letter-spacing:2px;
+color:var(–gold);text-transform:uppercase;margin-bottom:14px;}
+.adv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
+.adv-item{background:var(–panel)!important;border:1px solid var(–border)!important;
+border-radius:6px;padding:10px 12px;}
+.adv-lbl{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-bottom:5px;}
+.adv-lbl span{font-family:“IBM Plex Mono”,monospace;font-size:8px;letter-spacing:.8px;
+color:var(–tdim);text-transform:uppercase;padding:2px 0;}
+.adv-lbl span.b{font-family:“Hind Siliguri”,sans-serif;font-size:10px;letter-spacing:0;color:var(–bn-ac);}
+.adv-lbl span.t{font-family:“Noto Sans Telugu”,sans-serif;font-size:10px;letter-spacing:0;color:var(–te-ac);}
+.adv-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.adv-col{font-size:11px;color:var(–tmid);line-height:1.5;}
+.adv-col.bn{font-family:“Hind Siliguri”,sans-serif;}
+.adv-col.te{font-family:“Noto Sans Telugu”,sans-serif;}
+
+/* Approved inputs table */
+.wt{width:100%;border-collapse:collapse;font-size:11px;}
+.wt th{background:rgba(20,56,80,.5)!important;font-family:“IBM Plex Mono”,monospace;
+font-size:8px;letter-spacing:.8px;color:var(–tdim);text-transform:uppercase;
+padding:5px 8px;text-align:left;border-bottom:1px solid var(–border);}
+.wt td{padding:4px 8px;border-bottom:1px solid var(–bordlt);font-size:11px;vertical-align:top;line-height:1.4;}
+.wt tr:last-child td{border-bottom:none;}
+.wt td:first-child{font-weight:700;color:var(–text);}
+.wt .bn-cell{font-family:“Hind Siliguri”,sans-serif;font-size:11px;color:var(–tmid);}
+.wt .te-cell{font-family:“Noto Sans Telugu”,sans-serif;font-size:11px;color:var(–tmid);}
+.wt .dose{font-family:“IBM Plex Mono”,monospace;font-size:10px;color:var(–gold);}
+.wt .banned{color:#ffb0b0!important;}
+.wt .ok-cell{color:var(–green)!important;}
+
+/* footer */
+footer{text-align:center;margin-top:32px;font-size:10.5px;color:var(–tdim);line-height:1.8;
+border-top:1px solid var(–border);padding-top:16px;}
+footer strong{color:var(–tmid);}
+
+/* print button */
+.pbar{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:999;}
+.pbtn{padding:9px 16px;border-radius:7px;border:none;cursor:pointer;
+font-family:“IBM Plex Mono”,monospace;font-size:11px;font-weight:700;letter-spacing:1px;
+transition:all .15s;box-shadow:0 4px 16px rgba(0,0,0,.5);}
+.pbtn.a4{background:var(–teal);color:#000;}
+.pbtn.a5{background:var(–gold);color:#000;}
+.pbtn:hover{transform:translateY(-2px);filter:brightness(1.1);}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:900px){
+.prob-header,.prob-cards,.lang-cols,.adv-cols,.adv-lbl,.adv-grid{grid-template-columns:1fr!important;}
+.qr-grid{grid-template-columns:repeat(3,1fr);}
+}
+
+/* ─── PRINT ─── */
+@page{size:A4 landscape;margin:8mm 7mm;}
+@media print{
+*,*::before,*::after{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+:root{–en-bg:#edf5f3;–en-bd:#a0c0bc;–bn-bg:#e0f4ee;–bn-bd:#60b0a8;–te-bg:#ece8f8;–te-bd:#9070c0;
+–panel:#eaf4f0;–border:#a0c8c0;–bordlt:#c0d8d0;–text:#101820;–tdim:#386060;–tmid:#284840;
+–gold:#604000;–teal:#087880;–red:#a02020;–green:#146040;–orange:#803800;}
+html,body{background:#f0f8f6!important;color:#101820!important;padding:0!important;font-size:9.5px!important;}
+.pbar{display:none!important;}
+.prob-row{break-before:page!important;page-break-before:always!important;break-inside:avoid!important;}
+#prob-1{break-before:page!important;}
+.sec{break-after:avoid!important;page-break-after:avoid!important;
+break-before:page!important;page-page-before:always!important;margin:0 0 6px 0!important;}
+.hbk-header{break-after:avoid!important;margin-bottom:10px!important;}
+.adv{break-before:page!important;page-break-before:always!important;background:#e2f0ec!important;}
+.prob-header,.prob-cards{grid-template-columns:1fr 1fr 1fr!important;}
+.card.en{background:#edf5f3!important;border-color:#a0c0bc!important;}
+.card.bn{background:#e0f4ee!important;border-color:#60b0a8!important;}
+.card.te{background:#ece8f8!important;border-color:#9070c0!important;}
+.prob-label{border-radius:4px 4px 0 0;}
+.cc-red .prob-label{background:#ffe0e0!important;} .cc-red .title-en,.cc-red .title-bn,.cc-red .title-te{color:#900000!important;}
+.cc-orange .prob-label{background:#fff0e0!important;} .cc-orange .title-en,.cc-orange .title-bn,.cc-orange .title-te{color:#803800!important;}
+.cc-purple .prob-label{background:#f0ecff!important;} .cc-purple .title-en,.cc-purple .title-bn,.cc-purple .title-te{color:#4c1d95!important;}
+.cc-teal .prob-label{background:#daf8f4!important;} .cc-teal .title-en,.cc-teal .title-bn,.cc-teal .title-te{color:#065870!important;}
+.cc-green .prob-label{background:#daf8e4!important;} .cc-green .title-en,.cc-green .title-bn,.cc-green .title-te{color:#145239!important;}
+.cc-gold .prob-label{background:#fff8e0!important;} .cc-gold .title-en,.cc-gold .title-bn,.cc-gold .title-te{color:#604000!important;}
+.cc-sky .prob-label{background:#e0f4ff!important;} .cc-sky .title-en,.cc-sky .title-bn,.cc-sky .title-te{color:#104870!important;}
+.cc-pink .prob-label{background:#ffe8f4!important;} .cc-pink .title-en,.cc-pink .title-bn,.cc-pink .title-te{color:#800040!important;}
+.cc-cyan .prob-label{background:#d0f8f8!important;} .cc-cyan .title-en,.cc-cyan .title-bn,.cc-cyan .title-te{color:#044848!important;}
+.cause{border-bottom-color:#b0d0cc!important;color:#283848!important;font-size:9px!important;}
+.symp{background:rgba(160,200,192,.2)!important;border-left-color:#80b0a8!important;font-size:9px!important;color:#202c38!important;}
+.step{color:#386060!important;font-size:7.5px!important;}
+.dl li{border-bottom-color:#b0d0cc!important;font-size:9px!important;}
+.dc{color:#101820!important;} .dq{color:#604000!important;font-size:9px!important;}
+.dn{color:#386060!important;font-size:8.5px!important;}
+.warn{background:#fff8e0!important;border-color:#b06000!important;color:#604000!important;font-size:8.5px!important;}
+.ban{background:#ffe8e8!important;border-color:#b02020!important;color:#700000!important;font-size:8.5px!important;}
+.tip{background:#d8f8f4!important;border-color:#087880!important;color:#044848!important;font-size:8.5px!important;}
+.ok{background:#daf8e4!important;border-color:#166840!important;color:#104830!important;font-size:8.5px!important;}
+.adv{background:#e2f0ec!important;}
+.adv-item{background:#eaf4f0!important;border-color:#a0c0bc!important;}
+.dtbl th{background:#d0e8e4!important;}
+.dtbl td.g{color:#146040!important;} .dtbl td.w{color:#804000!important;} .dtbl td.b{color:#a02020!important;}
+.qr-panel{background:#e2f0ec!important;}
+.qr-item{background:#eaf4f0!important;}
+.qr-v{color:#604000!important;}
+footer{color:#386060!important;font-size:8.5px!important;}
+.cite-row{display:none!important;}
+}
+</style>
+
+</head>
+<body>
+<!-- ═══ HEADER ═══ -->
+<div class="hbk-header">
+  <div class="hbk-title">
+    🦐 L. vannamei — Problems &amp; Solutions Field Handbook
+    <span class="bn">লিটোপেনেউস ভ্যানামেই — সমস্যা ও সমাধান মাঠ হ্যান্ডবুক</span>
+    <span class="te">లిటోపెనేయస్ వన్నమీ — సమస్యలు & పరిష్కారాలు క్షేత్ర మాన్యువల్</span>
+  </div>
+  <div class="hbk-sub">AP · Odisha · Bengal · Research: Boyd &amp; Tucker (2012) · Boyd et al. (2023) · ICAR-CIBA · Patil et al. (2021)</div>
+  <div class="cite-row">
+    <span class="cite">Boyd &amp; Tucker (2012) Pond WQ Management</span>
+    <span class="cite">Boyd, Torrans &amp; Tucker (2023) DO &amp; Aeration</span>
+    <span class="cite">ICAR-CIBA BMP Guidelines 2024</span>
+    <span class="cite">Patil et al. (2021) EHP/WSSV Economic Loss India</span>
+    <span class="cite">Boyd et al. (2017/2018) AP/Bengal Farm Surveys</span>
+    <span class="cite">MPEDA BMP · OIE/WOAH Shrimp Manuals · FAO (2024)</span>
+  </div>
+  <div class="lang-cols">
+    <div class="lang-flag en">🇬🇧 English</div>
+    <div class="lang-flag bn">🇧🇩 বাংলা (Bengali)</div>
+    <div class="lang-flag te">🇮🇳 తెలుగు (Telugu)</div>
+  </div>
+</div>
+
+<!-- ═══ QUICK REFERENCE ═══ -->
+
+<div class="qr-panel">
+  <div class="qr-h">⚡ Critical Water Quality Targets — Boyd (2023) &amp; ICAR-CIBA Standards — Always monitor these 12 parameters</div>
+  <div class="qr-grid">
+    <div class="qr-item"><div class="qr-p">DO</div><div class="qr-v g">&gt;5</div><div class="qr-u">mg/L (always)</div></div>
+    <div class="qr-item"><div class="qr-p">pH</div><div class="qr-v">7.8–8.5</div><div class="qr-u">swing &lt;0.5/day</div></div>
+    <div class="qr-item"><div class="qr-p">Alkalinity</div><div class="qr-v">100–150</div><div class="qr-u">mg/L as CaCO₃</div></div>
+    <div class="qr-item"><div class="qr-p">Salinity</div><div class="qr-v">15–25</div><div class="qr-u">ppt optimal</div></div>
+    <div class="qr-item"><div class="qr-p">TAN</div><div class="qr-v r">&lt;0.5</div><div class="qr-u">mg/L</div></div>
+    <div class="qr-item"><div class="qr-p">H₂S</div><div class="qr-v r">&lt;0.01</div><div class="qr-u">mg/L</div></div>
+    <div class="qr-item"><div class="qr-p">Temp</div><div class="qr-v">23–30</div><div class="qr-u">°C optimal</div></div>
+    <div class="qr-item"><div class="qr-p">Secchi</div><div class="qr-v">30–45</div><div class="qr-u">cm bloom</div></div>
+    <div class="qr-item"><div class="qr-p">Nitrite</div><div class="qr-v r">&lt;0.1</div><div class="qr-u">mg/L</div></div>
+    <div class="qr-item"><div class="qr-p">FCR target</div><div class="qr-v g">1.3–1.5</div><div class="qr-u">well-managed</div></div>
+    <div class="qr-item"><div class="qr-p">Survival</div><div class="qr-v g">&gt;70%</div><div class="qr-u">at harvest</div></div>
+    <div class="qr-item"><div class="qr-p">Hardness</div><div class="qr-v">&gt;50</div><div class="qr-u">mg/L CaCO₃</div></div>
+  </div>
+</div>
+
+<div class="sec"><span class="sec-txt">Viral Diseases<span class="sec-bn"> · ভাইরাসজনিত রোগ</span><span class="sec-te"> · వైరల్ వ్యాధులు</span></span></div>
+
+<div class="prob-row cc-red" id="prob-1">
+  <div class="prob-header cc-red">
+    <div class="prob-label">
+      <span class="num">01</span>
+      <span class="ch-icon">🦠</span>
+      <span class="title-en">WSSV — White Spot Syndrome Virus</span>
+      <span class="badge badge b-crit">OIE · NO CURE</span>
+    </div>
+    <div class="prob-label bn-lbl">
+      <span class="num">01</span>
+      <span class="ch-icon">🦠</span>
+      <span class="title-bn">ডব্লিউএসএসভি — সাদা দাগ ভাইরাস রোগ</span>
+    </div>
+    <div class="prob-label te-lbl">
+      <span class="num">01</span>
+      <span class="ch-icon">🦠</span>
+      <span class="title-te">WSSV — తెల్ల మచ్చ వైరస్ రొయ్య రోగం</span>
+    </div>
+  </div>
+  <div class="prob-cards">
+    <div class="card en"><div class="cause"><strong>Cause:</strong> WSSV — dsDNA virus. OIE Notifiable. <span class="boyd">Patil et al. 2021</span>: India ₹1,670 crore/yr loss; 2.58 t/ha/crop loss — highest of all shrimp diseases. Transmission: infected seed, wild crustaceans, birds, untreated water, shared equipment. <strong>No treatment exists.</strong></div><span class="symp-lbl">Signs / Symptoms</span><div class="symp">White spots (0.5–2 mm) on carapace, visible under bright light. Loose shell. Pink-reddish discolouration. Shrimp crowding at surface. Reduced feeding 1–2 days before mass die-off. Total mortality within 3–10 days.</div><div class="step">Prevention — only defence</div><ul class="dl"><li><span class="dc">Use only SPF/PCR-certified PL (CIBA/MPEDA hatcheries)</span><span class="dq">Mandatory<span class="dn ok">Request WSSV+EHP+IHHNV PCR certificate with every batch</span></span></li>
+<li><span class="dc">Complete pond dry 7–14 days + CaO</span><span class="dq">200–300 kg/acre<span class="dn None">Kills WSSV reservoir hosts in bottom. Raises pH to 11+</span></span></li>
+<li><span class="dc">Filter all inlet water — 300 µm mesh + chlorinate</span><span class="dq">30 ppm Cl₂<span class="dn None">Wild crabs/shrimp = WSSV carriers. Neutralise with Na₂S₂O₃ before stocking</span></span></li>
+<li><span class="dc">Bird exclusion nets over full pond</span><span class="dq">Mandatory<span class="dn None">Herons, egrets: confirmed mechanical WSSV vectors between ponds</span></span></li>
+<li><span class="dc">β-glucan + Vitamin C in feed (DOC 15 onwards)</span><span class="dq">3–5 + 2 g/kg<span class="dn None">Boosts innate immune response — slows WSSV progression when challenged</span></span></li>
+</ul><div class="step">WSSV confirmed — emergency response</div><ul class="dl"><li><span class="dc">Harvest immediately if marketable size (>8 g)</span><span class="dq">Total or partial<span class="dn dx">100% mortality within 5–7 days after confirmation. Harvest now.</span></span></li>
+<li><span class="dc">After harvest: drain + BKC+TCCA disinfect + dry ≥10 days</span><span class="dq">5 ppm each<span class="dn None">Do NOT rush re-stocking after WSSV crop.</span></span></li>
+</ul><div class="box ban"><span class="bh">✖ NO ANTIVIRAL TREATMENT EXISTS</span>Prevention is the only strategy: SPF seed + biosecurity + water disinfection. All chemical treatments during active WSSV are futile.</div></div>
+    <div class="card bn"><div class="cause"><strong>কারণ:</strong> WSSV — dsDNA ভাইরাস। ভারতে ₹১,৬৭০ কোটি/বছর ক্ষতি। ছড়ানোর পথ: সংক্রমিত পোনা, বন্য কাঁকড়া/চিংড়ি, পাখি, দূষিত সরঞ্জাম। <strong>কোনো চিকিৎসা নেই।</strong></div><span class="symp-lbl">Signs / Symptoms</span><div class="symp">খোলে ও শরীরে সাদা দাগ। আলগা খোল। গোলাপি রঙ। পৃষ্ঠে ভিড়। মৃত্যুর ১–২ দিন আগে খাবার বন্ধ। ৩–১০ দিনে সম্পূর্ণ মৃত্যু।</div><div class="step">নিবারণ — একমাত্র প্রতিরক্ষা</div><ul class="dl"><li><span class="dc">শুধুমাত্র SPF/PCR সার্টিফাইড পোনা</span><span class="dq">অবশ্যই<span class="dn ok">CIBA/MPEDA হ্যাচারি থেকে। PCR সার্টিফিকেট চান।</span></span></li>
+<li><span class="dc">পুকুর ৭–১৪ দিন শুকানো + কলিচুন</span><span class="dq">২০০–৩০০ কেজি/একর</span></li>
+<li><span class="dc">৩০০ µm জাল ছাঁকনি + ৩০ ppm Cl₂ ক্লোরিনেশন</span><span class="dq">অবশ্যই<span class="dn None">মজুতের আগে Na₂S₂O₃ দিয়ে নিরপদ করুন।</span></span></li>
+<li><span class="dc">পাখি রোধক জাল — পুরো পুকুর</span><span class="dq">অবশ্যই</span></li>
+<li><span class="dc">β-গ্লুকান + ভিটামিন সি খাবারে (DOC ১৫+)</span><span class="dq">৩–৫ + ২ গ্রা/কেজি</span></li>
+</ul><div class="step">WSSV নিশ্চিত হলে</div><ul class="dl"><li><span class="dc">বিক্রয়যোগ্য হলে অবিলম্বে ধরুন</span><span class="dq">>৮ গ্রাম হলে<span class="dn dx">৫–৭ দিনে ১০০% মৃত্যু হবে। এখনই ধরুন।</span></span></li>
+<li><span class="dc">ধরার পরে পুকুর সম্পূর্ণ জীবাণুমুক্ত করুন</span><span class="dq">BKC+TCCA ৫ ppm</span></li>
+</ul><div class="box ban"><span class="bh">✖ কোনো অ্যান্টিভাইরাল চিকিৎসা নেই</span>নিবারণই একমাত্র কৌশল। প্রাদুর্ভাবের সময় রাসায়নিক চিকিৎসা বৃথা।</div></div>
+    <div class="card te"><div class="cause"><strong>కారణం:</strong> WSSV — dsDNA వైరస్. భారత్‌లో ₹1,670 కోటి/సంవత్సరం నష్టం. వ్యాప్తి: కలుషిత పిల్లలు, అడవి పీతలు/రొయ్యలు, పక్షులు, పరికరాలు. <strong>చికిత్స లేదు.</strong></div><span class="symp-lbl">Signs / Symptoms</span><div class="symp">పెచ్చుపై తెల్ల మచ్చలు. వదులైన పెచ్చు. గులాబీ రంగు. నీటిపై రొయ్యలు. 1–2 రోజుల ముందే తినడం ఆగుతుంది. 3–10 రోజుల్లో మొత్తం మరణాలు.</div><div class="step">నివారణ — ఏకైక రక్షణ</div><ul class="dl"><li><span class="dc">SPF/PCR సర్టిఫైడ్ పిల్లలు మాత్రమే</span><span class="dq">తప్పనిసరి<span class="dn ok">CIBA/MPEDA హ్యాచరీ. PCR సర్టిఫికెట్ అడగండి.</span></span></li>
+<li><span class="dc">7–14 రోజులు ఆరబెట్టి CaO వేయండి</span><span class="dq">200–300 కేజీ/ఎకరా</span></li>
+<li><span class="dc">300 µm జాలి + 30 ppm Cl₂ క్లోరినేషన్</span><span class="dq">తప్పనిసరి<span class="dn None">Na₂S₂O₃ తో నిర్వీర్యం చేయండి.</span></span></li>
+<li><span class="dc">పక్షి-వల — పూర్తి చెరువు కవరేజ్</span><span class="dq">తప్పనిసరి</span></li>
+<li><span class="dc">β-గ్లూకాన్ + విటమిన్ C మేతలో (DOC 15+)</span><span class="dq">3–5 + 2 గ్రా/కేజీ</span></li>
+</ul><div class="step">WSSV నిర్ధారిస్తే — అత్యవసరం</div><ul class="dl"><li><span class="dc">వెంటనే పట్టండి (>8 గ్రా ఉంటే)</span><span class="dq">+8 గ్రా ఉంటే<span class="dn dx">5–7 రోజుల్లో 100% మరణాలు. ఇప్పుడే పట్టండి.</span></span></li>
+<li><span class="dc">పంట తర్వాత మొత్తం శుద్ధి + ≥10 రోజులు ఆరబెట్టండి</span><span class="dq">BKC+TCCA 5 ppm</span></li>
+</ul><div class="box ban"><span class="bh">✖ యాంటీవైరల్ చికిత్స లేదు</span>నివారణ మాత్రమే వ్యూహం. ముప్పు సమయంలో రసాయన చికిత్స పూర్తిగా వ్యర్థం.</div></div>
+  </div>
+</div>
+
+<div class="prob-row cc-orange" id="prob-2">
+  <div class="prob-header cc-orange">
+    <div class="prob-label"><span class="num">02</span><span class="ch-icon">🔬</span><span class="title-en">EHP — Enterocytozoon hepatopenaei (Microsporidian)</span><span class="badge badge b-para">#1 ECONOMIC LOSS INDIA</span></div>
+    <div class="prob-label bn-lbl"><span class="num">02</span><span class="ch-icon">🔬</span><span class="title-bn">ইএইচপি — হেপাটোপ্যানক্রিয়াস পরজীবী</span></div>
+    <div class="prob-label te-lbl"><span class="num">02</span><span class="ch-icon">🔬</span><span class="title-te">EHP — కాలేయ పాన్క్రియాస్ పరాన్నజీవి</span></div>
+  </div>
+  <div class="prob-cards">
+    <div class="card en">
+      <div class="cause"><strong>Cause:</strong> EHP microsporidian spore parasite invades hepatopancreatic tubule cells, destroying nutrient absorption. <span class="boyd">Patil et al. 2021</span>: India ₹3,977 crore/yr — <em>exceeds WSSV loss</em>. 17% farm probability in AP. Spreads via feces in pond water. No approved cure — prevention and management only.</div>
+      <span class="symp-lbl">Signs / Symptoms</span>
+      <div class="symp"><strong>Earliest sign:</strong> White floating feces on pond surface. Severe size variation ("big-small mix") in same pond. Pale/yellowish hepatopancreas. Soft shell. Empty midgut. FCR &gt;2.5 despite normal feeding. Weight gain stops.</div>
+      <div class="step">Prevention — pond prep is the most critical step</div>
+      <ul class="dl">
+        <li><span class="dc">EHPF-certified PL — PCR hepatopancreas test before stocking</span><span class="dq">Mandatory<span class="dn ok">EHP transmits vertically (broodstock→larvae) and horizontally (feces in water). Test every batch arriving at farm.</span></span></li>
+        <li><span class="dc">Full drying 7–14 days + CaO — destroys EHP spores in mud</span><span class="dq">200–300 kg/acre<span class="dn">EHP spores survive months in bottom sediment. Only full drying + lime destroys them. Rushed prep = EHP carryover.</span></span></li>
+        <li><span class="dc">Daily probiotics in water — Bacillus spp. from DOC 1</span><span class="dq">10⁵–10⁶ CFU/ml<span class="dn">Competitive exclusion reduces EHP spore load in water. Never skip — discontinuation loses effect within 48 hrs.</span></span></li>
+        <li><span class="dc">Organic acid in feed (butyric/formic acid) — every day</span><span class="dq">3–5 g/kg feed<span class="dn">Reduces spore shedding in feces. Improves gut integrity. Must be daily — intermittent use is ineffective.</span></span></li>
+      </ul>
+      <div class="step">EHP-positive crop management</div>
+      <ul class="dl">
+        <li><span class="dc">Confirm by PCR first — do not assume from field signs alone</span><span class="dq">HP tissue PCR</span></li>
+        <li><span class="dc">Harvest early DOC 80–90 — EHP shrimp never recover growth</span><span class="dq">Partial or full harvest<span class="dn">Calculate break-even DOC before stocking. Early harvest at commercial size limits total loss.</span></span></li>
+        <li><span class="dc">Next crop: reduce stocking density 20–30%</span><span class="dq">Max 60 PL/m²</span></li>
+      </ul>
+      <div class="box warn"><span class="bh">⚠ EHP + WSSV CO-INFECTION CONFIRMED IN AP &amp; ODISHA</span>Co-infected shrimp have dramatically higher mortality. Any combination of size variation + white spots = PCR for both diseases simultaneously.</div>
+    </div>
+    <div class="card bn">
+      <div class="cause"><strong>কারণ:</strong> EHP মাইক্রোস্পোরিডিয়ান পরজীবী হেপাটোপ্যানক্রিয়াস কোষ নষ্ট করে। ভারতে ₹৩,৯৭৭ কোটি/বছর ক্ষতি — WSSV-এর চেয়ে বেশি। ১৭% খামারে হওয়ার সম্ভাবনা। মলের মাধ্যমে ছড়ায়। অনুমোদিত চিকিৎসা নেই।</div>
+      <span class="symp-lbl">লক্ষণ</span>
+      <div class="symp"><strong>প্রথম চিহ্ন:</strong> পুকুরের পৃষ্ঠে সাদা ভাসমান মল। একই পুকুরে বড়-ছোট চিংড়ির মিশ্রণ। ফ্যাকাশে হেপাটোপ্যানক্রিয়াস। আলগা খোল। স্বাভাবিক খাবার সত্ত্বেও FCR &gt;২.৫।</div>
+      <div class="step">নিবারণ</div>
+      <ul class="dl">
+        <li><span class="dc">EHPF সার্টিফাইড পোনা — মজুতের আগে PCR পরীক্ষা</span><span class="dq">অবশ্যই<span class="dn ok">প্রতিটি ব্যাচ আসার সময় পরীক্ষা করুন।</span></span></li>
+        <li><span class="dc">পুকুর পুরো শুকানো + কলিচুন — EHP স্পোর ধ্বংস</span><span class="dq">২০০–৩০০ কেজি/একর<span class="dn">EHP স্পোর কাদায় মাসের পর মাস বাঁচে। সম্পূর্ণ শুকানো + উচ্চ মাত্রার চুনই ধ্বংস করে।</span></span></li>
+        <li><span class="dc">প্রোবায়োটিক্স — DOC ১ থেকে প্রতিদিন জলে</span><span class="dq">১০⁵–১০⁶ CFU/ml</span></li>
+        <li><span class="dc">জৈব অ্যাসিড খাবারে (বিউটিরিক/ফর্মিক) — প্রতিদিন</span><span class="dq">৩–৫ গ্রা/কেজি</span></li>
+      </ul>
+      <div class="step">ইএইচপি-পজিটিভ ক্রপ</div>
+      <ul class="dl">
+        <li><span class="dc">আগে PCR নিশ্চিত করুন</span><span class="dq">হেপাটোপ্যানক্রিয়াস PCR</span></li>
+        <li><span class="dc">DOC ৮০–৯০-এ তাড়াতাড়ি ধরুন</span><span class="dq">আংশিক বা সম্পূর্ণ</span></li>
+        <li><span class="dc">পরবর্তী ক্রপে ঘনত্ব ২০–৩০% কমান</span><span class="dq">সর্বোচ্চ ৬০ PL/m²</span></li>
+      </ul>
+      <div class="box warn"><span class="bh">⚠ EHP+WSSV সহ-সংক্রমণ এপি ও ওড়িশায় নিশ্চিত</span>দুটি লক্ষণ একসাথে থাকলে দুটির জন্যই PCR পাঠান।</div>
+    </div>
+    <div class="card te">
+      <div class="cause"><strong>కారణం:</strong> EHP కాలేయ పాన్క్రియాస్ కణాలను నాశనం చేసి పోషకాహార శోషణ ఆపుతుంది. ₹3,977 కోటి/సంవత్సరం నష్టం — WSSV కంటే ఎక్కువ. AP లో 17% చెరువులు ప్రభావితం. మలం ద్వారా వ్యాపిస్తుంది. అనుమతించిన చికిత్స లేదు.</div>
+      <span class="symp-lbl">లక్షణాలు</span>
+      <div class="symp"><strong>మొదటి సంకేతం:</strong> చెరువు మీద తెల్ల మలం తేలడం. ఒకే చెరువులో పెద్ద-చిన్న రొయ్యల మిశ్రమం. లేత కాలేయ పాన్క్రియాస్. వదులైన పెచ్చు. సాధారణ మేత ఉన్నా FCR &gt;2.5.</div>
+      <div class="step">నివారణ</div>
+      <ul class="dl">
+        <li><span class="dc">EHPF సర్టిఫైడ్ పిల్లలు — PCR పరీక్ష వేయడానికి ముందు</span><span class="dq">తప్పనిసరి<span class="dn ok">ప్రతి బ్యాచ్ వచ్చినప్పుడు పరీక్షించండి.</span></span></li>
+        <li><span class="dc">7–14 రోజులు ఆరబెట్టి CaO — EHP స్పోర్లు నాశనం</span><span class="dq">200–300 కేజీ/ఎకరా<span class="dn">EHP స్పోర్లు బురదలో నెలల తరబడి బతుకుతాయి. పూర్తి ఆరిపోవడం + అధిక మాత్ర సున్నమే చంపుతుంది.</span></span></li>
+        <li><span class="dc">ప్రోబయోటిక్స్ — DOC 1 నుండి రోజువారీ నీటిలో</span><span class="dq">10⁵–10⁶ CFU/ml</span></li>
+        <li><span class="dc">సేంద్రీయ ఆమ్లం మేతలో (బ్యూటిరిక్/ఫార్మిక్) — రోజువారీ</span><span class="dq">3–5 గ్రా/కేజీ</span></li>
+      </ul>
+      <div class="step">EHP-పాజిటివ్ పంట</div>
+      <ul class="dl">
+        <li><span class="dc">ముందు PCR నిర్ధారించండి</span><span class="dq">HP PCR పరీక్ష</span></li>
+        <li><span class="dc">DOC 80–90 లో తొందరగా పట్టండి</span><span class="dq">పాక్షిక లేదా పూర్తి</span></li>
+        <li><span class="dc">తర్వాత పంటలో సాంద్రత 20–30% తగ్గించండి</span><span class="dq">గరిష్టం 60 PL/m²</span></li>
+      </ul>
+      <div class="box warn"><span class="bh">⚠ EHP+WSSV సహ-సంక్రమణ ఏపీ & ఒడిశాలో నిర్ధారించబడింది</span>రెండు లక్షణాలు ఉంటే రెండింటికీ ఒకేసారి PCR పంపండి.</div>
+    </div>
+  </div>
+</div>
+
+<div class="prob-row cc-amber" id="prob-3">
+  <div class="prob-header cc-amber">
+    <div class="prob-label"><span class="num">03</span><span class="ch-icon">🧫</span><span class="title-en">Vibriosis &amp; AHPND/EMS — Antibiotic-Free Management</span><span class="badge badge b-bact">PROBIOTIC PROTOCOL</span></div>
+    <div class="prob-label bn-lbl"><span class="num">03</span><span class="ch-icon">🧫</span><span class="title-bn">ভিব্রিওসিস ও এএইচপিএনডি — অ্যান্টিবায়োটিক-মুক্ত ব্যবস্থাপনা</span></div>
+    <div class="prob-label te-lbl"><span class="num">03</span><span class="ch-icon">🧫</span><span class="title-te">విబ్రియోసిస్ & AHPND/EMS — యాంటీబయాటిక్-లేని నిర్వహణ</span></div>
+  </div>
+  <div class="prob-cards">
+    <div class="card en">
+      <div class="cause"><strong>Cause:</strong> Vibrio parahaemolyticus (AHPND/EMS — PirB toxin plasmid strains), V. harveyi (luminescence), V. alginolyticus. AHPND in India since 2015 (AP &amp; TN). All proliferate at low pH, high organics, low DO. <strong>Consistent probiotics + pH management eliminates the need for antibiotics entirely.</strong></div>
+      <span class="symp-lbl">Signs / Symptoms</span>
+      <div class="symp"><strong>AHPND (DOC 10–30):</strong> Mass mortality. Pale/atrophied hepatopancreas at necropsy. Shrimp at surface, loose shell, empty gut. <strong>V. harveyi:</strong> Shrimp glow blue-green at night (luminescence). High early-crop mortality.</div>
+      <div class="step">Prevention — daily water ecology (most important)</div>
+      <ul class="dl">
+        <li><span class="dc">Maintain pH 7.8–8.5 with morning lime application</span><span class="dq">CaO 10–20 kg/acre<span class="dn dx">Vibrio doubles every 10 min at pH 7.0 vs every 2 hrs at pH 8.2. pH above 7.8 = single most effective Vibrio suppression.</span></span></li>
+        <li><span class="dc">Daily probiotics in water — Bacillus spp. from DOC 1</span><span class="dq">10⁵–10⁶ CFU/ml<span class="dn ok">Bacillus produces bacteriocins that inhibit Vibrio. Never skip — effect lost within 48 hrs of discontinuation.</span></span></li>
+        <li><span class="dc">Probiotics in feed — Bacillus + Lactobacillus blend</span><span class="dq">3–5 g/kg · daily<span class="dn">Gut-level Vibrio suppression. Critical for AHPND prevention — reduces HP colonisation.</span></span></li>
+        <li><span class="dc">Organic acid in feed (butyric acid) — daily</span><span class="dq">2–3 g/kg<span class="dn">Lowers gut pH — hostile to Vibrio. Improves gut wall integrity (tight junctions).</span></span></li>
+        <li><span class="dc">TCCA after every water exchange</span><span class="dq">1–2 ppm<span class="dn">Wait 24 hrs after TCCA before adding probiotics — TCCA kills them.</span></span></li>
+      </ul>
+      <div class="step">Active Vibriosis — pond response</div>
+      <ul class="dl">
+        <li><span class="dc">BKC 80% — evening pond treatment</span><span class="dq">1–2 ppm</span></li>
+        <li><span class="dc">Water exchange 20–30% + TCCA incoming water</span><span class="dq">Fresh treated water</span></li>
+        <li><span class="dc">Stop feeding 24–48 hrs + increase aeration</span><span class="dq">DO &gt;5 mg/L</span></li>
+      </ul>
+      <div class="box ok"><span class="bh">✓ ANTIBIOTICS NOT REQUIRED</span>Consistent daily probiotics from DOC 1 + pH above 7.8 + organic acids prevents the vast majority of Vibriosis. AP farms using this protocol report 80–90% reduction in Vibriosis mortality without antibiotics.</div>
+    </div>
+    <div class="card bn">
+      <div class="cause"><strong>কারণ:</strong> ভিব্রিও প্যারাহেমোলিটিকাস (AHPND/EMS), ভিব্রিও হার্ভেই। AHPND ২০১৫ থেকে ভারতে। কম pH, বেশি জৈব পদার্থ, কম DO-তে বাড়ে। <strong>নিয়মিত প্রোবায়োটিক + pH ব্যবস্থাপনায় অ্যান্টিবায়োটিক সম্পূর্ণ অপ্রয়োজনীয়।</strong></div>
+      <span class="symp-lbl">লক্ষণ</span>
+      <div class="symp"><strong>AHPND (DOC ১০–৩০):</strong> ব্যাপক মৃত্যু। ফ্যাকাশে হেপাটোপ্যানক্রিয়াস। পৃষ্ঠে চিংড়ি, আলগা খোল, খালি অন্ত্র। <strong>ভিব্রিও হার্ভেই:</strong> রাতে চিংড়ি নীল-সবুজ আলো দেয়।</div>
+      <div class="step">নিবারণ — দৈনিক জল পরিবেশ ব্যবস্থাপনা</div>
+      <ul class="dl">
+        <li><span class="dc">pH ৭.৮–৮.৫ বজায় (সকালে চুন)</span><span class="dq">CaO ১০–২০ কেজি/একর<span class="dn dx">pH ৭.০-এ ১০ মিনিটে দ্বিগুণ। pH &gt;৭.৮ সবচেয়ে কার্যকর ভিব্রিও দমন।</span></span></li>
+        <li><span class="dc">প্রোবায়োটিক্স — DOC ১ থেকে প্রতিদিন জলে</span><span class="dq">১০⁵–১০⁶ CFU/ml<span class="dn ok">কখনো বন্ধ করবেন না — ৪৮ ঘণ্টায় কার্যকারিতা হারায়।</span></span></li>
+        <li><span class="dc">প্রোবায়োটিক্স খাবারে</span><span class="dq">৩–৫ গ্রা/কেজি · প্রতিদিন</span></li>
+        <li><span class="dc">জৈব অ্যাসিড খাবারে (বিউটিরিক) — প্রতিদিন</span><span class="dq">২–৩ গ্রা/কেজি</span></li>
+        <li><span class="dc">জল বিনিময়ের পরে TCCA</span><span class="dq">১–২ ppm</span></li>
+      </ul>
+      <div class="step">চলমান ভিব্রিওসিস</div>
+      <ul class="dl">
+        <li><span class="dc">BKC 80% — সন্ধ্যায় পুকুর</span><span class="dq">১–২ ppm</span></li>
+        <li><span class="dc">২০–৩০% জল পরিবর্তন + বায়ু বাড়ান</span><span class="dq">DO &gt;৫ mg/L</span></li>
+      </ul>
+      <div class="box ok"><span class="bh">✓ অ্যান্টিবায়োটিক দরকার নেই</span>DOC ১ থেকে নিয়মিত প্রোবায়োটিক + pH &gt;৭.৮ বেশিরভাগ ভিব্রিওসিস প্রতিরোধ করে।</div>
+    </div>
+    <div class="card te">
+      <div class="cause"><strong>కారణం:</strong> విబ్రియో పారాహెమొలిటికస్ (AHPND/EMS), విబ్రియో హార్వేయి. 2015 నుండి భారత్‌లో. తక్కువ pH, అధిక సేంద్రియం, తక్కువ DO లో పెరుగుతుంది. <strong>నిరంతర ప్రోబయోటిక్స్ + pH నిర్వహణతో యాంటీబయాటిక్ పూర్తిగా అనవసరం.</strong></div>
+      <span class="symp-lbl">లక్షణాలు</span>
+      <div class="symp"><strong>AHPND (DOC 10–30):</strong> మొత్తం మరణాలు. లేత కాలేయ పాన్క్రియాస్. చెరువు అంచుకు రొయ్యలు, వదులైన పెచ్చు. <strong>విబ్రియో హార్వేయి:</strong> రాత్రి నీలం-ఆకుపచ్చ వెలుతురు.</div>
+      <div class="step">నివారణ — రోజువారీ నీటి పర్యావరణ నిర్వహణ</div>
+      <ul class="dl">
+        <li><span class="dc">pH 7.8–8.5 (ఉదయం సున్నం)</span><span class="dq">CaO 10–20 కేజీ/ఎకరా<span class="dn dx">pH 7.0 లో 10 నిమిషాలకే రెట్టింపు. pH &gt;7.8 అత్యంత కార్యకారితంగల అణచివేత.</span></span></li>
+        <li><span class="dc">ప్రోబయోటిక్స్ — DOC 1 నుండి రోజువారీ నీటిలో</span><span class="dq">10⁵–10⁶ CFU/ml<span class="dn ok">ఆపకండి — 48 గంటల్లో కార్యకారితం తగ్గుతుంది.</span></span></li>
+        <li><span class="dc">ప్రోబయోటిక్స్ మేతలో</span><span class="dq">3–5 గ్రా/కేజీ · రోజువారీ</span></li>
+        <li><span class="dc">సేంద్రీయ ఆమ్లం మేతలో (బ్యూటిరిక్) — రోజువారీ</span><span class="dq">2–3 గ్రా/కేజీ</span></li>
+        <li><span class="dc">నీటి మార్పు తర్వాత TCCA</span><span class="dq">1–2 ppm</span></li>
+      </ul>
+      <div class="step">చురుకైన విబ్రియోసిస్</div>
+      <ul class="dl">
+        <li><span class="dc">BKC 80% సాయంత్రం + నీటి మార్పు</span><span class="dq">1–2 ppm</span></li>
+      </ul>
+      <div class="box ok"><span class="bh">✓ యాంటీబయాటిక్ అవసరం లేదు</span>DOC 1 నుండి నిరంతర ప్రోబయోటిక్స్ + pH &gt;7.8 చాలావరకు విబ్రియోసిస్‌ను నివారిస్తుంది.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2: WATER QUALITY -->
+
+<div class="sec"><span class="sec-txt">Water Quality Management — Boyd &amp; Tucker (2012) · Boyd et al. (2023)<span class="sec-bn"> · জলমান ব্যবস্থাপনা</span><span class="sec-te"> · నీటి నాణ్యత నిర్వహణ</span></span></div>
+
+<!-- PROB 4: DO & AERATION -->
+
+<div class="prob-row cc-cyan" id="prob-4">
+  <div class="prob-header cc-cyan">
+    <div class="prob-label"><span class="num">04</span><span class="ch-icon">💨</span><span class="title-en">Dissolved Oxygen &amp; Aeration Crisis</span><span class="badge badge b-water">BOYD (2023) · MOST CRITICAL</span></div>
+    <div class="prob-label bn-lbl"><span class="num">04</span><span class="ch-icon">💨</span><span class="title-bn">দ্রবীভূত অক্সিজেন সংকট ও বায়ু সরবরাহ ব্যবস্থাপনা</span></div>
+    <div class="prob-label te-lbl"><span class="num">04</span><span class="ch-icon">💨</span><span class="title-te">కరిగిన ఆక్సిజన్ సంక్షోభం & గాలి నిర్వహణ</span></div>
+  </div>
+  <div class="prob-cards">
+    <div class="card en">
+      <div class="cause"><strong>Why most critical:</strong> <span class="boyd">Boyd, Torrans &amp; Tucker (2023)</span> — DO must be &gt;5 mg/L at all times. Low DO is the trigger for nearly every secondary disease: Vibrio proliferates, H₂S forms, ammonia toxicity rises, immunity collapses. <span class="boyd">Boyd (1998)</span>: aerator HP must scale with growing shrimp biomass. DO crashes worst pre-dawn (4–6 AM), after heavy rain, algal bloom collapse.</div>
+      <span class="symp-lbl">DO Threshold Reference</span>
+      <table class="dtbl">
+        <thead><tr><th>DO Level</th><th>Effect</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td class="g">&gt;6 mg/L</td><td class="g">Optimal — max growth &amp; immunity</td><td>Target always</td></tr>
+          <tr><td>&gt;5 mg/L</td><td>Normal behaviour</td><td>Maintain</td></tr>
+          <tr><td class="w">4–5 mg/L</td><td class="w">Sub-lethal stress — immune suppression</td><td>Add aeration now</td></tr>
+          <tr><td class="b">3–4 mg/L</td><td class="b">Severe — crowding at surface, stops feeding</td><td>Emergency aeration</td></tr>
+          <tr><td class="b">&lt;3 mg/L</td><td class="b">Lethal in hours. H₂S forms. Vibrio explodes.</td><td>All aerators maximum</td></tr>
+        </tbody>
+      </table>
+      <div class="step">Aeration protocol</div>
+      <ul class="dl">
+        <li><span class="dc">Paddlewheel: 1 HP per 300–500 kg shrimp biomass</span><span class="dq">Scale with crop<span class="dn ok">Add aerators at DOC 40 and DOC 70. Most farms underestimate late-crop DO demand.</span></span></li>
+        <li><span class="dc">Run aerators 24 hrs/day from DOC 50 — no shutdown</span><span class="dq">Continuous</span></li>
+        <li><span class="dc">Measure DO at 5 AM daily (lowest point)</span><span class="dq">Bottom &amp; surface<span class="dn">Surface DO can be 2–3 mg/L higher than bottom. Shrimp live at bottom.</span></span></li>
+        <li><span class="dc">Aerator placement: circular current toward centre drain</span><span class="dq">Boyd (2012)<span class="dn">Concentrates sludge at drain. Oxygenates perimeter where shrimp feed.</span></span></li>
+        <li><span class="dc">Emergency backup aerator — always on standby per pond</span><span class="dq">1 per pond minimum<span class="dn dx">Power failures at late crop = DO crash within 30 min = catastrophic loss.</span></span></li>
+      </ul>
+    </div>
+    <div class="card bn">
+      <div class="cause"><strong>কেন সবচেয়ে গুরুত্বপূর্ণ:</strong> Boyd, Torrans &amp; Tucker (2023) — DO সর্বদা &gt;৫ mg/L রাখতে হবে। কম DO প্রায় প্রতিটি গৌণ রোগের কারণ: ভিব্রিও বাড়ে, H₂S তৈরি, অ্যামোনিয়া বিষাক্ততা বাড়ে, রোগ প্রতিরোধ ক্ষমতা নষ্ট হয়। DO সবচেয়ে কমে ভোর ৪–৬টায়, ভারী বৃষ্টির পরে।</div>
+      <span class="symp-lbl">DO মাত্রা রেফারেন্স</span>
+      <table class="dtbl">
+        <thead><tr><th>DO মাত্রা</th><th>প্রভাব</th><th>পদক্ষেপ</th></tr></thead>
+        <tbody>
+          <tr><td class="g">&gt;৬ mg/L</td><td class="g">সর্বোত্তম — সর্বোচ্চ বৃদ্ধি ও রোগ প্রতিরোধ</td><td>সর্বদা লক্ষ্য</td></tr>
+          <tr><td>&gt;৫ mg/L</td><td>স্বাভাবিক আচরণ</td><td>বজায় রাখুন</td></tr>
+          <tr><td class="w">৪–৫ mg/L</td><td class="w">সাব-লিথাল চাপ — রোগ প্রতিরোধ কমে</td><td>বায়ু বাড়ান</td></tr>
+          <tr><td class="b">৩–৪ mg/L</td><td class="b">তীব্র চাপ — পৃষ্ঠে ভিড়, খাবার বন্ধ</td><td>জরুরি বায়ু</td></tr>
+          <tr><td class="b">&lt;৩ mg/L</td><td class="b">ঘণ্টায় মৃত্যু। H₂S তৈরি। ভিব্রিও বিস্ফোরণ।</td><td>সর্বোচ্চ সব বায়ু</td></tr>
+        </tbody>
+      </table>
+      <div class="step">বায়ু সরবরাহ প্রোটোকল</div>
+      <ul class="dl">
+        <li><span class="dc">প্যাডেলহুইল: প্রতি ৩০০–৫০০ কেজি বায়োমাসে ১ HP</span><span class="dq">ফসলের সাথে বাড়ান<span class="dn ok">DOC ৪০ ও DOC ৭০-এ অতিরিক্ত বায়ু যুক্ত করুন।</span></span></li>
+        <li><span class="dc">DOC ৫০ থেকে ২৪ ঘণ্টা — কোনো বন্ধ নেই</span><span class="dq">একটানা</span></li>
+        <li><span class="dc">ভোর ৫টায় তলায় ও পৃষ্ঠে DO পরিমাপ</span><span class="dq">প্রতিদিন</span></li>
+        <li><span class="dc">জরুরি ব্যাকআপ বায়ু যন্ত্র — সর্বদা প্রস্তুত</span><span class="dq">প্রতিটি পুকুরে ১টি<span class="dn dx">বিদ্যুৎ বিভ্রাটে ৩০ মিনিটে DO ধস = সর্বনাশ।</span></span></li>
+      </ul>
+    </div>
+    <div class="card te">
+      <div class="cause"><strong>ఎందుకు అత్యంత కీలకం:</strong> Boyd, Torrans &amp; Tucker (2023) — DO ఎల్లప్పుడూ &gt;5 mg/L ఉండాలి. తక్కువ DO దాదాపు ప్రతి ద్వితీయ వ్యాధికి కారణం: విబ్రియో పెరుగుతుంది, H₂S ఏర్పడుతుంది, రోగ నిరోధకత పడిపోతుంది. DO అత్యంత తక్కువగా: తెల్లవారుజామున 4–6 గంటలు, వర్షం తర్వాత.</div>
+      <span class="symp-lbl">DO స్థాయి సూచన</span>
+      <table class="dtbl">
+        <thead><tr><th>DO స్థాయి</th><th>ప్రభావం</th><th>చర్య</th></tr></thead>
+        <tbody>
+          <tr><td class="g">&gt;6 mg/L</td><td class="g">సర్వోత్తమం — గరిష్ట పెరుగుదల</td><td>ఎల్లప్పుడూ లక్ష్యం</td></tr>
+          <tr><td>&gt;5 mg/L</td><td>సాధారణ ప్రవర్తన</td><td>నిర్వహించండి</td></tr>
+          <tr><td class="w">4–5 mg/L</td><td class="w">మరణం-కాని ఒత్తిడి</td><td>గాలి పెంచండి</td></tr>
+          <tr><td class="b">3–4 mg/L</td><td class="b">తీవ్ర ఒత్తిడి — తినడం ఆగుతుంది</td><td>అత్యవసర గాలి</td></tr>
+          <tr><td class="b">&lt;3 mg/L</td><td class="b">గంటల్లో మరణాలు. H₂S. విబ్రియో.</td><td>అన్ని గాలి గరిష్టం</td></tr>
+        </tbody>
+      </table>
+      <div class="step">గాలి ప్రోటోకల్</div>
+      <ul class="dl">
+        <li><span class="dc">పాడిల్‌వీల్: 300–500 కేజీ బయోమాస్‌కు 1 HP</span><span class="dq">పంటతో పెంచండి<span class="dn ok">DOC 40 & DOC 70 లో అదనపు గాలి యంత్రాలు జోడించండి.</span></span></li>
+        <li><span class="dc">DOC 50 నుండి 24 గంటలు — ఆపకండి</span><span class="dq">నిరంతరం</span></li>
+        <li><span class="dc">ఉదయం 5 గంటలకు అడుగు & ఉపరితల DO కొలవండి</span><span class="dq">రోజువారీ</span></li>
+        <li><span class="dc">అత్యవసర బ్యాకప్ గాలి యంత్రం — ఎల్లప్పుడూ సిద్ధంగా</span><span class="dq">చెరువుకు 1 కనిష్టం<span class="dn dx">విద్యుత్ వ్యర్థమైతే 30 నిమిషాల్లో DO పతనం = విపత్తు.</span></span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- PROB 5: pH, ALKALINITY, AMMONIA -->
+
+<div class="prob-row cc-sky" id="prob-5">
+  <div class="prob-header cc-sky">
+    <div class="prob-label"><span class="num">05</span><span class="ch-icon">🧪</span><span class="title-en">pH, Alkalinity, Ammonia &amp; Nitrite Management</span><span class="badge badge b-water">BOYD &amp; TUCKER (2012)</span></div>
+    <div class="prob-label bn-lbl"><span class="num">05</span><span class="ch-icon">🧪</span><span class="title-bn">pH, ক্ষারত্ব, অ্যামোনিয়া ও নাইট্রাইট ব্যবস্থাপনা</span></div>
+    <div class="prob-label te-lbl"><span class="num">05</span><span class="ch-icon">🧪</span><span class="title-te">pH, క్షారీయత, అమ్మోనియా & నైట్రైట్ నిర్వహణ</span></div>
+  </div>
+  <div class="prob-cards">
+    <div class="card en">
+      <div class="cause"><span class="boyd">Boyd &amp; Tucker (2012)</span>: pH, alkalinity, TAN, nitrite, and H₂S are all interconnected in the nitrogen cycle. Alkalinity buffering prevents pH swings; adequate alkalinity supports nitrification that converts toxic ammonia to less-toxic nitrate. In intensive ponds, feed nitrogen can overwhelm natural buffering, causing cascading failure. Test twice daily: 5 AM + 5 PM.</div>
+      <div class="step">pH — target 7.8–8.5, daily swing &lt;0.5 units</div>
+      <ul class="dl">
+        <li><span class="dc">Ca(OH)₂ agricultural lime — evening application</span><span class="dq">50–100 kg/acre<span class="dn ok">Apply evening when pH at daily low. NEVER midday — algal photosynthesis + lime spikes pH above 9.5.</span></span></li>
+        <li><span class="dc">CaO quicklime — emergency correction</span><span class="dq">50 kg/acre</span></li>
+      </ul>
+      <div class="step">Alkalinity — target 100–150 mg/L as CaCO₃</div>
+      <ul class="dl">
+        <li><span class="dc">Dolomite CaMg(CO₃)₂ — long-term maintenance</span><span class="dq">50–100 kg/acre<span class="dn ok">Below 80 mg/L = pH instability, nitrification failure, moulting failure. Ca+Mg both needed.</span></span></li>
+        <li><span class="dc">Sodium bicarbonate NaHCO₃ — rapid correction</span><span class="dq">10–15 kg/acre</span></li>
+      </ul>
+      <div class="step">Ammonia (TAN &lt;0.5 mg/L) &amp; Nitrite (&lt;0.1 mg/L)</div>
+      <ul class="dl">
+        <li><span class="dc">Zeolite — ammonia adsorption from water</span><span class="dq">20–30 kg/acre every 3–5 days<span class="dn">Replenish frequently — saturated zeolite releases ammonia. Critical from DOC 40.</span></span></li>
+        <li><span class="dc">Water exchange 10–15%/week from DOC 30</span><span class="dq">TCCA-treated water<span class="dn">Removes dissolved nitrogen and organic matter.</span></span></li>
+        <li><span class="dc">Reduce feed 30–50% immediately when TAN &gt;0.5</span><span class="dq">Immediately<span class="dn dx">Feed nitrogen is primary ammonia source. Reducing feed is the fastest intervention.</span></span></li>
+      </ul>
+    </div>
+    <div class="card bn">
+      <div class="cause">Boyd &amp; Tucker (2012): pH, ক্ষারত্ব, TAN, নাইট্রাইট ও H₂S সব নাইট্রোজেন চক্রে পরস্পর সংযুক্ত। ক্ষারত্ব বাফারিং pH দোলন রোধ করে; পর্যাপ্ত ক্ষারত্ব নাইট্রিফিকেশন সমর্থন করে। নিবিড় পুকুরে খাবারের নাইট্রোজেন বাফার ক্ষমতাকে ছাড়িয়ে যেতে পারে। দিনে দুবার পরীক্ষা: ভোর ৫টা + সন্ধ্যা ৫টা।</div>
+      <div class="step">pH — লক্ষ্য ৭.৮–৮.৫, দৈনিক দোলন &lt;০.৫</div>
+      <ul class="dl">
+        <li><span class="dc">Ca(OH)₂ কৃষি চুন — সন্ধ্যায় প্রয়োগ</span><span class="dq">৫০–১০০ কেজি/একর<span class="dn ok">সন্ধ্যায় দিন। দুপুরে দেবেন না — pH ৯.৫+ উঠবে।</span></span></li>
+        <li><span class="dc">কলিচুন — জরুরি সংশোধন</span><span class="dq">৫০ কেজি/একর</span></li>
+      </ul>
+      <div class="step">ক্ষারত্ব — লক্ষ্য ১০০–১৫০ mg/L</div>
+      <ul class="dl">
+        <li><span class="dc">ডলোমাইট — দীর্ঘমেয়াদি বজায়</span><span class="dq">৫০–১০০ কেজি/একর<span class="dn ok">৮০-এর নিচে: pH অস্থির, নাইট্রিফিকেশন ও মোল্টিং ব্যর্থ।</span></span></li>
+        <li><span class="dc">সোডিয়াম বাইকার্বোনেট — দ্রুত সংশোধন</span><span class="dq">১০–১৫ কেজি/একর</span></li>
+      </ul>
+      <div class="step">অ্যামোনিয়া (TAN &lt;০.৫) ও নাইট্রাইট (&lt;০.১)</div>
+      <ul class="dl">
+        <li><span class="dc">জিওলাইট — জল থেকে অ্যামোনিয়া শোষণ</span><span class="dq">২০–৩০ কেজি/একর · ৩–৫ দিনে</span></li>
+        <li><span class="dc">DOC ৩০ থেকে সাপ্তাহিক ১০–১৫% জল পরিবর্তন</span><span class="dq">TCCA-পরিশোধিত জল</span></li>
+        <li><span class="dc">TAN &gt;০.৫ হলে অবিলম্বে খাবার ৩০–৫০% কমান</span><span class="dq">তাৎক্ষণিক<span class="dn dx">খাবার থেকে নাইট্রোজেনই প্রধান অ্যামোনিয়া উৎস।</span></span></li>
+      </ul>
+    </div>
+    <div class="card te">
+      <div class="cause">Boyd &amp; Tucker (2012): pH, క్షారీయత, TAN, నైట్రైట్, H₂S అన్నీ నైట్రోజన్ చక్రంలో అనుసంధానమై ఉంటాయి. క్షారీయత బఫరింగ్ pH హెచ్చుతగ్గులు నివారిస్తుంది; నైట్రిఫికేషన్‌కు పర్యాప్త క్షారీయత అవసరం. నిబిడ చెరువులలో మేత నైట్రోజన్ భారం సహజ బఫర్‌ను మించవచ్చు. రోజుకు రెండుసార్లు పరీక్ష: 5 AM + 5 PM.</div>
+      <div class="step">pH — లక్ష్యం 7.8–8.5, రోజువారీ హెచ్చుతగ్గు &lt;0.5</div>
+      <ul class="dl">
+        <li><span class="dc">Ca(OH)₂ వ్యవసాయ సున్నం — సాయంత్రం వేయండి</span><span class="dq">50–100 కేజీ/ఎకరా<span class="dn ok">సాయంత్రం వేయండి. మధ్యాహ్నం వేయకండి — pH 9.5+ అవుతుంది.</span></span></li>
+        <li><span class="dc">CaO — అత్యవసర దిద్దుబాటు</span><span class="dq">50 కేజీ/ఎకరా</span></li>
+      </ul>
+      <div class="step">క్షారీయత — లక్ష్యం 100–150 mg/L</div>
+      <ul class="dl">
+        <li><span class="dc">డోలోమైట్ — దీర్ఘకాలిక నిర్వహణ</span><span class="dq">50–100 కేజీ/ఎకరా<span class="dn ok">80 కింద: pH అస్థిరం, నైట్రిఫికేషన్ & చాలు వేయడం విఫలం.</span></span></li>
+        <li><span class="dc">సోడియం బైకార్బోనేట్ — వేగంగా పెంచడానికి</span><span class="dq">10–15 కేజీ/ఎకరా</span></li>
+      </ul>
+      <div class="step">అమ్మోనియా (TAN &lt;0.5) & నైట్రైట్ (&lt;0.1)</div>
+      <ul class="dl">
+        <li><span class="dc">జియోలైట్ — నీటి నుండి అమ్మోనియా గ్రహణం</span><span class="dq">20–30 కేజీ/ఎకరా · 3–5 రోజులకోసారి</span></li>
+        <li><span class="dc">DOC 30 నుండి వారానికి 10–15% నీటి మార్పు</span><span class="dq">TCCA శుద్ధిచేసిన నీరు</span></li>
+        <li><span class="dc">TAN &gt;0.5 అయితే మేత 30–50% వెంటనే తగ్గించండి</span><span class="dq">వెంటనే<span class="dn dx">మేత నైట్రోజనే ప్రధాన అమ్మోనియా మూలం.</span></span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 3: SYNDROMES -->
+
+<div class="sec"><span class="sec-txt">Common Syndromes &amp; Production Issues<span class="sec-bn"> · সাধারণ সিন্ড্রোম ও উৎপাদন সমস্যা</span><span class="sec-te"> · సాధారణ సిండ్రోమ్‌లు & ఉత్పత్తి సమస్యలు</span></span></div>
+
+<!-- PROB 6: RMS + WFS + LSS -->
+
+<div class="prob-row cc-pink" id="prob-6">
+  <div class="prob-header cc-pink">
+    <div class="prob-label"><span class="num">06</span><span class="ch-icon">📉</span><span class="title-en">RMS · WFS · Loose Shell Syndrome (LSS)</span><span class="badge badge b-synd">MULTIFACTORIAL</span></div>
+    <div class="prob-label bn-lbl"><span class="num">06</span><span class="ch-icon">📉</span><span class="title-bn">আরএমএস · সাদা মল · আলগা খোল সিন্ড্রোম</span></div>
+    <div class="prob-label te-lbl"><span class="num">06</span><span class="ch-icon">📉</span><span class="title-te">RMS · WFS · LSS — వదులైన పెచ్చు సిండ్రోమ్</span></div>
+  </div>
+  <div class="prob-cards">
+    <div class="card en">
+      <div class="cause"><strong>RMS (Running Mortality Syndrome):</strong> AP &amp; Bengal since 2011. Non-infectious — low DO + high density + organic overload + opportunistic infections. Continuous 1–3% daily loss DOC 35–90. <strong>WFS (White Feces Syndrome):</strong> EHP, Vibrio, toxic algae or poor feed. <strong>LSS:</strong> Mineral imbalance, low alkalinity, temperature shock during moulting.</div>
+      <span class="symp-lbl">Signs / Symptoms</span>
+      <div class="symp"><strong>RMS:</strong> 1–3% daily mortality DOC 35–90. White muscle patches on abdomen. Shrimp at surface, lethargic. No single catastrophic event.<br><strong>WFS:</strong> White feces floating on surface. Pale hepatopancreas. FCR &gt;2.5.<br><strong>LSS:</strong> Soft shell 48+ hrs post-moult. Mortality spikes after mass moult.</div>
+      <div class="step">RMS Management</div>
+      <ul class="dl">
+        <li><span class="dc">Reduce stocking density — &lt;60 PL/m² for RMS-prone farms</span><span class="dq">Primary prevention<span class="dn">Most RMS farms stocked at 80–120 PL/m². Reduction to 50–60 dramatically cuts incidence.</span></span></li>
+        <li><span class="dc">Aggressive 24-hr aeration from DOC 35 — DO &gt;5 mg/L at bottom</span><span class="dq">Boyd (2023)<span class="dn ok">Bottom DO deficiency is the primary RMS trigger. Bottom aeration specifically addresses this.</span></span></li>
+        <li><span class="dc">Molasses (organic carbon) 2–3×/week</span><span class="dq">5–10 kg/acre</span></li>
+        <li><span class="dc">Partial harvest DOC 80–90 — remove 30–40% of stock</span><span class="dq">Reduce pond load</span></li>
+      </ul>
+      <div class="step">WFS — PCR for EHP first, then:</div>
+      <ul class="dl">
+        <li><span class="dc">Reduce feed 20–30% + daily probiotics in feed</span><span class="dq">3–5 g/kg</span></li>
+        <li><span class="dc">Hepatoprotective supplement (silymarin + sorbitol)</span><span class="dq">2–3 g/kg · 7 days</span></li>
+      </ul>
+      <div class="step">LSS — moulting mineralogy</div>
+      <ul class="dl">
+        <li><span class="dc">Dolomite — maintain alkalinity 100–150 mg/L</span><span class="dq">50–100 kg/acre<span class="dn ok">Alkalinity directly controls exoskeleton mineralisation. Most common cause in Bengal low-salinity ponds.</span></span></li>
+        <li><span class="dc">Ca + Mg mineral supplement in feed</span><span class="dq">3–5 g/kg<span class="dn">Essential in low-salinity culture (&lt;10 ppt) where Ca &amp; Mg are deficient.</span></span></li>
+        <li><span class="dc">Avoid abrupt salinity change &gt;3 ppt/day</span><span class="dq">Acclimate slowly<span class="dn dx">Sudden change triggers synchronised mass moult → LSS mortality spike.</span></span></li>
+      </ul>
+    </div>
+    <div class="card bn">
+      <div class="cause"><strong>RMS:</strong> ২০১১ থেকে এপি ও বাংলায়। সংক্রামক নয় — কম DO + বেশি ঘনত্ব + জৈব পদার্থ। DOC ৩৫–৯০ প্রতিদিন ১–৩% মৃত্যু। <strong>WFS:</strong> EHP, ভিব্রিও, বিষাক্ত শৈবাল। <strong>LSS:</strong> খনিজ ভারসাম্যহীনতা, কম ক্ষারত্ব।</div>
+      <span class="symp-lbl">লক্ষণ</span>
+      <div class="symp"><strong>RMS:</strong> DOC ৩৫–৯০ প্রতিদিন ১–৩% মৃত্যু। পেটে সাদা ছোপ। পৃষ্ঠে দুর্বল চিংড়ি।<br><strong>WFS:</strong> পৃষ্ঠে সাদা মল। ফ্যাকাশে হেপাটোপ্যানক্রিয়াস।<br><strong>LSS:</strong> মোল্টিংয়ের ৪৮ ঘণ্টা পরেও নরম খোল।</div>
+      <div class="step">RMS ব্যবস্থাপনা</div>
+      <ul class="dl">
+        <li><span class="dc">ঘনত্ব কমান — &lt;৬০ PL/m²</span><span class="dq">প্রধান প্রতিরোধ</span></li>
+        <li><span class="dc">DOC ৩৫ থেকে ২৪ ঘণ্টা বায়ু — তলায় DO &gt;৫</span><span class="dq">Boyd (2023)<span class="dn ok">তলার DO ঘাটতিই RMS-এর প্রধান ট্রিগার।</span></span></li>
+        <li><span class="dc">গুড় সপ্তাহে ২–৩ বার</span><span class="dq">৫–১০ কেজি/একর</span></li>
+        <li><span class="dc">DOC ৮০–৯০-এ ৩০–৪০% আংশিক ধরা</span><span class="dq">ঘনত্ব কমান</span></li>
+      </ul>
+      <div class="step">WFS — আগে EHP PCR তারপর:</div>
+      <ul class="dl">
+        <li><span class="dc">খাবার ২০–৩০% কমান + প্রোবায়োটিক্স খাবারে</span><span class="dq">৩–৫ গ্রা/কেজি</span></li>
+        <li><span class="dc">হেপাটোপ্রোটেক্টিভ সম্পূরক</span><span class="dq">২–৩ গ্রা/কেজি · ৭ দিন</span></li>
+      </ul>
+      <div class="step">LSS — মোল্টিং খনিজায়ন</div>
+      <ul class="dl">
+        <li><span class="dc">ডলোমাইট — ক্ষারত্ব ১০০–১৫০ mg/L বজায়</span><span class="dq">৫০–১০০ কেজি/একর</span></li>
+        <li><span class="dc">Ca + Mg খনিজ সম্পূরক খাবারে</span><span class="dq">৩–৫ গ্রা/কেজি</span></li>
+        <li><span class="dc">হঠাৎ লবণত্ব পরিবর্তন &gt;৩ ppt/দিন এড়িয়ে চলুন</span><span class="dq">ধীরে অভ্যস্ত করুন</span></li>
+      </ul>
+    </div>
+    <div class="card te">
+      <div class="cause"><strong>RMS:</strong> 2011 నుండి ఏపీ & బెంగాల్‌లో. అంటువ్యాధి కాదు — తక్కువ DO + అధిక సాంద్రత + సేంద్రీయ భారం. DOC 35–90 రోజువారీ 1–3% మరణాలు. <strong>WFS:</strong> EHP, విబ్రియో, విషపూరిత ఆల్గే. <strong>LSS:</strong> ఖనిజ అసమతుల్యత, తక్కువ క్షారీయత.</div>
+      <span class="symp-lbl">లక్షణాలు</span>
+      <div class="symp"><strong>RMS:</strong> DOC 35–90 రోజువారీ 1–3% మరణాలు. పొట్టపై తెల్ల మచ్చలు. బలహీనంగా రొయ్యలు అంచుకు.<br><strong>WFS:</strong> తేలాడే తెల్ల మలం. లేత కాలేయ పాన్క్రియాస్.<br><strong>LSS:</strong> చాలు వేసిన 48+ గంటలు పెచ్చు మెత్తగా.</div>
+      <div class="step">RMS నిర్వహణ</div>
+      <ul class="dl">
+        <li><span class="dc">సాంద్రత తగ్గించండి — &lt;60 PL/m²</span><span class="dq">ప్రధాన నివారణ</span></li>
+        <li><span class="dc">DOC 35 నుండి 24 గంటలు గాలి — అడుగు DO &gt;5</span><span class="dq">Boyd (2023)<span class="dn ok">అడుగు DO లోపమే RMS ప్రాథమిక కారణం.</span></span></li>
+        <li><span class="dc">బెల్లం వారానికి 2–3 సార్లు</span><span class="dq">5–10 కేజీ/ఎకరా</span></li>
+        <li><span class="dc">DOC 80–90 లో 30–40% పాక్షిక పంట</span><span class="dq">సాంద్రత తగ్గించండి</span></li>
+      </ul>
+      <div class="step">WFS — ముందు EHP PCR, తర్వాత:</div>
+      <ul class="dl">
+        <li><span class="dc">మేత 20–30% తగ్గించి ప్రోబయోటిక్స్</span><span class="dq">3–5 గ్రా/కేజీ</span></li>
+        <li><span class="dc">హెపటోప్రొటెక్టివ్ సప్లిమెంట్</span><span class="dq">2–3 గ్రా/కేజీ · 7 రోజులు</span></li>
+      </ul>
+      <div class="step">LSS — చాలు వేయడం ఖనిజీకరణ</div>
+      <ul class="dl">
+        <li><span class="dc">డోలోమైట్ — క్షారీయత 100–150 mg/L</span><span class="dq">50–100 కేజీ/ఎకరా</span></li>
+        <li><span class="dc">Ca + Mg ఖనిజ సప్లిమెంట్ మేతలో</span><span class="dq">3–5 గ్రా/కేజీ</span></li>
+        <li><span class="dc">హఠాత్ లవణీయత మార్పు &gt;3 ppt/రోజు నివారించండి</span><span class="dq">నెమ్మదిగా అలవాటు పరచండి</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 4: POND ECOLOGY -->
+
+<div class="sec"><span class="sec-txt">Pond Ecology &amp; Production Management — Boyd &amp; Tucker (2012) · Boyd et al. (2017/2018)<span class="sec-bn"> · পুকুর পরিবেশ ব্যবস্থাপনা</span><span class="sec-te"> · చెరువు పర్యావరణ నిర్వహణ</span></span></div>
+
+<!-- PROB 7: PLANKTON & SLUDGE -->
+
+<div class="prob-row cc-green" id="prob-7">
+  <div class="prob-header cc-green">
+    <div class="prob-label"><span class="num">07</span><span class="ch-icon">🟢</span><span class="title-en">Plankton Management, Sludge &amp; Bloom Crash</span><span class="badge badge b-env">BOYD (2012) · POND FOUNDATION</span></div>
+    <div class="prob-label bn-lbl"><span class="num">07</span><span class="ch-icon">🟢</span><span class="title-bn">প্ল্যাংকটন ব্যবস্থাপনা, কাদা ও ব্লুম ক্র্যাশ</span></div>
+    <div class="prob-label te-lbl"><span class="num">07</span><span class="ch-icon">🟢</span><span class="title-te">ప్లాంక్టన్ నిర్వహణ, మురికి & బ్లూమ్ క్రాష్</span></div>
+  </div>
+  <div class="prob-cards">
+    <div class="card en">
+      <div class="cause"><span class="boyd">Boyd &amp; Tucker (2012)</span>: Stable phytoplankton bloom (Secchi 30–45 cm) is the biological foundation of a healthy shrimp pond — provides DO buffering, pH stability, natural feed, and competitive biosecurity. <strong>Pond bottom sludge = root cause of H₂S, ammonia spikes, and late-crop disease.</strong> Sludge accumulates from uneaten feed, shrimp waste, and dead algae.</div>
+      <div class="step">Phytoplankton bloom management — check Secchi depth daily</div>
+      <ul class="dl">
+        <li><span class="dc">Secchi &lt;25 cm (too dense) — reduce feed 20% + partial water exchange</span><span class="dq">Bloom thinning<span class="dn ok">Dense bloom = overnight DO crash risk from algal respiration. Thin with 10% exchange.</span></span></li>
+        <li><span class="dc">Secchi &gt;60 cm (too thin) — molasses + DAP fertiliser</span><span class="dq">5–10 kg + 0.5–1 kg/acre</span></li>
+        <li><span class="dc">BGA (blue-green algae): spot-treat Copper Sulphate only on patches</span><span class="dq">0.5–1 ppm spot<span class="dn dx">Entire-pond algaecide causes total bloom crash = DO disaster. Only spot-treat. Reduce fertiliser immediately.</span></span></li>
+      </ul>
+      <div class="step">Bloom crash — emergency response (most dangerous event)</div>
+      <ul class="dl">
+        <li><span class="dc">Run ALL aerators at maximum immediately</span><span class="dq">First action<span class="dn dx">DO crash, H₂S release, pH drop happen simultaneously within hours. Aerate FIRST — everything else second.</span></span></li>
+        <li><span class="dc">Water exchange 20–30% + Ca(OH)₂ lime</span><span class="dq">50–100 kg/acre evening</span></li>
+        <li><span class="dc">Double-dose probiotics</span><span class="dq">Immediately<span class="dn">Probiotics degrade dead algae biomass at pond bottom — prevents H₂S buildup.</span></span></li>
+      </ul>
+      <div class="step">Pond bottom &amp; sludge management (most important prep step)</div>
+      <ul class="dl">
+        <li><span class="dc">Between crops: dry 7–14 days + rototill + CaO 200–300 kg/acre</span><span class="dq">Mandatory<span class="dn ok">Full drying kills WSSV, EHP spores, Vibrio, anaerobic bacteria AND oxidises H₂S in sediment. This single step prevents 60–70% of crop diseases.</span></span></li>
+        <li><span class="dc">Probiotics in water throughout crop (Bacillus)</span><span class="dq">10⁵–10⁶ CFU/ml · every 5–7 days<span class="dn">Biological sludge degradation at pond bottom. Prevents anaerobic zones that produce H₂S.</span></span></li>
+        <li><span class="dc">H₂S emergency — CaO + maximum aeration + water exchange</span><span class="dq">50–100 kg/acre CaO<span class="dn dx">Rotten-egg smell at pond bottom = immediate emergency. H₂S lethal at &gt;0.01 mg/L.</span></span></li>
+      </ul>
+    </div>
+    <div class="card bn">
+      <div class="cause">Boyd &amp; Tucker (2012): স্থিতিশীল ফাইটোপ্লাংকটন ব্লুম (সেকি ৩০–৪৫ সেমি) সুস্থ চিংড়ি পুকুরের জৈবিক ভিত্তি — DO বাফারিং, pH স্থিতিশীলতা, প্রাকৃতিক খাবার ও জৈব নিরাপত্তা প্রদান করে। <strong>পুকুরের তলায় কাদা = H₂S, অ্যামোনিয়া বৃদ্ধি ও দেরি-ক্রপ রোগের মূল কারণ।</strong></div>
+      <div class="step">ফাইটোপ্লাংকটন ব্লুম — দৈনিক সেকি ডিস্ক পরীক্ষা</div>
+      <ul class="dl">
+        <li><span class="dc">সেকি &lt;২৫ সেমি — খাবার ২০% কমান + আংশিক জল বিনিময়</span><span class="dq">ব্লুম পাতলা করুন</span></li>
+        <li><span class="dc">সেকি &gt;৬০ সেমি — গুড় + DAP</span><span class="dq">৫–১০ কেজি + ০.৫–১ কেজি/একর</span></li>
+      </ul>
+      <div class="step">ব্লুম ক্র্যাশ — জরুরি ব্যবস্থা</div>
+      <ul class="dl">
+        <li><span class="dc">অবিলম্বে সব বায়ু যন্ত্র সর্বোচ্চে চালান</span><span class="dq">প্রথম পদক্ষেপ<span class="dn dx">DO ধস, H₂S, pH পতন একসাথে। বায়ু দিন — বাকি সব পরে।</span></span></li>
+        <li><span class="dc">২০–৩০% জল পরিবর্তন + Ca(OH)₂ চুন সন্ধ্যায়</span><span class="dq">৫০–১০০ কেজি/একর</span></li>
+        <li><span class="dc">দ্বিগুণ মাত্রায় প্রোবায়োটিক্স</span><span class="dq">অবিলম্বে</span></li>
+      </ul>
+      <div class="step">পুকুরের তলা ও কাদা ব্যবস্থাপনা</div>
+      <ul class="dl">
+        <li><span class="dc">ক্রপের মাঝে: শুকানো + রোটোটিল + কলিচুন</span><span class="dq">২০০–৩০০ কেজি/একর<span class="dn ok">একটি পদক্ষেপই ৬০–৭০% ক্রপ রোগ প্রতিরোধ করে।</span></span></li>
+        <li><span class="dc">সারা ক্রপ প্রোবায়োটিক্স জলে</span><span class="dq">১০⁵–১০⁶ CFU/ml · ৫–৭ দিনে</span></li>
+        <li><span class="dc">H₂S জরুরি: কলিচুন + সর্বোচ্চ বায়ু + জল বিনিময়</span><span class="dq">৫০–১০০ কেজি/একর<span class="dn dx">পুকুরের তলায় পচা ডিমের গন্ধ = তাৎক্ষণিক জরুরি।</span></span></li>
+      </ul>
+    </div>
+    <div class="card te">
+      <div class="cause">Boyd &amp; Tucker (2012): స్థిరమైన ఫైటోప్లాంక్టన్ బ్లూమ్ (సెక్కి 30–45 cm) ఆరోగ్యకరమైన రొయ్య చెరువుకు జీవ పునాది — DO బఫరింగ్, pH స్థిరత, సహజ ఆహారం, జీవ భద్రత. <strong>చెరువు అడుగున మురికి = H₂S, అమ్మోనియా పెరుగుదల & పాత పంటలో వ్యాధులకు మూల కారణం.</strong></div>
+      <div class="step">ఫైటోప్లాంక్టన్ బ్లూమ్ — రోజువారీ సెక్కి పరీక్ష</div>
+      <ul class="dl">
+        <li><span class="dc">సెక్కి &lt;25 cm — మేత 20% తగ్గించి పాక్షిక నీటి మార్పు</span><span class="dq">బ్లూమ్ పలుచన</span></li>
+        <li><span class="dc">సెక్కి &gt;60 cm — బెల్లం + DAP</span><span class="dq">5–10 కేజీ + 0.5–1 కేజీ/ఎకరా</span></li>
+      </ul>
+      <div class="step">బ్లూమ్ క్రాష్ — అత్యవసర స్పందన</div>
+      <ul class="dl">
+        <li><span class="dc">వెంటనే అన్ని గాలి యంత్రాలు గరిష్టంలో నడపండి</span><span class="dq">మొదటి చర్య<span class="dn dx">DO పతనం, H₂S, pH పతనం ఒకేసారి. ముందు గాలి — తర్వాత మిగతాదంతా.</span></span></li>
+        <li><span class="dc">20–30% నీటి మార్పు + Ca(OH)₂ సాయంత్రం</span><span class="dq">50–100 కేజీ/ఎకరా</span></li>
+        <li><span class="dc">రెట్టింపు మాత్ర ప్రోబయోటిక్స్</span><span class="dq">వెంటనే</span></li>
+      </ul>
+      <div class="step">చెరువు అడుగు & మురికి నిర్వహణ</div>
+      <ul class="dl">
+        <li><span class="dc">పంటల మధ్య: ఆరబెట్టి + రోటోటిల్ + CaO</span><span class="dq">200–300 కేజీ/ఎకరా<span class="dn ok">ఒక్క దశే 60–70% పంట వ్యాధులు నివారిస్తుంది.</span></span></li>
+        <li><span class="dc">మొత్తం పంటలో ప్రోబయోటిక్స్ నీటిలో</span><span class="dq">10⁵–10⁶ CFU/ml · 5–7 రోజులకోసారి</span></li>
+        <li><span class="dc">H₂S అత్యవసరం: CaO + గరిష్ట గాలి + నీటి మార్పు</span><span class="dq">50–100 కేజీ/ఎకరా<span class="dn dx">అడుగున కుళ్ళిన గుడ్ల వాసన = తక్షణ అత్యవసరం.</span></span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- PROB 8: FEED & BIOSECURITY -->
+
+<div class="prob-row cc-gold" id="prob-8">
+  <div class="prob-header cc-gold">
+    <div class="prob-label"><span class="num">08</span><span class="ch-icon">🌾</span><span class="title-en">Feed Management, FCR Optimisation &amp; Biosecurity</span><span class="badge badge b-mgmt">BOYD et al. 2017/2018 · AP/BENGAL</span></div>
+    <div class="prob-label bn-lbl"><span class="num">08</span><span class="ch-icon">🌾</span><span class="title-bn">খাদ্য ব্যবস্থাপনা, FCR অপ্টিমাইজেশন ও জৈব নিরাপত্তা</span></div>
+    <div class="prob-label te-lbl"><span class="num">08</span><span class="ch-icon">🌾</span><span class="title-te">మేత నిర్వహణ, FCR ఆప్టిమైజేషన్ & జీవ భద్రత</span></div>
+  </div>
+  <div class="prob-cards">
+    <div class="card en">
+      <div class="cause"><strong>Feed = 60–68% of variable production cost.</strong> <span class="boyd">Boyd et al. (2017, 2018)</span> surveys of AP &amp; Bengal farms: well-managed farms achieved FCR 1.33–1.49 vs poorly managed FCR 2.2–2.8. The difference is almost entirely feed management. Overfeeding is also the #1 cause of water quality deterioration and secondary disease outbreaks.</div>
+      <div class="step">Feed quantity — how much and when</div>
+      <ul class="dl">
+        <li><span class="dc">Feeding trays — 1 per 2,500–3,000 m² — check every 2 hrs</span><span class="dq">Non-negotiable<span class="dn ok">Most effective FCR tool. Reduce feed if &gt;30% remains after 2 hrs. Increase if all gone in &lt;1.5 hrs.</span></span></li>
+        <li><span class="dc">Feed 4–6 times per day — smaller more frequent meals</span><span class="dq">Min 4× daily<span class="dn ok">Boyd (2024): more frequent smaller feeds improve FCR by 0.2–0.3 points vs 2× feeding.</span></span></li>
+        <li><span class="dc">STOP feeding immediately: DO &lt;4, heavy rain, mass moult, chemical treatment, daily mortality &gt;30%</span><span class="dq">Immediate stop<span class="dn dx">Feeding stressed shrimp wastes feed and worsens water quality with zero benefit to growth.</span></span></li>
+      </ul>
+      <div class="step">Feed additives — apply every day throughout crop</div>
+      <ul class="dl">
+        <li><span class="dc">Vitamin C (stabilised ascorbate)</span><span class="dq">2 g/kg daily<span class="dn">Oxidative stress reduction, moulting support, immune enhancement. Use stabilised form (vitamin C phosphate).</span></span></li>
+        <li><span class="dc">Probiotics in feed (Bacillus + Lactobacillus)</span><span class="dq">3–5 g/kg daily<span class="dn">Mix with oil for binding. Gut Vibrio suppression + FCR improvement.</span></span></li>
+        <li><span class="dc">β-glucan immunostimulant (DOC 15 onwards)</span><span class="dq">3 g/kg daily<span class="dn ok">Most cost-effective immunity supplement for L. vannamei. Continue throughout crop.</span></span></li>
+        <li><span class="dc">Organic acid (butyric/formic)</span><span class="dq">2–3 g/kg daily<span class="dn">EHP suppression + Vibrio gut control + FCR improvement. Must be daily.</span></span></li>
+      </ul>
+      <div class="step">Biosecurity — non-negotiable daily practices</div>
+      <ul class="dl">
+        <li><span class="dc">Footwear BKC foot bath at every pond entry</span><span class="dq">All staff &amp; visitors</span></li>
+        <li><span class="dc">Dedicated equipment per pond — nets, aerators, buckets</span><span class="dq">No sharing without disinfection<span class="dn">Shared equipment = #1 WSSV and EHP inter-pond transmission vector.</span></span></li>
+        <li><span class="dc">Written daily pond log — DO, pH, feed, mortality, all inputs</span><span class="dq">Every day<span class="dn ok">Required for MPEDA/ASC certification. Identifies disease patterns across crops. Tracks withdrawal periods.</span></span></li>
+      </ul>
+    </div>
+    <div class="card bn">
+      <div class="cause"><strong>খাবার = মোট পরিবর্তনশীল খরচের ৬০–৬৮%।</strong> Boyd et al. (2017, 2018) এপি ও বাংলার সর্বেক্ষণে ভালো ব্যবস্থাপিত খামারে FCR ১.৩৩–১.৪৯ বনাম খারাপ ব্যবস্থাপনায় ২.২–২.৮। অতিরিক্ত খাবার জলমান বিপর্যয়ের প্রধান কারণ।</div>
+      <div class="step">খাদ্য পরিমাণ — কতটুকু এবং কখন</div>
+      <ul class="dl">
+        <li><span class="dc">ফিডিং ট্রে — প্রতি ২,৫০০–৩,০০০ m² এ ১টি · প্রতি ২ ঘণ্টায় পরীক্ষা</span><span class="dq">অবশ্যই<span class="dn ok">সেরা FCR উন্নয়ন হাতিয়ার। &gt;৩০% বাকি → কমান। &lt;১.৫ ঘণ্টায় সব শেষ → বাড়ান।</span></span></li>
+        <li><span class="dc">দিনে ৪–৬ বার ছোট ছোট খাবার</span><span class="dq">ন্যূনতম ৪ বার</span></li>
+        <li><span class="dc">খাবার বন্ধ করুন: কম DO, বৃষ্টি, মোল্টিং, চিকিৎসা, মৃত্যু &gt;৩০%</span><span class="dq">তাৎক্ষণিক<span class="dn dx">চাপগ্রস্ত চিংড়িকে খাওয়ানো বৃথা — জলমান আরও খারাপ করে।</span></span></li>
+      </ul>
+      <div class="step">খাদ্য সংযোজন — প্রতিদিন, সারা ক্রপ</div>
+      <ul class="dl">
+        <li><span class="dc">ভিটামিন সি (স্থিতিশীল অ্যাসকরবেট)</span><span class="dq">২ গ্রা/কেজি প্রতিদিন</span></li>
+        <li><span class="dc">প্রোবায়োটিক্স খাবারে</span><span class="dq">৩–৫ গ্রা/কেজি প্রতিদিন</span></li>
+        <li><span class="dc">β-গ্লুকান (DOC ১৫ থেকে)</span><span class="dq">৩ গ্রা/কেজি প্রতিদিন<span class="dn ok">সবচেয়ে সাশ্রয়ী ইমিউনিটি সরঞ্জাম।</span></span></li>
+        <li><span class="dc">জৈব অ্যাসিড (বিউটিরিক/ফর্মিক)</span><span class="dq">২–৩ গ্রা/কেজি প্রতিদিন</span></li>
+      </ul>
+      <div class="step">জৈব নিরাপত্তা — প্রতিদিনের অনিবার্য অভ্যাস</div>
+      <ul class="dl">
+        <li><span class="dc">প্রতিটি পুকুর প্রবেশে BKC পাদ বাথ</span><span class="dq">সব কর্মী ও দর্শনার্থী</span></li>
+        <li><span class="dc">প্রতিটি পুকুরের আলাদা সরঞ্জাম</span><span class="dq">জীবাণুমুক্তকরণ ছাড়া ভাগ নয়</span></li>
+        <li><span class="dc">লিখিত দৈনিক পুকুর লগ</span><span class="dq">প্রতিদিন<span class="dn ok">MPEDA/ASC সার্টিফিকেশনের জন্য প্রয়োজন।</span></span></li>
+      </ul>
+    </div>
+    <div class="card te">
+      <div class="cause"><strong>మేత = మొత్తం వేరియబుల్ ఖర్చులో 60–68%.</strong> Boyd et al. (2017, 2018) ఏపీ & బెంగాల్ సర్వే: సరిగ్గా నిర్వహించిన FCR 1.33–1.49 vs పేలవమైన నిర్వహణ FCR 2.2–2.8. అదనపు మేత నీటి నాణ్యత క్షీణతకు #1 కారణం.</div>
+      <div class="step">మేత పరిమాణం — ఎంత & ఎప్పుడు</div>
+      <ul class="dl">
+        <li><span class="dc">ఫీడింగ్ ట్రేలు — 2,500–3,000 m² కి 1 · 2 గంటలకోసారి పరీక్ష</span><span class="dq">తప్పనిసరి<span class="dn ok">అత్యుత్తమ FCR మెరుగుదల సాధనం. 30% మిగిలితే తగ్గించండి.</span></span></li>
+        <li><span class="dc">రోజుకు 4–6 సార్లు చిన్న మేత</span><span class="dq">కనిష్టం 4 సార్లు</span></li>
+        <li><span class="dc">మేత వెంటనే ఆపండి: తక్కువ DO, వర్షం, చాలు వేయడం, చికిత్స</span><span class="dq">వెంటనే<span class="dn dx">ఒత్తిడిలో ఉన్న రొయ్యలకు మేత వేయడం వ్యర్థం — నీటి నాణ్యత మరింత దిగజారుతుంది.</span></span></li>
+      </ul>
+      <div class="step">మేత సప్లిమెంట్లు — రోజువారీ, మొత్తం పంటలో</div>
+      <ul class="dl">
+        <li><span class="dc">విటమిన్ C (స్థిరీకరించిన అస్కార్బేట్)</span><span class="dq">2 గ్రా/కేజీ రోజువారీ</span></li>
+        <li><span class="dc">ప్రోబయోటిక్స్ మేతలో</span><span class="dq">3–5 గ్రా/కేజీ రోజువారీ</span></li>
+        <li><span class="dc">β-గ్లూకాన్ (DOC 15+)</span><span class="dq">3 గ్రా/కేజీ రోజువారీ<span class="dn ok">అత్యంత తక్కువ ఖర్చుతో ఇమ్యూనిటీ సాధనం.</span></span></li>
+        <li><span class="dc">సేంద్రీయ ఆమ్లం (బ్యూటిరిక్/ఫార్మిక్)</span><span class="dq">2–3 గ్రా/కేజీ రోజువారీ</span></li>
+      </ul>
+      <div class="step">జీవ భద్రత — రోజువారీ తప్పనిసరి అభ్యాసాలు</div>
+      <ul class="dl">
+        <li><span class="dc">ప్రతి చెరువు ప్రవేశానికి BKC పాద బాత్</span><span class="dq">సిబ్బంది & సందర్శకులు</span></li>
+        <li><span class="dc">ప్రతి చెరువుకు ప్రత్యేక పరికరాలు</span><span class="dq">శుద్ధి లేకుండా పంచుకోవద్దు</span></li>
+        <li><span class="dc">లిఖిత రోజువారీ చెరువు లాగ్</span><span class="dq">ప్రతిరోజు<span class="dn ok">MPEDA/ASC సర్టిఫికేషన్‌కు అవసరం.</span></span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADVISORY ═══ -->
+
+<div class="adv">
+  <div class="adv-h">⚠ Critical Advisory — All 3 Languages · L. vannamei Farm Management</div>
+
+  <!-- Row 1 -->
+
+  <div class="adv-grid">
+    <div class="adv-item">
+      <div class="adv-lbl"><span>Seed Selection</span><span class="b">পোনা নির্বাচন</span><span class="t">పిల్లల ఎంపిక</span></div>
+      <div class="adv-cols">
+        <div class="adv-col en"><strong>SPF/EHPF-certified PL only</strong> from CIBA/MPEDA hatcheries. Request PCR for WSSV, EHP, IHHNV with every batch. Non-certified seed = largest preventable risk in Indian L. vannamei farming.</div>
+        <div class="adv-col bn">শুধুমাত্র CIBA/MPEDA অনুমোদিত হ্যাচারি থেকে SPF/EHPF সার্টিফাইড পোনা। প্রতিটি কেনায় WSSV, EHP, IHHNV-র PCR সার্টিফিকেট চান।</div>
+        <div class="adv-col te">CIBA/MPEDA అనుమోదించిన హ్యాచరీ నుండి SPF/EHPF సర్టిఫైడ్ పిల్లలు మాత్రమే. ప్రతి కొనుగోలుకు WSSV, EHP, IHHNV PCR సర్టిఫికెట్ అడగండి.</div>
+      </div>
+    </div>
+    <div class="adv-item">
+      <div class="adv-lbl"><span>Daily Probiotic Protocol</span><span class="b">দৈনিক প্রোবায়োটিক প্রোটোকল</span><span class="t">రోజువారీ ప్రోబయోటిక్ ప్రోటోకల్</span></div>
+      <div class="adv-cols">
+        <div class="adv-col en"><strong>Most important ongoing management tool.</strong> Water: 10⁵–10⁶ CFU/ml from DOC 1, every 3–5 days. Feed: 3–5 g/kg daily. Organic acid: 2–3 g/kg daily. <strong>Never stop.</strong></div>
+        <div class="adv-col bn">DOC ১ থেকে প্রতি ৩–৫ দিনে জলে (১০⁵–১০⁶ CFU/ml), প্রতিদিন খাবারে (৩–৫ গ্রা/কেজি), জৈব অ্যাসিড (২–৩ গ্রা/কেজি)। <strong>ক্রপে কখনো বন্ধ করবেন না।</strong></div>
+        <div class="adv-col te">DOC 1 నుండి 3–5 రోజులకోసారి నీటిలో (10⁵–10⁶ CFU/ml), రోజువారీ మేతలో (3–5 గ్రా/కేజీ), సేంద్రీయ ఆమ్లం (2–3 గ్రా/కేజీ). <strong>పంటలో ఆపకండి.</strong></div>
+      </div>
+    </div>
+    <div class="adv-item">
+      <div class="adv-lbl"><span>Daily Monitoring Schedule</span><span class="b">দৈনিক পর্যবেক্ষণ সময়সূচি</span><span class="t">రోజువారీ పర్యవేక్షణ షెడ్యూల్</span></div>
+      <div class="adv-cols">
+        <div class="adv-col en"><strong>5 AM:</strong> DO (bottom+surface). <strong>7 AM:</strong> Feed tray + pond walk. <strong>12 PM:</strong> Secchi, temp, salinity. <strong>5 PM:</strong> DO, pH. <strong>Weekly:</strong> TAN, nitrite, alkalinity + 30-shrimp health sample.</div>
+        <div class="adv-col bn">ভোর ৫টা: DO। ৭টা: ট্রে + পুকুর হাঁটা। দুপুর: সেকি, তাপমাত্রা। সন্ধ্যা: DO, pH। সাপ্তাহিক: TAN, নাইট্রাইট, ক্ষারত্ব, ৩০ চিংড়ির নমুনা।</div>
+        <div class="adv-col te">ఉదయం 5 AM: DO. 7 AM: ట్రే + చెరువు నడక. మధ్యాహ్నం: సెక్కి, ఉష్ణోగ్రత. సాయంత్రం: DO, pH. వారానికి: TAN, నైట్రైట్, క్షారీయత, 30 రొయ్యల నమూనా.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2 -->
+
+  <div class="adv-grid">
+    <div class="adv-item">
+      <div class="adv-lbl"><span>No Antibiotics Policy</span><span class="b">কোনো অ্যান্টিবায়োটিক নেই</span><span class="t">యాంటీబయాటిక్ వాడకుండా విధానం</span></div>
+      <div class="adv-cols">
+        <div class="adv-col en"><strong>Antibiotics NOT required</strong> in L. vannamei culture. Probiotic + water management + organic acids replace all previous antibiotic uses. EU/USA/Japan test every export consignment — antibiotic residue = total rejection and permanent market ban.</div>
+        <div class="adv-col bn">ভ্যানামেই চাষে <strong>অ্যান্টিবায়োটিক অপ্রয়োজনীয়।</strong> প্রোবায়োটিক + জলমান + জৈব অ্যাসিড দিয়ে সব ব্যাকটেরিয়া রোগ সামলানো যায়। রপ্তানিতে অ্যান্টিবায়োটিক অবশিষ্টে সম্পূর্ণ চালান বাতিল।</div>
+        <div class="adv-col te">L. vannamei పెంపకానికి <strong>యాంటీబయాటిక్ అవసరం లేదు.</strong> ప్రోబయోటిక్ + నీటి నిర్వహణ + సేంద్రీయ ఆమ్లాలు సర్వసాధారణ బాక్టీరియా వ్యాధులు నివారిస్తాయి. ఎగుమతిలో అవశేషాలు = పూర్తి తిరస్కరణ.</div>
+      </div>
+    </div>
+    <div class="adv-item">
+      <div class="adv-lbl"><span>PCR Testing Schedule</span><span class="b">PCR পরীক্ষার সময়সূচি</span><span class="t">PCR పరీక్ష షెడ్యూల్</span></div>
+      <div class="adv-cols">
+        <div class="adv-col en">Test PL on arrival (WSSV, EHP, IHHNV). At DOC 30 if size variation seen. First white feces → EHP PCR. First white spots → WSSV PCR. Abnormal mortality → both simultaneously. ICAR-CIBA labs offer affordable PCR.</div>
+        <div class="adv-col bn">মজুতে পোনায় PCR। DOC ৩০-এ আকারের বৈচিত্র্যে। সাদা মলে ইএইচপি PCR। সাদা দাগে WSSV PCR। ICAR-CIBA ল্যাবে সাশ্রয়ী PCR।</div>
+        <div class="adv-col te">వేయడానికి ముందు PCR. DOC 30 లో పరిమాణ వైవిధ్యంలో. తెల్ల మలంలో EHP PCR. తెల్ల మచ్చలలో WSSV PCR. ICAR-CIBA ల్యాబ్‌లో చౌకగా PCR.</div>
+      </div>
+    </div>
+    <div class="adv-item">
+      <div class="adv-lbl"><span>Export Compliance</span><span class="b">রপ্তানি সম্মতি</span><span class="t">ఎగుమతి నియమాల పాలన</span></div>
+      <div class="adv-cols">
+        <div class="adv-col en">Daily records mandatory for MPEDA, ASC, BAP. <strong>Zero tolerance:</strong> Chloramphenicol, Nitrofurans, Enrofloxacin. Know withdrawal periods: TCCA 5–7 days, BKC 3–5 days. Probiotics, vitamins, organics: no withdrawal.</div>
+        <div class="adv-col bn">MPEDA/ASC-এর জন্য দৈনিক রেকর্ড। <strong>শূন্য সহনশীলতা:</strong> ক্লোরামফেনিকল, নাইট্রোফুরান, এনরোফ্লক্সাসিন। প্রোবায়োটিক্স, ভিটামিন: কোনো বিরতি নেই।</div>
+        <div class="adv-col te">MPEDA/ASC కు రోజువారీ రికార్డులు. <strong>జీరో టాలరెన్స్:</strong> క్లోరాంఫెనికాల్, నైట్రోఫ్యూరాన్స్, ఎన్రోఫ్లాక్సాసిన్. ప్రోబయోటిక్స్, విటమిన్లు: విరామ అవసరం లేదు.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approved Inputs Table -->
+
+  <div style="margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:1.5px;color:var(--teal);text-transform:uppercase;margin-bottom:8px;">
+    ✓ Approved Inputs — No Antibiotics Required · অনুমোদিত উপকরণ · అనుమతించబడిన ఇన్‌పుట్‌లు
+  </div>
+  <table class="wt">
+    <thead>
+      <tr>
+        <th>Input</th>
+        <th>Dose</th>
+        <th>Purpose (EN)</th>
+        <th class="bn-cell">বাংলা</th>
+        <th class="te-cell">తెలుగు</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Probiotics (Bacillus/Lactobacillus)</td>
+        <td class="dose">10⁵–10⁶ CFU/ml; 3–5 g/kg feed</td>
+        <td>Vibrio control, EHP suppression, sludge degradation, FCR improvement. DOC 1 to harvest, no withdrawal.</td>
+        <td class="bn-cell">DOC ১ থেকে প্রতিদিন। বিরতি নেই।</td>
+        <td class="te-cell">DOC 1 నుండి రోజువారీ. ఆపకండి.</td>
+      </tr>
+      <tr>
+        <td>TCCA</td>
+        <td class="dose">1–2 ppm maintenance; 5–10 ppm disinfection</td>
+        <td>Kills WSSV &amp; Vibrio in water. Neutralise with Na₂S₂O₃ before stocking. Wait 24 hrs before probiotics.</td>
+        <td class="bn-cell">Na₂S₂O₃ দিয়ে নিরপদ করুন। প্রোবায়োটিকের ২৪ ঘণ্টা আগে দিন।</td>
+        <td class="te-cell">Na₂S₂O₃ తో నిర్వీర్యం. ప్రోబయోటిక్స్ కంటే 24 గంటలు ముందు.</td>
+      </tr>
+      <tr>
+        <td>BKC 80%</td>
+        <td class="dose">1–2 ppm pond; 5 ppm equipment</td>
+        <td>Vibrio suppression. Gill disease. Safe at 1–2 ppm; toxic to shrimp above 5 ppm.</td>
+        <td class="bn-cell">১–২ ppm নিরাপদ। ৫+ বিষাক্ত।</td>
+        <td class="te-cell">1–2 ppm సురక్షితం. 5+ ppm విషం.</td>
+      </tr>
+      <tr>
+        <td>Quicklime CaO / Ca(OH)₂</td>
+        <td class="dose">50–300 kg/acre (varies)</td>
+        <td>Pond prep (300 kg), pH correction, H₂S emergency, alkalinity. Safe all stages.</td>
+        <td class="bn-cell">পুকুর প্রস্তুতি, pH সংশোধন, H₂S নিয়ন্ত্রণ।</td>
+        <td class="te-cell">చెరువు సిద్ధత, pH దిద్దుబాటు, H₂S నియంత్రణ.</td>
+      </tr>
+      <tr>
+        <td>Dolomite CaMg(CO₃)₂</td>
+        <td class="dose">50–100 kg/acre weekly</td>
+        <td>Maintain alkalinity 100–150 mg/L. Ca+Mg for moulting. pH stability. No withdrawal.</td>
+        <td class="bn-cell">ক্ষারত্ব ১০০–১৫০। মোল্টিংয়ে Ca+Mg।</td>
+        <td class="te-cell">క్షారీయత 100–150. చాలు వేయడానికి Ca+Mg.</td>
+      </tr>
+      <tr>
+        <td>Zeolite</td>
+        <td class="dose">20–30 kg/acre every 3–5 days</td>
+        <td>Ammonia adsorption. Critical from DOC 40. Replenish frequently — saturated zeolite releases ammonia.</td>
+        <td class="bn-cell">অ্যামোনিয়া শোষণ। DOC ৪০+ থেকে।</td>
+        <td class="te-cell">అమ్మోనియా గ్రహణం. DOC 40+ నుండి.</td>
+      </tr>
+      <tr>
+        <td>Organic acid (butyric/formic)</td>
+        <td class="dose">2–3 g/kg feed daily</td>
+        <td>EHP spore suppression, Vibrio gut control, FCR improvement. No withdrawal period.</td>
+        <td class="bn-cell">EHP দমন, ভিব্রিও নিয়ন্ত্রণ, FCR উন্নতি।</td>
+        <td class="te-cell">EHP అణచివేత, విబ్రియో నియంత్రణ, FCR.</td>
+      </tr>
+      <tr>
+        <td>β-glucan immunostimulant</td>
+        <td class="dose">3–5 g/kg feed from DOC 15</td>
+        <td>Most cost-effective immunity supplement for L. vannamei. No withdrawal. Daily throughout crop.</td>
+        <td class="bn-cell">সবচেয়ে সাশ্রয়ী ইমিউনিটি সরঞ্জাম।</td>
+        <td class="te-cell">అత్యంత తక్కువ ఖర్చుతో రోగ నిరోధకత.</td>
+      </tr>
+      <tr>
+        <td class="ok-cell">Vitamin C (stabilised ascorbate)</td>
+        <td class="dose ok-cell">2–3 g/kg feed daily</td>
+        <td class="ok-cell">Moulting, oxidative stress, immunity. No withdrawal. Use stabilised form throughout crop.</td>
+        <td class="bn-cell ok-cell">মোল্টিং, অক্সিডেটিভ চাপ, রোগ প্রতিরোধ।</td>
+        <td class="te-cell ok-cell">చాలు వేయడం, ఒత్తిడి, రోగ నిరోధకత.</td>
+      </tr>
+      <tr>
+        <td class="banned">Antibiotics — ALL types (OTC, Florfenicol, Enrofloxacin, Chloramphenicol)</td>
+        <td class="banned">⛔ NOT RECOMMENDED</td>
+        <td class="banned">Creates AMR. Replaced by probiotic protocol. EU/USA/Japan test every consignment — residue = total rejection &amp; permanent market loss.</td>
+        <td class="bn-cell banned">⛔ প্রোবায়োটিক প্রোটোকলে অপ্রয়োজনীয়। রপ্তানি বাতিল।</td>
+        <td class="te-cell banned">⛔ ప్రోబయోటిక్ ప్రోటోకాల్‌తో అనవసరం. ఎగుమతి తిరస్కరణ.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+
+<footer>
+  <p><strong>L. vannamei Problems &amp; Solutions Field Handbook — AP, Odisha &amp; Bengal Coastal Aquaculture, India</strong></p>
+  <p style="font-family:'Hind Siliguri',sans-serif;font-size:12px;color:var(--tmid);">লিটোপেনেউস ভ্যানামেই সমস্যা ও সমাধান মাঠ হ্যান্ডবুক — এপি, ওড়িশা ও বাংলা উপকূলীয় জলজ চাষ, ভারত</p>
+  <p style="font-family:'Noto Sans Telugu',sans-serif;font-size:12px;color:var(--tmid);">లిటోపెనేయస్ వన్నమీ సమస్యలు & పరిష్కారాలు క్షేత్ర హ్యాండ్‌బుక్ — ఏపీ, ఒడిశా & బెంగాల్, భారత్</p>
+  <p style="margin-top:8px;font-size:10px;">
+    Boyd &amp; Tucker (2012) Pond Aquaculture Water Quality Management ·
+    Boyd, Torrans &amp; Tucker (2023) Dissolved Oxygen and Aeration in Aquaculture ·
+    Boyd et al. (2017, 2018) Resource Use in Indian Shrimp Farming (AP &amp; Bengal surveys) ·
+    ICAR-CIBA BMP Guidelines for L. vannamei (2024) ·
+    Patil et al. (2021) Economic Loss EHP/WSSV India ·
+    MPEDA Shrimp BMP Guidelines · OIE/WOAH Shrimp Disease Manuals · FAO (2024)
+  </p>
+  <p style="font-size:10px;color:#1e3850;margin-top:8px;">⚠ Research-backed field reference only. For individual farm disease diagnosis and management, consult a registered aquatic animal health veterinarian or ICAR-CIBA extension officer. WSSV and EHP require PCR confirmation — field signs alone are insufficient for management decisions. No antibiotics are required for L. vannamei culture when proper probiotic and water quality management protocols are followed.</p>
+</footer>
+
+<!-- ═══ PRINT BAR ═══ -->
+
+<div class="pbar">
+  <button class="pbtn a4" onclick="triggerPrint('a4')">🖨 A4 Landscape</button>
+  <button class="pbtn a5" onclick="triggerPrint('a5')">🖨 A5</button>
+</div>
+
+<script>
+function triggerPrint(sz){
+  var p=document.getElementById('dp');if(p)p.remove();
+  var s=document.createElement('style');s.id='dp';
+  s.textContent=sz==='a5'?'@media print{@page{size:A5 landscape;margin:6mm 5mm;}}'
+                         :'@media print{@page{size:A4 landscape;margin:8mm 7mm;}}';
+  document.head.appendChild(s);
+  setTimeout(function(){window.print();setTimeout(function(){s.remove();},1500);},80);
+}
+document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key==='p'){e.preventDefault();triggerPrint('a4');}});
+</script>
+
+</body>
+</html>
