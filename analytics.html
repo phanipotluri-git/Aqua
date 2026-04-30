@@ -227,6 +227,9 @@ tbody td.col-type { color: var(--purple); }
 </div><!-- /main -->
 
 <script>
+// ─── Apps Script Web App URL — paste your deployed URL here ─────────────────
+var APPS_SCRIPT_URL = 'PASTE_YOUR_WEB_APP_URL_HERE';
+
 // ─── Column mapping — update here if sheet columns change ───────────────────
 var COL = {
   UNIQUE_ID:   'UNIQUE ID',
@@ -301,17 +304,21 @@ function setStatus(msg, color) {
   el.style.color = color || 'var(--dim)';
 }
 
-async function loadData(forceRefresh) {
+async function loadData() {
   document.getElementById('loading-overlay').classList.remove('hidden');
   document.getElementById('loading-txt').textContent = 'Fetching data from Google Sheets…';
   try {
-    var url = '/api/data' + (forceRefresh ? '?refresh=1' : '');
-    var res = await fetch(url);
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'PASTE_YOUR_WEB_APP_URL_HERE') {
+      throw new Error('Set APPS_SCRIPT_URL at the top of the script block in analytics.html');
+    }
+    var res = await fetch(APPS_SCRIPT_URL);
     if (!res.ok) {
       var err = await res.json().catch(function(){ return { error: 'HTTP ' + res.status }; });
       throw new Error(err.error || 'HTTP ' + res.status);
     }
-    RAW_DATA = await res.json();
+    var json = await res.json();
+    if (json && json.error) throw new Error(json.error);
+    RAW_DATA = Array.isArray(json) ? json : [];
     // Parse dates
     RAW_DATA.forEach(function(r) {
       r._visitDate = new Date(r[COL.VISIT_DATE] || r[COL.TIMESTAMP]);
@@ -634,7 +641,7 @@ document.getElementById('btn-export').addEventListener('click', async function()
 });
 
 // ─── Refresh ─────────────────────────────────────────────────────────────────
-document.getElementById('btn-refresh').addEventListener('click', function() { loadData(true); });
+document.getElementById('btn-refresh').addEventListener('click', function() { loadData(); });
 
 // ─── Filter buttons ───────────────────────────────────────────────────────────
 document.getElementById('btn-apply').addEventListener('click', applyFilters);
@@ -653,7 +660,7 @@ window.addEventListener('DOMContentLoaded', function() {
   from.setDate(from.getDate() - 30);
   document.getElementById('f-to').valueAsDate   = to;
   document.getElementById('f-from').valueAsDate = from;
-  loadData(false);
+  loadData();
 });
 </script>
 </body>
