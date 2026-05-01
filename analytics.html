@@ -380,10 +380,15 @@ function displayTime(v){
   if(!v)return'';
   var s=String(v).trim();if(!s||s==='0')return'';
   if(s.indexOf('1899')!==-1){
-    // ISO format "1899-12-30T20:32:57.000Z" — extract UTC H:MM
+    // ISO "1899-12-30T15:02:57.000Z": Apps Script stores time as UTC,
+    // add IST offset (+330 min) to recover the actual sheet value
     var iso=s.match(/1899-\d{2}-\d{2}T(\d{2}):(\d{2})/);
-    if(iso)return iso[1]+':'+iso[2];
-    // toString() format "Sat Dec 30 1899 20:32:57 GMT+0521..." — extract local HH:MM
+    if(iso){
+      var mins=(parseInt(iso[1])*60+parseInt(iso[2])+330)%1440;
+      var h=Math.floor(mins/60),m=mins%60;
+      return(h<10?'0':'')+h+':'+(m<10?'0':'')+m;
+    }
+    // toString() "Sat Dec 30 1899 20:32:57 GMT+0521..." — local time shown is already IST
     var ts=s.match(/(\d{2}):(\d{2}):\d{2}/);
     if(ts)return ts[1]+':'+ts[2];
   }
