@@ -370,14 +370,57 @@ function timeToMins(ts){
   return h*60+mn;
 }
 function fmtTime(v){
-  // Converts any time value to "H:MM AM" display string
   if(!v)return'';
   var s=String(v).trim();if(!s||s==='0')return'';
-  // Already clean "HH:MM:SS" or "HH:MM" 24h text (output by new Code.gs)
   var clean=s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
   if(clean){var h=parseInt(clean[1]),mn=parseInt(clean[2]),ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+(mn<10?'0':'')+mn+' '+ap}
-  // Fallback: try timeToMins then minsToTime
   var mins=timeToMins(s);return mins!==null?minsToTime(mins):'';
+}
+function displayTime(v){
+  if(!v)return'';
+  var s=String(v).trim();if(!s||s==='0')return'';
+  // Handle "Sat Dec 30 1899 20:32:57 GMT+0521..." from Apps Script fallthrough
+  if(s.indexOf('1899')!==-1){
+    var d=new Date(s);
+    if(!isNaN(d.getTime())){var h=d.getUTCHours(),m=d.getUTCMinutes();return(h<10?'0':'')+h+':'+(m<10?'0':'')+m;}
+  }
+  return s;
+}
+var TABLE_SORTS={};
+function sortTableBy(tbodyId,colIdx){
+  var tbody=document.getElementById(tbodyId);if(!tbody)return;
+  var table=tbody.closest('table');if(!table)return;
+  var st=TABLE_SORTS[tbodyId]||{col:-1,dir:1};
+  if(st.col===colIdx)st.dir*=-1;else{st.col=colIdx;st.dir=1;}
+  TABLE_SORTS[tbodyId]=st;
+  table.querySelectorAll('thead th').forEach(function(th,i){
+    var arr=th.querySelector('.sarr');if(!arr)return;
+    arr.className='sarr'+(i===colIdx?' on':'');
+    if(i===colIdx)arr.textContent=st.dir===1?'▼':'▲';
+  });
+  var groups=[];
+  Array.from(tbody.children).forEach(function(tr){
+    if(tr.classList.contains('row-detail')||tr.classList.contains('exp-row'))
+      {if(groups.length)groups[groups.length-1].push(tr);}
+    else groups.push([tr]);
+  });
+  groups.sort(function(a,b){
+    var ac=a[0].cells[colIdx],bc=b[0].cells[colIdx];
+    var av=ac?ac.textContent.trim():'',bv=bc?bc.textContent.trim():'';
+    var an=parseFloat(av.replace(/[^\d.\-]/g,'')),bn=parseFloat(bv.replace(/[^\d.\-]/g,''));
+    if(!isNaN(an)&&!isNaN(bn))return(an-bn)*st.dir;
+    return av.localeCompare(bv)*st.dir;
+  });
+  groups.forEach(function(g){g.forEach(function(tr){tbody.appendChild(tr)});});
+}
+function makeSortable(tbodyId){
+  var tbody=document.getElementById(tbodyId);if(!tbody)return;
+  var table=tbody.closest('table');if(!table)return;
+  table.querySelectorAll('thead th:not(.sth)').forEach(function(th,i){
+    th.className=(th.className?th.className+' sth':'sth');
+    if(!th.querySelector('.sarr'))th.insertAdjacentHTML('beforeend',' <span class="sarr">▼</span>');
+    th.onclick=function(){sortTableBy(tbodyId,i);};
+  });
 }
 function minsToTime(mins){
   if(mins===null||isNaN(mins))return'—';
@@ -511,7 +554,7 @@ function renderOverview(){
   document.getElementById('tbl-count').textContent='('+rows.length+' of '+FILTERED_DATA.length+')';
   rows.forEach(function(r){
     var tr=document.createElement('tr');tr.className='cl';
-    var rowTime=esc(r[COL.TIME]||'');
+    var rowTime=displayTime(r[COL.TIME]);
     tr.innerHTML='<td class="c-date">'+fmtDate(r._visitDate)+'</td><td style="font-family:IBM Plex Mono,monospace;font-size:11px;white-space:nowrap;color:var(--mid)">'+rowTime+'</td><td class="c-name">'+esc(r[COL.STAFF_NAME])+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r[COL.REMARKS])+'</td>';
     var det=document.createElement('tr');det.className='row-detail';
     var ph=r[COL.PHOTO]?'<a href="'+esc(r[COL.PHOTO])+'" target="_blank" rel="noopener">View Photo</a> &nbsp;':'';
@@ -519,6 +562,7 @@ function renderOverview(){
     tr.addEventListener('click',function(){det.classList.toggle('open')});
     tbody.appendChild(tr);tbody.appendChild(det);
   });
+  makeSortable('tbl-recent');
 }
 
 // ─── STAFF TAB ────────────────────────────────────────────────────────────────
@@ -534,6 +578,7 @@ function renderLeaderboard(){
     tr.innerHTML='<td><span class="rank '+cls+'">'+(i+1)+'</span></td><td class="c-name">'+esc(e[0])+'</td><td class="c-teal">'+e[1].v+'</td><td class="c-gold">'+e[1].f.size+'</td><td class="c-green">'+e[1].a.size+'</td>';
     tbody.appendChild(tr);
   });
+  makeSortable('tbl-leader');
 }
 
 function renderReportTimes(){
@@ -570,6 +615,7 @@ function renderReportTimes(){
       +'<td class="c-teal">'+(avg(st.counts)||0).toFixed(1)+'</td>';
     tbody.appendChild(tr);
   });
+  makeSortable('tbl-times');
 }
 
 function renderRevisit(){
@@ -657,6 +703,7 @@ function renderAbsent(){
     expTd.innerHTML=mhtml;expTr.appendChild(expTd);
     tbody.appendChild(tr);tbody.appendChild(expTr);
   });
+  makeSortable('tbl-absent');
 }
 
 function renderDow(){
@@ -706,6 +753,7 @@ function renderCoverageTab(){
   stale.sort(function(a,b){return b.d-a.d});
   if(!stale.length){tbody.innerHTML='<tr><td colspan="3" style="color:var(--green);padding:14px">All areas visited within 7 days ✓</td></tr>'}
   else stale.forEach(function(s){var c=s.d>=14?'c-red':'c-gold';var tr=document.createElement('tr');tr.innerHTML='<td class="c-area c-name">'+esc(s.a)+'</td><td class="c-date">'+fmtDate(s.last)+'</td><td class="'+c+'">'+s.d+' days</td>';tbody.appendChild(tr)});
+  makeSortable('tbl-stale');
 
   var wrap=document.getElementById('matrix-wrap'),staffL=unique(FILTERED_DATA.map(function(r){return r[COL.STAFF_NAME]})),areaL=unique(FILTERED_DATA.map(function(r){return r[COL.AREA]}));
   if(!staffL.length||!areaL.length){wrap.innerHTML='<div style="padding:14px;color:var(--dim)">No data</div>';return}
@@ -748,6 +796,7 @@ function renderDealersTab(){
   var dm={};
   FILTERED_DATA.forEach(function(r){var d=r[COL.DEALER_NAME];if(!d)return;if(!dm[d])dm[d]={cat:r[COL.DEALER_CAT]||'',v:0,f:new Set(),s:new Set()};dm[d].v++;if(r[COL.FARMER_NAME])dm[d].f.add(r[COL.FARMER_NAME]);if(r[COL.STAFF_NAME])dm[d].s.add(r[COL.STAFF_NAME])});
   Object.entries(dm).sort(function(a,b){return b[1].v-a[1].v}).forEach(function(e){var tr=document.createElement('tr');tr.innerHTML='<td class="c-name">'+esc(e[0])+'</td><td class="c-type">'+esc(e[1].cat)+'</td><td class="c-teal">'+e[1].v+'</td><td class="c-gold">'+e[1].f.size+'</td><td class="c-green">'+e[1].s.size+'</td>';tbody.appendChild(tr)});
+  makeSortable('tbl-dealers');
 }
 
 // ─── REMARKS TAB ──────────────────────────────────────────────────────────────
@@ -774,6 +823,7 @@ function renderRemarksTab(){
     tbody.appendChild(tr);
   });
   if(!remarksData.length){var tr=document.createElement('tr');tr.innerHTML='<td colspan="6" style="color:var(--dim);padding:14px">No remarks in this range</td>';tbody.appendChild(tr)}
+  makeSortable('tbl-remarks');
 }
 
 // ─── PDF EXPORT ───────────────────────────────────────────────────────────────
@@ -909,7 +959,7 @@ function renderPerformanceTab(){
     var tbl='<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Visits ('+rows.length+')</div>'
       +'<div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Time</th><th>Area</th><th>Type</th><th>Farmer</th><th>Dealer</th></tr></thead><tbody>';
     rows.forEach(function(r){
-      tbl+='<tr><td class="c-date">'+fmtDate(r._visitDate)+'</td><td style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--dim)">'+esc(r[COL.TIME]||'')+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td></tr>';
+      tbl+='<tr><td class="c-date">'+fmtDate(r._visitDate)+'</td><td style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--dim)">'+displayTime(r[COL.TIME])+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td></tr>';
     });
     tbl+='</tbody></table></div>';
     det.innerHTML+=tbl;
