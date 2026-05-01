@@ -114,6 +114,44 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
   .chart-panel{padding:10px 12px}
   .matrix-wrap{font-size:10px}
 }
+/* ── Expandable attendance ── */
+.exp-row{background:var(--panel2)}.exp-row.closed{display:none}
+.month-row{display:flex;align-items:center;gap:10px;padding:7px 16px 7px 32px;border-bottom:1px solid rgba(26,48,96,.3);cursor:pointer;transition:background .1s}
+.month-row:hover{background:rgba(18,196,208,.06)}
+.day-cal{display:flex;flex-wrap:wrap;gap:4px;padding:8px 16px 12px 40px;background:var(--bg)}
+.day-dot{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;cursor:default}
+.day-dot.p{background:rgba(68,212,136,.18);color:var(--green);border:1px solid rgba(68,212,136,.35)}
+.day-dot.a{background:rgba(240,96,96,.1);color:var(--red);border:1px solid rgba(240,96,96,.25)}
+.day-dot.out{opacity:.2;background:var(--panel);color:var(--dim);border:1px solid transparent}
+/* ── Revisit sortable + pill filter ── */
+.staff-pills{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.staff-pill{cursor:pointer;padding:4px 12px;border-radius:20px;font-size:11px;font-family:'IBM Plex Mono',monospace;border:1px solid var(--border);background:var(--panel2);color:var(--mid);transition:all .15s;white-space:nowrap}
+.staff-pill:hover{border-color:var(--teal);color:var(--teal)}
+.staff-pill.active{background:rgba(18,196,208,.15);border-color:var(--teal);color:var(--teal)}
+.sth{cursor:pointer;user-select:none;white-space:nowrap}
+.sth:hover{color:var(--txt)}
+.sarr{margin-left:3px;font-size:9px;opacity:.3}
+.sarr.on{opacity:1;color:var(--teal)}
+/* ── Performance tab ── */
+.perf-period{background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.perf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;padding:14px 16px}
+.perf-card{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:border-color .15s,box-shadow .15s;position:relative}
+.perf-card:hover{border-color:var(--teal);box-shadow:0 0 0 1px rgba(18,196,208,.2)}
+.perf-card.sel{border-color:var(--teal);background:rgba(18,196,208,.05)}
+.perf-trophy{position:absolute;top:10px;right:12px;font-size:18px;line-height:1}
+.perf-name{font-weight:700;color:var(--txt);font-size:13px;margin-bottom:8px;padding-right:26px;line-height:1.3}
+.pm{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(26,48,96,.3)}
+.pm:last-child{border:none}
+.pm-lbl{color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+.pm-val{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600}
+.perf-detail{margin:0 16px 14px;background:rgba(18,196,208,.04);border:1px solid var(--teal);border-radius:8px;padding:16px;display:none}
+.perf-detail.open{display:block}
+.perf-dname{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--teal);font-weight:700;margin-bottom:12px}
+.perf-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px}
+.perf-kpi{background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:9px 12px}
+.perf-kpi-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.perf-kpi-val{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;color:var(--teal);line-height:1.2}
+@media(max-width:700px){.perf-grid{grid-template-columns:1fr 1fr;gap:8px;padding:10px}.perf-kpis{grid-template-columns:1fr 1fr}.day-dot{width:26px;height:26px;font-size:10px}}
 </style>
 </head>
 <body>
@@ -149,6 +187,7 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
   <button class="tab-btn" data-tab="trends">Trends</button>
   <button class="tab-btn" data-tab="dealers">Dealers</button>
   <button class="tab-btn" data-tab="remarks">Remarks</button>
+  <button class="tab-btn" data-tab="performance">Performance</button>
 </div>
 
 <!-- OVERVIEW -->
@@ -185,7 +224,13 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
     <div class="tbl-wrap"><table><thead><tr><th>Staff</th><th class="r">Avg First Report</th><th class="r">Avg Last Report</th><th class="r">Avg Visits/Day</th></tr></thead><tbody id="tbl-times"></tbody></table></div>
   </div>
   <div class="sec-panel"><div class="sec-head"><div class="sec-label">Farmer Revisit Interval — avg days between visits to the same farmer</div></div>
-    <div class="tbl-wrap"><table><thead><tr><th>Staff</th><th>Farmer</th><th class="r">Total Visits</th><th class="r">Avg Days Between Visits</th></tr></thead><tbody id="tbl-revisit"></tbody></table></div>
+    <div id="revisit-pills" class="staff-pills"></div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th class="sth" onclick="setRevisitSort('n')">Staff <span id="rsort-n" class="sarr">▼</span></th>
+      <th class="sth" onclick="setRevisitSort('f')">Farmer <span id="rsort-f" class="sarr">▼</span></th>
+      <th class="r sth" onclick="setRevisitSort('v')">Visits <span id="rsort-v" class="sarr">▼</span></th>
+      <th class="r sth" onclick="setRevisitSort('gap')">Avg Days Between <span id="rsort-gap" class="sarr on">▼</span></th>
+    </tr></thead><tbody id="tbl-revisit"></tbody></table></div>
   </div>
   <div class="sec-panel"><div class="sec-head"><div class="sec-label">Days Without Report (Mon–Sat, same baseline for all staff)</div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Staff</th><th class="r">Working Days</th><th class="r">Days Present</th><th class="r">Days Absent</th><th class="r">Attendance %</th></tr></thead><tbody id="tbl-absent"></tbody></table></div>
@@ -247,6 +292,12 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
   </div>
 </div>
 
+<!-- PERFORMANCE -->
+<div id="tab-performance" class="tab-content">
+  <div class="perf-period" id="perf-week"></div>
+  <div class="perf-period" id="perf-month"></div>
+</div>
+
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxO-1pqk3u52gJ_LNl68RaaSZMXFVIC04pHBaGWyE1axQKc1WMemeVlUT5Tmzwrrjkv/exec';
@@ -267,6 +318,7 @@ var NEG_KW = ['not interested','rejected','refused','bad','problem','issue','com
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 var RAW_DATA=[], FILTERED_DATA=[], charts={}, CURRENT_TAB='overview';
+var REVISIT_FILTER='', REVISIT_SORT={col:'gap',dir:1};
 Chart.defaults.color='#8ab2cc'; Chart.defaults.borderColor='#1a3060';
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -305,6 +357,10 @@ function monthKey(d){var x=new Date(d);return x.getFullYear()+'-'+(x.getMonth()<
 function fmtMonth(mk){var p=mk.split('-');var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mo[parseInt(p[1])-1]+' '+p[0]}
 function weekKey(d){var dt=new Date(d);dt.setHours(0,0,0,0);dt.setDate(dt.getDate()-dt.getDay()+1);return dt.toISOString().slice(0,10)}
 function avg(arr){return arr.length?arr.reduce(function(a,b){return a+b},0)/arr.length:null}
+function countWorkingDaysInMonth(mk,globalFirst,today){var p=mk.split('-'),y=parseInt(p[0]),m=parseInt(p[1])-1;var s=new Date(Math.max(new Date(y,m,1,0,0,0),globalFirst));var e=new Date(Math.min(new Date(y,m+1,0,23,59,59),today));return s<=e?countWorkingDays(s,e):0}
+function buildMonthCal(mk,presentSet,globalFirst,today){var p=mk.split('-'),y=parseInt(p[0]),m=parseInt(p[1])-1;var d=new Date(y,m,1);var last=new Date(y,m+1,0);var gf=new Date(globalFirst);gf.setHours(0,0,0,0);var td=new Date(today);td.setHours(23,59,59);var html='';while(d<=last){var isSun=d.getDay()===0;var dk=d.toISOString().slice(0,10);var inRange=d>=gf&&d<=td;var lbl=String(d.getDate()).padStart(2,' ');if(isSun||!inRange){html+='<div class="day-dot out" title="'+(isSun?'Sun ':'')+dk+'">'+d.getDate()+'</div>';}else{var present=presentSet.has(dk);html+='<div class="day-dot '+(present?'p':'a')+'" title="'+(present?'Present':'Absent')+' — '+dk+'">'+d.getDate()+'</div>';}d.setDate(d.getDate()+1);}return html;}
+function toggleAbsExpand(uid){var exp=document.getElementById('exp-'+uid);var arr=document.getElementById('arr-'+uid);if(!exp)return;var closing=!exp.classList.contains('closed');exp.classList.toggle('closed',closing);if(arr)arr.textContent=closing?'▶':'▼';}
+function toggleMonthCal(mUid){var cal=document.getElementById('cal-'+mUid);var arr=document.getElementById('marr-'+mUid);if(!cal)return;var open=cal.style.display==='none'||cal.style.display==='';cal.style.display=open?'block':'none';if(arr)arr.textContent=open?'▼':'▶';}
 
 // ─── DATA LOAD ────────────────────────────────────────────────────────────────
 async function loadData(){
@@ -380,6 +436,7 @@ function renderTab(name){
   else if(name==='trends')renderTrendsTab();
   else if(name==='dealers')renderDealersTab();
   else if(name==='remarks')renderRemarksTab();
+  else if(name==='performance')renderPerformanceTab();
 }
 function switchTab(name){
   CURRENT_TAB=name;
@@ -487,37 +544,79 @@ function renderRevisit(){
     var gaps=[];for(var i=1;i<g.dates.length;i++)gaps.push((g.dates[i]-g.dates[i-1])/86400000);
     results.push({n:g.n,f:g.f,v:g.dates.length,gap:Math.round(avg(gaps))});
   });
-  results.sort(function(a,b){return a.gap-b.gap});
-  if(!results.length){tbody.innerHTML='<tr><td colspan="4" style="color:var(--dim);padding:14px">Need 2+ visits to same farmer to calculate</td></tr>';return}
-  results.forEach(function(r){
+  // Populate staff pills
+  var allStaff=unique(results.map(function(r){return r.n}));
+  var pillsEl=document.getElementById('revisit-pills');
+  if(pillsEl){
+    pillsEl.innerHTML='<span class="staff-pill'+(REVISIT_FILTER===''?' active':'')+'" onclick="setRevisitFilter(\'\')">All</span>'
+      +allStaff.map(function(s){return'<span class="staff-pill'+(REVISIT_FILTER===s?' active':'')+'" onclick="setRevisitFilter(\''+s.replace(/'/g,"\\'")+'\')" title="'+esc(s)+'">'+esc(s)+'</span>'}).join('');
+  }
+  // Filter
+  var filtered=REVISIT_FILTER?results.filter(function(r){return r.n===REVISIT_FILTER}):results;
+  // Sort
+  filtered.sort(function(a,b){var va=a[REVISIT_SORT.col],vb=b[REVISIT_SORT.col];return REVISIT_SORT.dir*(typeof va==='string'?va.localeCompare(vb):va-vb)});
+  // Update sort arrows
+  ['n','f','v','gap'].forEach(function(c){var el=document.getElementById('rsort-'+c);if(!el)return;el.className='sarr'+(REVISIT_SORT.col===c?' on':'');el.textContent=REVISIT_SORT.col===c?(REVISIT_SORT.dir===1?'▼':'▲'):'▼'});
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="4" style="color:var(--dim);padding:14px">'+(REVISIT_FILTER?'No repeat visits for this staff':'Need 2+ visits to same farmer')+'</td></tr>';return}
+  filtered.forEach(function(r){
     var col=r.gap<=7?'c-green':r.gap<=14?'c-gold':'c-red';
     var tr=document.createElement('tr');
     tr.innerHTML='<td class="c-name">'+esc(r.n)+'</td><td class="c-area">'+esc(r.f)+'</td><td class="c-teal">'+r.v+'</td><td class="'+col+'">'+r.gap+' days</td>';
     tbody.appendChild(tr);
   });
 }
+function setRevisitFilter(name){REVISIT_FILTER=name;renderRevisit()}
+function setRevisitSort(col){if(REVISIT_SORT.col===col)REVISIT_SORT.dir*=-1;else{REVISIT_SORT.col=col;REVISIT_SORT.dir=1}renderRevisit()}
 
 function renderAbsent(){
   var tbody=document.getElementById('tbl-absent');tbody.innerHTML='';
   var today=new Date();today.setHours(23,59,59,999);
-  // Find the single earliest date across ALL records — used as uniform baseline for everyone
   var globalFirst=null;
   RAW_DATA.forEach(function(r){if(r._visitDate&&(!globalFirst||r._visitDate<globalFirst))globalFirst=r._visitDate});
   if(!globalFirst){tbody.innerHTML='<tr><td colspan="5" style="color:var(--dim);padding:14px">No date data</td></tr>';return}
   var totalWorkingDays=countWorkingDays(globalFirst,today);
-  // Collect each staff's distinct Mon–Sat visit dates
+  // Per-staff: all present Mon-Sat dateKeys + grouped by month
   var info={};
   RAW_DATA.forEach(function(r){
-    var n=r[COL.STAFF_NAME];if(!n||!r._visitDate)return;
-    if(!info[n])info[n]=new Set();
-    if(r._visitDate.getDay()!==0)info[n].add(dateKey(r._visitDate));
+    var n=r[COL.STAFF_NAME];if(!n||!r._visitDate||r._visitDate.getDay()===0)return;
+    if(!info[n])info[n]={dates:new Set(),byMonth:{}};
+    var dk=dateKey(r._visitDate),mk=monthKey(r._visitDate);
+    info[n].dates.add(dk);
+    if(!info[n].byMonth[mk])info[n].byMonth[mk]=new Set();
+    info[n].byMonth[mk].add(dk);
   });
   Object.entries(info).sort(function(a,b){return a[0].localeCompare(b[0])}).forEach(function(e){
-    var present=e[1].size,absent=Math.max(0,totalWorkingDays-present),pct=totalWorkingDays?Math.round(present/totalWorkingDays*100):0;
+    var name=e[0],data=e[1];
+    var present=data.dates.size,absent=Math.max(0,totalWorkingDays-present),pct=totalWorkingDays?Math.round(present/totalWorkingDays*100):0;
     var col=pct>=90?'c-green':pct>=70?'c-gold':'c-red';
-    var tr=document.createElement('tr');
-    tr.innerHTML='<td class="c-name">'+esc(e[0])+'</td><td class="c-teal">'+totalWorkingDays+'</td><td class="c-green">'+present+'</td><td class="c-red">'+absent+'</td><td class="'+col+'">'+pct+'%</td>';
-    tbody.appendChild(tr);
+    var uid='abs'+name.replace(/\W/g,'_');
+    // Staff summary row
+    var tr=document.createElement('tr');tr.className='cl';
+    tr.innerHTML='<td class="c-name"><span id="arr-'+uid+'" style="font-size:9px;margin-right:6px;color:var(--dim);display:inline-block;width:10px">▶</span>'+esc(name)+'</td>'
+      +'<td class="c-teal">'+totalWorkingDays+'</td><td class="c-green">'+present+'</td><td class="c-red">'+absent+'</td><td class="'+col+'">'+pct+'%</td>';
+    tr.addEventListener('click',function(){toggleAbsExpand(uid)});
+    // Month expansion row
+    var expTr=document.createElement('tr');expTr.className='exp-row closed';expTr.id='exp-'+uid;
+    var expTd=document.createElement('td');expTd.colSpan=5;
+    var months=Object.keys(data.byMonth).sort();
+    var mhtml='<div>';
+    months.forEach(function(mk){
+      var mUid=uid+'_'+mk.replace('-','');
+      var mDays=data.byMonth[mk];
+      var mTotal=countWorkingDaysInMonth(mk,globalFirst,today);
+      var mPct=mTotal?Math.round(mDays.size/mTotal*100):0;
+      var mCol=mPct>=90?'var(--green)':mPct>=70?'var(--gold)':'var(--red)';
+      mhtml+='<div class="month-row" onclick="toggleMonthCal(\''+mUid+'\')">'
+        +'<span id="marr-'+mUid+'" style="font-size:9px;color:var(--dim);width:10px">▶</span>'
+        +'<span style="font-family:IBM Plex Mono,monospace;font-size:12px;color:var(--txt);min-width:90px">'+fmtMonth(mk)+'</span>'
+        +'<span style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--teal);min-width:70px">'+mDays.size+' / '+mTotal+' days</span>'
+        +'<span style="font-family:IBM Plex Mono,monospace;font-size:12px;color:'+mCol+'">'+mPct+'%</span>'
+        +'</div>'
+        +'<div id="cal-'+mUid+'" style="display:none"><div class="day-cal">'+buildMonthCal(mk,mDays,globalFirst,today)+'</div></div>';
+    });
+    mhtml+='</div>';
+    expTd.innerHTML=mhtml;expTr.appendChild(expTd);
+    tbody.appendChild(tr);tbody.appendChild(expTr);
   });
 }
 
@@ -651,6 +750,104 @@ document.getElementById('btn-export').addEventListener('click',async function(){
   }catch(e){alert('PDF export failed: '+e.message)}
   finally{btn.textContent='⬇ Export PDF';btn.disabled=false}
 });
+
+// ─── PERFORMANCE TAB ─────────────────────────────────────────────────────────
+function renderPerformanceTab(){
+  var today=new Date();today.setHours(23,59,59,999);
+  var wd=today.getDay()===0?6:(today.getDay()-1); // days since Monday
+  var weekStart=new Date(today);weekStart.setDate(today.getDate()-wd);weekStart.setHours(0,0,0,0);
+  var monthStart=new Date(today.getFullYear(),today.getMonth(),1);
+
+  function computeStats(from,to){
+    var sm={};
+    RAW_DATA.forEach(function(r){
+      if(!r._visitDate||r._visitDate<from||r._visitDate>to)return;
+      var n=r[COL.STAFF_NAME];if(!n)return;
+      if(!sm[n])sm[n]={visits:[],farmers:new Set(),areas:new Set(),dayTimes:{},dates:new Set()};
+      sm[n].visits.push(r);
+      if(r[COL.FARMER_NAME])sm[n].farmers.add(r[COL.FARMER_NAME]);
+      if(r[COL.AREA])sm[n].areas.add(r[COL.AREA]);
+      var dk=dateKey(r._visitDate);sm[n].dates.add(dk);
+      var ts=r[COL.TIME]&&String(r[COL.TIME]).trim()?r[COL.TIME]:r[COL.TIMESTAMP];
+      var mins=timeToMins(ts);if(mins!==null){if(!sm[n].dayTimes[dk])sm[n].dayTimes[dk]=[];sm[n].dayTimes[dk].push(mins)}
+    });
+    var totalWD=countWorkingDays(from,to);
+    return Object.entries(sm).map(function(e){
+      var n=e[0],d=e[1];
+      var firsts=Object.values(d.dayTimes).map(function(a){return Math.min.apply(null,a)});
+      var lasts=Object.values(d.dayTimes).map(function(a){return Math.max.apply(null,a)});
+      return{name:n,visits:d.visits.length,visitList:d.visits,farmers:d.farmers.size,areas:d.areas.size,
+        present:d.dates.size,totalWD:totalWD,
+        att:totalWD?Math.round(d.dates.size/totalWD*100):0,
+        avgFirst:firsts.length?minsToTime(avg(firsts)):'—',
+        avgLast:lasts.length?minsToTime(avg(lasts)):'—',
+        vpd:d.dates.size?(d.visits.length/d.dates.size).toFixed(1):'0'};
+    }).sort(function(a,b){return b.visits-a.visits});
+  }
+
+  var TROPHIES=['🏆','🥈','🥉'];
+
+  function buildSection(containerId,stats,title){
+    var el=document.getElementById(containerId);el.innerHTML='';
+    // Header
+    var hd=document.createElement('div');hd.className='sec-head';
+    hd.innerHTML='<div class="sec-label">'+title+'</div>';el.appendChild(hd);
+    if(!stats.length){el.innerHTML+='<div style="padding:16px;color:var(--dim)">No visits in this period</div>';return}
+    // Cards grid
+    var grid=document.createElement('div');grid.className='perf-grid';
+    stats.forEach(function(s,i){
+      var card=document.createElement('div');card.className='perf-card';
+      var attCol=s.att>=90?'var(--green)':s.att>=70?'var(--gold)':'var(--red)';
+      card.innerHTML=(i<3?'<div class="perf-trophy">'+TROPHIES[i]+'</div>':'')
+        +'<div class="perf-name">'+esc(s.name)+'</div>'
+        +'<div class="pm"><span class="pm-lbl">Visits</span><span class="pm-val" style="color:var(--teal)">'+s.visits+'</span></div>'
+        +'<div class="pm"><span class="pm-lbl">Farmers</span><span class="pm-val" style="color:var(--gold)">'+s.farmers+'</span></div>'
+        +'<div class="pm"><span class="pm-lbl">Areas</span><span class="pm-val" style="color:var(--sky)">'+s.areas+'</span></div>'
+        +'<div class="pm"><span class="pm-lbl">Attendance</span><span class="pm-val" style="color:'+attCol+'">'+s.att+'%</span></div>'
+        +'<div class="pm"><span class="pm-lbl">First Report</span><span class="pm-val" style="color:var(--mid);font-size:11px">'+s.avgFirst+'</span></div>'
+        +'<div class="pm"><span class="pm-lbl">Visits / Day</span><span class="pm-val" style="color:var(--purple)">'+s.vpd+'</span></div>';
+      var detId=containerId+'-det-'+i;
+      card.addEventListener('click',function(){
+        var det=document.getElementById(detId),wasOpen=det&&det.classList.contains('open');
+        el.querySelectorAll('.perf-detail').forEach(function(d){d.classList.remove('open')});
+        el.querySelectorAll('.perf-card').forEach(function(c){c.classList.remove('sel')});
+        if(!wasOpen&&det){det.classList.add('open');card.classList.add('sel')}
+      });
+      grid.appendChild(card);
+    });
+    el.appendChild(grid);
+    // Detail panels
+    stats.forEach(function(s,i){
+      var det=document.createElement('div');det.className='perf-detail';det.id=containerId+'-det-'+i;
+      var attCol=s.att>=90?'var(--green)':s.att>=70?'var(--gold)':'var(--red)';
+      // Top KPIs
+      det.innerHTML='<div class="perf-dname">'+(i<3?TROPHIES[i]+' ':'')+esc(s.name)+'</div>'
+        +'<div class="perf-kpis">'
+        +'<div class="perf-kpi"><div class="perf-kpi-lbl">Visits</div><div class="perf-kpi-val">'+s.visits+'</div></div>'
+        +'<div class="perf-kpi"><div class="perf-kpi-lbl">Farmers</div><div class="perf-kpi-val" style="color:var(--gold)">'+s.farmers+'</div></div>'
+        +'<div class="perf-kpi"><div class="perf-kpi-lbl">Areas</div><div class="perf-kpi-val" style="color:var(--sky)">'+s.areas+'</div></div>'
+        +'<div class="perf-kpi"><div class="perf-kpi-lbl">Days Present</div><div class="perf-kpi-val" style="color:var(--green)">'+s.present+' / '+s.totalWD+'</div></div>'
+        +'<div class="perf-kpi"><div class="perf-kpi-lbl">Attendance</div><div class="perf-kpi-val" style="color:'+attCol+'">'+s.att+'%</div></div>'
+        +'<div class="perf-kpi"><div class="perf-kpi-lbl">First Report</div><div class="perf-kpi-val" style="color:var(--mid);font-size:14px">'+s.avgFirst+'</div></div>'
+        +'<div class="perf-kpi"><div class="perf-kpi-lbl">Last Report</div><div class="perf-kpi-val" style="color:var(--dim);font-size:14px">'+s.avgLast+'</div></div>'
+        +'<div class="perf-kpi"><div class="perf-kpi-lbl">Visits / Day</div><div class="perf-kpi-val" style="color:var(--purple)">'+s.vpd+'</div></div>'
+        +'</div>';
+      // Visit list for this period
+      var rows=s.visitList.slice().sort(function(a,b){return(b._visitDate||0)-(a._visitDate||0)});
+      var tbl='<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Visits this period ('+rows.length+')</div>'
+        +'<div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Area</th><th>Type</th><th>Farmer</th><th>Dealer</th></tr></thead><tbody>';
+      rows.forEach(function(r){tbl+='<tr><td class="c-date">'+fmtDate(r._visitDate)+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td></tr>'});
+      tbl+='</tbody></table></div>';
+      det.innerHTML+=tbl;
+      el.appendChild(det);
+    });
+  }
+
+  var weekStats=computeStats(weekStart,today);
+  var monthStats=computeStats(monthStart,today);
+  buildSection('perf-week',weekStats,'This Week — '+fmtDate(weekStart.toISOString())+' to Today');
+  buildSection('perf-month',monthStats,'This Month — '+fmtMonth(monthKey(today)));
+}
 
 // ─── AUTO-REFRESH ────────────────────────────────────────────────────────────
 var AUTO_REFRESH_MINS=5;
