@@ -511,7 +511,7 @@ function renderOverview(){
   document.getElementById('tbl-count').textContent='('+rows.length+' of '+FILTERED_DATA.length+')';
   rows.forEach(function(r){
     var tr=document.createElement('tr');tr.className='cl';
-    var rowTime=fmtTime(r[COL.TIME])||minsToTime(timeToMins(r[COL.TIMESTAMP]))||'';
+    var rowTime=esc(r[COL.TIME]||'');
     tr.innerHTML='<td class="c-date">'+fmtDate(r._visitDate)+'</td><td style="font-family:IBM Plex Mono,monospace;font-size:11px;white-space:nowrap;color:var(--mid)">'+rowTime+'</td><td class="c-name">'+esc(r[COL.STAFF_NAME])+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r[COL.REMARKS])+'</td>';
     var det=document.createElement('tr');det.className='row-detail';
     var ph=r[COL.PHOTO]?'<a href="'+esc(r[COL.PHOTO])+'" target="_blank" rel="noopener">View Photo</a> &nbsp;':'';
@@ -909,7 +909,7 @@ function renderPerformanceTab(){
     var tbl='<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Visits ('+rows.length+')</div>'
       +'<div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Time</th><th>Area</th><th>Type</th><th>Farmer</th><th>Dealer</th></tr></thead><tbody>';
     rows.forEach(function(r){
-      tbl+='<tr><td class="c-date">'+fmtDate(r._visitDate)+'</td><td style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--dim)">'+fmtTime(r[COL.TIME])+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td></tr>';
+      tbl+='<tr><td class="c-date">'+fmtDate(r._visitDate)+'</td><td style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--dim)">'+esc(r[COL.TIME]||'')+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td></tr>';
     });
     tbl+='</tbody></table></div>';
     det.innerHTML+=tbl;
