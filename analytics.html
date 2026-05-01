@@ -379,10 +379,13 @@ function fmtTime(v){
 function displayTime(v){
   if(!v)return'';
   var s=String(v).trim();if(!s||s==='0')return'';
-  // Handle "Sat Dec 30 1899 20:32:57 GMT+0521..." from Apps Script fallthrough
   if(s.indexOf('1899')!==-1){
-    var d=new Date(s);
-    if(!isNaN(d.getTime())){var h=d.getUTCHours(),m=d.getUTCMinutes();return(h<10?'0':'')+h+':'+(m<10?'0':'')+m;}
+    // ISO format "1899-12-30T20:32:57.000Z" — extract UTC H:MM
+    var iso=s.match(/1899-\d{2}-\d{2}T(\d{2}):(\d{2})/);
+    if(iso)return iso[1]+':'+iso[2];
+    // toString() format "Sat Dec 30 1899 20:32:57 GMT+0521..." — extract local HH:MM
+    var ts=s.match(/(\d{2}):(\d{2}):\d{2}/);
+    if(ts)return ts[1]+':'+ts[2];
   }
   return s;
 }
