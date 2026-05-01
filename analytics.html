@@ -345,22 +345,39 @@ function setStatus(msg,col){var el=document.getElementById('data-status');el.tex
 function timeToMins(ts){
   if(!ts)return null;
   var s=String(ts).trim();if(!s||s==='0')return null;
-  // Google Sheets time serial — pure decimal 0–1 (e.g. "0.375" = 9:00 AM)
+  // Pure decimal fraction — Google Sheets time serial e.g. "0.375" = 9:00 AM
   if(/^\d*\.\d+$/.test(s)){var f=parseFloat(s);if(f>=0&&f<1)return Math.round(f*1440)}
-  // ISO / date string — always convert to IST (UTC + 5h30m = +330 min)
   var d=new Date(s);
-  if(!isNaN(d.getTime())&&s.length>8){
-    var ist=new Date(d.getTime()+330*60000);
-    var mins=ist.getUTCHours()*60+ist.getUTCMinutes();
-    return(mins>=300&&mins<=1320)?mins:null; // keep 5 AM–10 PM only
+  if(!isNaN(d.getTime())&&s.length>4){
+    var mins;
+    if(d.getFullYear()<1902){
+      // 1899-epoch time cell (or old toString "Sat Dec 30 1899..."):
+      // Apps Script stores time values as UTC, so getUTCHours() = actual local time
+      mins=d.getUTCHours()*60+d.getUTCMinutes();
+    } else {
+      // Real UTC timestamp (AppSheet Timestamp column) — shift to IST (+330 min)
+      var ist=new Date(d.getTime()+330*60000);
+      mins=ist.getUTCHours()*60+ist.getUTCMinutes();
+    }
+    return(mins>=300&&mins<=1320)?mins:null; // keep 5 AM–10 PM
   }
-  // Plain text "HH:MM", "H:MM AM/PM", "HH:MM:SS" — assumed already in IST
+  // Plain text "HH:MM", "HH:MM:SS", "H:MM AM/PM" — already in IST
   var m=s.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?/i);
   if(!m)return null;
   var h=parseInt(m[1]),mn=parseInt(m[2]);
   if(m[3]&&m[3].toUpperCase()==='PM'&&h<12)h+=12;
   if(m[3]&&m[3].toUpperCase()==='AM'&&h===12)h=0;
   return h*60+mn;
+}
+function fmtTime(v){
+  // Converts any time value to "H:MM AM" display string
+  if(!v)return'';
+  var s=String(v).trim();if(!s||s==='0')return'';
+  // Already clean "HH:MM:SS" or "HH:MM" 24h text (output by new Code.gs)
+  var clean=s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if(clean){var h=parseInt(clean[1]),mn=parseInt(clean[2]),ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+(mn<10?'0':'')+mn+' '+ap}
+  // Fallback: try timeToMins then minsToTime
+  var mins=timeToMins(s);return mins!==null?minsToTime(mins):'';
 }
 function minsToTime(mins){
   if(mins===null||isNaN(mins))return'—';
@@ -494,7 +511,7 @@ function renderOverview(){
   document.getElementById('tbl-count').textContent='('+rows.length+' of '+FILTERED_DATA.length+')';
   rows.forEach(function(r){
     var tr=document.createElement('tr');tr.className='cl';
-    var rowTime=r[COL.TIME]?esc(r[COL.TIME]):(r[COL.TIMESTAMP]?minsToTime(timeToMins(r[COL.TIMESTAMP])):'');
+    var rowTime=fmtTime(r[COL.TIME])||minsToTime(timeToMins(r[COL.TIMESTAMP]))||'';
     tr.innerHTML='<td class="c-date">'+fmtDate(r._visitDate)+'</td><td style="font-family:IBM Plex Mono,monospace;font-size:11px;white-space:nowrap;color:var(--mid)">'+rowTime+'</td><td class="c-name">'+esc(r[COL.STAFF_NAME])+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r[COL.REMARKS])+'</td>';
     var det=document.createElement('tr');det.className='row-detail';
     var ph=r[COL.PHOTO]?'<a href="'+esc(r[COL.PHOTO])+'" target="_blank" rel="noopener">View Photo</a> &nbsp;':'';
@@ -892,8 +909,7 @@ function renderPerformanceTab(){
     var tbl='<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Visits ('+rows.length+')</div>'
       +'<div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Time</th><th>Area</th><th>Type</th><th>Farmer</th><th>Dealer</th></tr></thead><tbody>';
     rows.forEach(function(r){
-      var t=r[COL.TIME]||'';
-      tbl+='<tr><td class="c-date">'+fmtDate(r._visitDate)+'</td><td style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--dim)">'+esc(t)+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td></tr>';
+      tbl+='<tr><td class="c-date">'+fmtDate(r._visitDate)+'</td><td style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--dim)">'+fmtTime(r[COL.TIME])+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td></tr>';
     });
     tbl+='</tbody></table></div>';
     det.innerHTML+=tbl;

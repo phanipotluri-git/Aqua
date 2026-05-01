@@ -16,21 +16,29 @@ var SHEET_NAME = 'Field Reports'; // exact tab name in the Google Sheet
 
 function doGet() {
   try {
-    var sheet  = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
     if (!sheet) throw new Error('Sheet "' + SHEET_NAME + '" not found');
 
     var values = sheet.getDataRange().getValues();
     if (values.length < 2) return respond([]);
 
     var headers = values[0].map(function(h) { return String(h).trim(); });
+    var tz = Session.getScriptTimeZone(); // use the script's configured timezone (IST)
 
     var records = values.slice(1).map(function(row) {
       var obj = {};
       headers.forEach(function(h, i) {
         var v = row[i];
-        // Apps Script returns Date objects for date cells — convert to ISO string
         if (v instanceof Date) {
-          obj[h] = v.toISOString();
+          // TIME-only cells use the 1899-12-30 epoch in Apps Script.
+          // Output them as plain "HH:mm:ss" text so the dashboard can parse
+          // them simply without any epoch/timezone confusion.
+          if (v.getFullYear() <= 1899) {
+            obj[h] = Utilities.formatDate(v, tz, 'HH:mm:ss');
+          } else {
+            // Full date/datetime cells — keep as ISO string (UTC)
+            obj[h] = v.toISOString();
+          }
         } else {
           obj[h] = (v === null || v === undefined) ? '' : String(v).trim();
         }
