@@ -12,7 +12,7 @@
 //  9. Paste that URL into analytics.html  →  var APPS_SCRIPT_URL = '...'
 // ─────────────────────────────────────────────────────────────────────────────
 
-var SHEET_NAME = 'Field Visit'; // exact tab name in the Google Sheet
+var SHEET_NAME = 'Field Reports'; // exact tab name in the Google Sheet
 
 function doGet() {
   try {
