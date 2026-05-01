@@ -297,9 +297,10 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
   <div class="sec-panel">
     <div class="sec-head" style="flex-wrap:wrap;gap:8px">
       <div class="sec-label" id="perf-period-lbl">Performance</div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
+      <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap">
         <button class="btn btn-primary" id="btn-perf-pdf">⬇ PDF</button>
         <button class="btn" id="btn-perf-img">🖼 Image</button>
+        <button class="btn" id="btn-perf-wa" style="border-color:#25d366;color:#25d366">📱 WhatsApp</button>
       </div>
     </div>
     <div id="perf-pills" class="staff-pills"></div>
@@ -346,23 +347,14 @@ function timeToMins(ts){
   var s=String(ts).trim();if(!s||s==='0')return null;
   // Google Sheets time serial — pure decimal 0–1 (e.g. "0.375" = 9:00 AM)
   if(/^\d*\.\d+$/.test(s)){var f=parseFloat(s);if(f>=0&&f<1)return Math.round(f*1440)}
-  // ISO date string from Apps Script
+  // ISO / date string — always convert to IST (UTC + 5h30m = +330 min)
   var d=new Date(s);
   if(!isNaN(d.getTime())&&s.length>8){
-    if(d.getFullYear()<1902){
-      // Google Sheets 1899-epoch time-only cell
-      // Try local hours first (correct if Apps Script & browser share timezone = IST)
-      // Fall back to UTC hours (correct if Apps Script runs in UTC)
-      var localM=d.getHours()*60+d.getMinutes();
-      var utcM=d.getUTCHours()*60+d.getUTCMinutes();
-      // Pick whichever is in plausible working hours (5 AM – 10 PM)
-      if(localM>=300&&localM<=1320)return localM;
-      if(utcM>=300&&utcM<=1320)return utcM;
-      return localM; // fallback
-    }
-    return d.getHours()*60+d.getMinutes();
+    var ist=new Date(d.getTime()+330*60000);
+    var mins=ist.getUTCHours()*60+ist.getUTCMinutes();
+    return(mins>=300&&mins<=1320)?mins:null; // keep 5 AM–10 PM only
   }
-  // Plain text: "HH:MM", "H:MM AM/PM", "HH:MM:SS"
+  // Plain text "HH:MM", "H:MM AM/PM", "HH:MM:SS" — assumed already in IST
   var m=s.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?/i);
   if(!m)return null;
   var h=parseInt(m[1]),mn=parseInt(m[2]);
@@ -862,9 +854,8 @@ function renderPerformanceTab(){
       +'<div class="perf-name">'+esc(s.name)+'</div>'
       +'<div class="pm"><span class="pm-lbl">Visits</span><span class="pm-val" style="color:var(--teal)">'+s.visits+'</span></div>'
       +'<div class="pm"><span class="pm-lbl">Farmers</span><span class="pm-val" style="color:var(--gold)">'+s.farmers+'</span></div>'
-      +'<div class="pm"><span class="pm-lbl">Areas</span><span class="pm-val" style="color:var(--sky)">'+s.areas+'</span></div>'
+      +'<div class="pm"><span class="pm-lbl">Days Present</span><span class="pm-val" style="color:var(--green)">'+s.present+' / '+s.totalWD+'</span></div>'
       +'<div class="pm"><span class="pm-lbl">Attendance</span><span class="pm-val" style="color:'+attCol+'">'+s.att+'%</span></div>'
-      +'<div class="pm"><span class="pm-lbl">First Report</span><span class="pm-val" style="color:var(--mid);font-size:11px">'+s.avgFirst+'</span></div>'
       +'<div class="pm"><span class="pm-lbl">Visits/Day</span><span class="pm-val" style="color:var(--purple)">'+s.vpd+'</span></div>';
     var detId='perf-det-'+i;
     card.addEventListener('click',function(){
@@ -880,7 +871,13 @@ function renderPerformanceTab(){
   stats.forEach(function(s,i){
     var det=document.createElement('div');det.className='perf-detail';det.id='perf-det-'+i;
     var attCol=s.att>=90?'var(--green)':s.att>=70?'var(--gold)':'var(--red)';
-    det.innerHTML='<div class="perf-dname">'+(i<3?TROPHIES[i]+' ':'')+esc(s.name)+'</div>'
+    var sn=s.name,di=i;
+    det.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">'
+      +'<div class="perf-dname" style="margin:0">'+(i<3?TROPHIES[i]+' ':'')+esc(s.name)+'</div>'
+      +'<div style="display:flex;gap:6px">'
+      +'<button class="btn btn-primary" onclick="exportStaffPDF(\'perf-det-'+i+'\',\''+s.name.replace(/'/g,'\\\'')+'\')" style="font-size:11px;padding:4px 10px">⬇ PDF</button>'
+      +'<button class="btn" onclick="shareStaffWA(\''+s.name.replace(/'/g,'\\\'')+'\')" style="font-size:11px;padding:4px 10px;border-color:#25d366;color:#25d366">📱 WhatsApp</button>'
+      +'</div></div>'
       +'<div class="perf-kpis">'
       +'<div class="perf-kpi"><div class="perf-kpi-lbl">Visits</div><div class="perf-kpi-val">'+s.visits+'</div></div>'
       +'<div class="perf-kpi"><div class="perf-kpi-lbl">Farmers</div><div class="perf-kpi-val" style="color:var(--gold)">'+s.farmers+'</div></div>'
@@ -909,11 +906,17 @@ function setPerfPeriod(key){PERF_PERIOD=key;renderPerformanceTab()}
 async function exportPerfPDF(){
   var btn=document.getElementById('btn-perf-pdf');btn.textContent='⏳…';btn.disabled=true;
   try{
-    var{jsPDF}=window.jspdf,pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,M=10;
-    var canvas=await html2canvas(document.getElementById('perf-content'),{backgroundColor:'#060d18',scale:2,useCORS:true});
-    var ih=Math.min((canvas.height/canvas.width)*(W-2*M),H-2*M-10);
-    pdf.addImage(canvas.toDataURL('image/png'),'PNG',M,M,W-2*M,ih);
-    pdf.setFontSize(8);pdf.setTextColor(120);pdf.text('Aqua Performance — '+document.getElementById('perf-period-lbl').textContent+' — '+new Date().toLocaleString('en-IN'),M,H-6);
+    var{jsPDF}=window.jspdf;
+    var content=document.getElementById('perf-content');
+    // Capture cards grid only (not expanded detail panels to keep PDF compact)
+    var grid=content.querySelector('.perf-grid')||content;
+    var canvas=await html2canvas(grid,{backgroundColor:'#060d18',scale:2,useCORS:true});
+    var pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,M=10;
+    var pw=W-2*M,ph=H-2*M-10;
+    var ratio=Math.min(pw/canvas.width,ph/canvas.height);
+    pdf.addImage(canvas.toDataURL('image/png'),'PNG',M,M,canvas.width*ratio,canvas.height*ratio);
+    pdf.setFontSize(8);pdf.setTextColor(140);
+    pdf.text('Aqua Analytics — '+document.getElementById('perf-period-lbl').textContent+' — '+new Date().toLocaleString('en-IN'),M,H-6);
     pdf.save('aqua-perf-'+PERF_PERIOD+'-'+new Date().toISOString().slice(0,10)+'.pdf');
   }catch(e){alert('PDF failed: '+e.message)}
   finally{btn.textContent='⬇ PDF';btn.disabled=false}
@@ -922,13 +925,70 @@ async function exportPerfPDF(){
 async function exportPerfImage(){
   var btn=document.getElementById('btn-perf-img');btn.textContent='⏳…';btn.disabled=true;
   try{
-    var canvas=await html2canvas(document.getElementById('tab-performance'),{backgroundColor:'#060d18',scale:2,useCORS:true});
+    var grid=document.getElementById('perf-content').querySelector('.perf-grid')||document.getElementById('perf-content');
+    var canvas=await html2canvas(grid,{backgroundColor:'#060d18',scale:2,useCORS:true});
     var a=document.createElement('a');
-    a.href=canvas.toDataURL('image/jpeg',0.92);
+    a.href=canvas.toDataURL('image/jpeg',0.93);
     a.download='aqua-perf-'+PERF_PERIOD+'-'+new Date().toISOString().slice(0,10)+'.jpg';
     a.click();
   }catch(e){alert('Image export failed: '+e.message)}
   finally{btn.textContent='🖼 Image';btn.disabled=false}
+}
+
+async function exportStaffPDF(detId,name){
+  var det=document.getElementById(detId);if(!det||!det.classList.contains('open'))return;
+  try{
+    var{jsPDF}=window.jspdf;
+    var canvas=await html2canvas(det,{backgroundColor:'#091430',scale:2,useCORS:true});
+    var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}),W=210,H=297,M=12;
+    var pw=W-2*M,ph=H-2*M-10;
+    var ratio=Math.min(pw/canvas.width,ph/canvas.height);
+    pdf.addImage(canvas.toDataURL('image/png'),'PNG',M,M,canvas.width*ratio,canvas.height*ratio);
+    pdf.setFontSize(8);pdf.setTextColor(140);
+    pdf.text('Aqua Analytics — '+name+' — '+document.getElementById('perf-period-lbl').textContent+' — '+new Date().toLocaleString('en-IN'),M,H-6);
+    pdf.save('aqua-'+name.replace(/\s+/g,'-')+'-'+PERF_PERIOD+'.pdf');
+  }catch(e){alert('PDF failed: '+e.message)}
+}
+
+function shareStaffWA(name){
+  var stats=computePerfStats(getPerfDateRange(PERF_PERIOD).from,getPerfDateRange(PERF_PERIOD).to);
+  var s=stats.find(function(x){return x.name===name});if(!s)return;
+  var rank=stats.indexOf(s)+1,medals=['🏆','🥈','🥉'];
+  var attE=s.att>=90?'🟢':s.att>=70?'🟡':'🔴';
+  var period=document.getElementById('perf-period-lbl').textContent.replace('Performance — ','');
+  var msg='🌊 *AQUA Staff Report*\n'
+    +'👤 *'+name+'*  |  📅 '+period+'\n\n'
+    +(rank<=3?medals[rank-1]+' Rank #'+rank+' this period\n\n':'#'+rank+' this period\n\n')
+    +'📊 Visits: *'+s.visits+'*\n'
+    +'👨‍🌾 Farmers covered: *'+s.farmers+'*\n'
+    +'📍 Areas: *'+s.areas+'*\n'
+    +attE+' Attendance: *'+s.att+'%* ('+s.present+' / '+s.totalWD+' days)\n'
+    +(s.avgFirst!=='—'?'🕐 First report avg: *'+s.avgFirst+'*\n':'')
+    +(s.avgLast!=='—'?'🕕 Last report avg: *'+s.avgLast+'*\n':'')
+    +'📈 Avg visits/day: *'+s.vpd+'*\n\n'
+    +'_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+function sendPerfWhatsApp(){
+  var today=new Date(),tdk=dateKey(today);
+  var allStaff=unique(RAW_DATA.map(function(r){return r[COL.STAFF_NAME]}));
+  var todaySet=new Set();
+  RAW_DATA.forEach(function(r){if(r._visitDate&&dateKey(r._visitDate)===tdk&&r[COL.STAFF_NAME])todaySet.add(r[COL.STAFF_NAME])});
+  var todayVisits=RAW_DATA.filter(function(r){return r._visitDate&&dateKey(r._visitDate)===tdk}).length;
+  var stats=computePerfStats(getPerfDateRange(PERF_PERIOD).from,getPerfDateRange(PERF_PERIOD).to);
+  var period=document.getElementById('perf-period-lbl').textContent.replace('Performance — ','');
+  var medals=['🏆','🥈','🥉'];
+  var msg='🌊 *AQUA Field Report*\n'
+    +'📅 '+fmtDate(today)+'\n\n'
+    +'*Today\'s Attendance ('+todaySet.size+'/'+allStaff.length+') — '+todayVisits+' visits*\n';
+  allStaff.forEach(function(s){msg+=(todaySet.has(s)?'✅':'❌')+' '+s+'\n'});
+  msg+='\n*'+period+' — Top Performers*\n';
+  stats.slice(0,5).forEach(function(s,i){
+    msg+=(i<3?medals[i]:'  ')+' '+s.name+' — '+s.visits+' visits, '+s.att+'% att\n';
+  });
+  msg+='\n_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
 // ─── AUTO-REFRESH ────────────────────────────────────────────────────────────
@@ -957,6 +1017,7 @@ loadData=async function(){await _origLoad();startCountdown()};
 document.getElementById('btn-refresh').addEventListener('click',function(){loadData()});
 document.getElementById('btn-perf-pdf').addEventListener('click',exportPerfPDF);
 document.getElementById('btn-perf-img').addEventListener('click',exportPerfImage);
+document.getElementById('btn-perf-wa').addEventListener('click',sendPerfWhatsApp);
 document.getElementById('btn-apply').addEventListener('click',applyFilters);
 document.getElementById('btn-clear').addEventListener('click',function(){
   ['f-staff','f-area','f-type','f-dealer'].forEach(function(id){document.getElementById(id).value=''});
