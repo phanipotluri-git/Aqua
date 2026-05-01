@@ -85,7 +85,35 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-txt{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--mid)}
 @media(max-width:900px){.two-col{grid-template-columns:1fr}}
-@media(max-width:600px){.tab-btn{padding:8px 10px;font-size:9px}.tab-content{padding:10px}.chart-wrap{height:180px}}
+@media(max-width:700px){
+  #topbar{padding:8px 12px;gap:8px}
+  .logo{font-size:13px;letter-spacing:1px}
+  #data-status{font-size:10px;order:3;width:100%;margin-top:2px}
+  .btn{padding:5px 10px;font-size:11px}
+  #filter-bar{padding:8px 12px;gap:6px}
+  #filter-bar label{display:none}
+  #filter-bar select,#filter-bar input[type="date"]{min-width:0;flex:1 1 calc(50% - 8px);font-size:12px;padding:6px 8px}
+  #filter-bar .btn{flex:1 1 calc(50% - 8px)}
+  .tab-btn{padding:9px 10px;font-size:9px;letter-spacing:.5px}
+  .tab-content{padding:10px;gap:12px}
+  #kpi-row{grid-template-columns:1fr 1fr;gap:8px}
+  .kpi-card{padding:10px 12px}
+  .kpi-value{font-size:22px}
+  .kpi-sub{font-size:10px}
+  .charts-grid{grid-template-columns:1fr}
+  .chart-wrap{height:200px}
+  .two-col{grid-template-columns:1fr}
+  table{font-size:11px}
+  thead th{padding:7px 8px;font-size:9px}
+  tbody td{padding:6px 8px}
+  .tbl-wrap{max-height:320px}
+  .att-grid{gap:6px;padding:10px 12px}
+  .att-card{flex:1 1 calc(50% - 6px);min-width:0;padding:7px 10px;font-size:11px;justify-content:center}
+  .att-label{padding:10px 12px;font-size:11px}
+  .sec-head{padding:10px 12px}
+  .chart-panel{padding:10px 12px}
+  .matrix-wrap{font-size:10px}
+}
 </style>
 </head>
 <body>
@@ -159,7 +187,7 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
   <div class="sec-panel"><div class="sec-head"><div class="sec-label">Farmer Revisit Interval — avg days between visits to the same farmer</div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Staff</th><th>Farmer</th><th class="r">Total Visits</th><th class="r">Avg Days Between Visits</th></tr></thead><tbody id="tbl-revisit"></tbody></table></div>
   </div>
-  <div class="sec-panel"><div class="sec-head"><div class="sec-label">Days Without Report (Mon–Sat, from each staff's first visit to today)</div></div>
+  <div class="sec-panel"><div class="sec-head"><div class="sec-label">Days Without Report (Mon–Sat, same baseline for all staff)</div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Staff</th><th class="r">Working Days</th><th class="r">Days Present</th><th class="r">Days Absent</th><th class="r">Attendance %</th></tr></thead><tbody id="tbl-absent"></tbody></table></div>
   </div>
 </div>
@@ -415,27 +443,35 @@ function renderLeaderboard(){
 
 function renderReportTimes(){
   var tbody=document.getElementById('tbl-times');tbody.innerHTML='';
+  // Group by staff+day; for each day find the first (earliest) submission time
+  // Prefer the 'Time' column (actual visit time entered by staff) over Timestamp (auto-submit)
   var staffDayMap={};
   FILTERED_DATA.forEach(function(r){
     var n=r[COL.STAFF_NAME];if(!n||!r._visitDate)return;
-    var mins=timeToMins(r[COL.TIMESTAMP]);if(mins===null)return;
+    // Try Time column first (visit time), fall back to Timestamp
+    var timeSrc=r[COL.TIME]&&String(r[COL.TIME]).trim()?r[COL.TIME]:r[COL.TIMESTAMP];
+    var mins=timeToMins(timeSrc);if(mins===null)return;
     var dk=dateKey(r._visitDate);var key=n+'|'+dk;
     if(!staffDayMap[key])staffDayMap[key]={n:n,mins:[]};
     staffDayMap[key].mins.push(mins);
   });
+  // Per staff: collect the FIRST time of each working day, average them
   var staffAcc={};
   Object.values(staffDayMap).forEach(function(sd){
     if(!staffAcc[sd.n])staffAcc[sd.n]={firsts:[],lasts:[],counts:[]};
-    staffAcc[sd.n].firsts.push(Math.min.apply(null,sd.mins));
-    staffAcc[sd.n].lasts.push(Math.max.apply(null,sd.mins));
+    staffAcc[sd.n].firsts.push(Math.min.apply(null,sd.mins)); // earliest visit that day
+    staffAcc[sd.n].lasts.push(Math.max.apply(null,sd.mins));  // latest visit that day
     staffAcc[sd.n].counts.push(sd.mins.length);
   });
   var sorted=Object.entries(staffAcc).sort(function(a,b){return a[0].localeCompare(b[0])});
-  if(!sorted.length){tbody.innerHTML='<tr><td colspan="4" style="color:var(--dim);padding:14px">No timestamp data — check Timestamp column</td></tr>';return}
+  if(!sorted.length){tbody.innerHTML='<tr><td colspan="4" style="color:var(--dim);padding:14px">No time data — check Time / Timestamp column</td></tr>';return}
   sorted.forEach(function(e){
-    var st=e[1];
+    var st=e[1],avgFirst=avg(st.firsts),avgLast=avg(st.lasts);
     var tr=document.createElement('tr');
-    tr.innerHTML='<td class="c-name">'+esc(e[0])+'</td><td class="c-green">'+minsToTime(avg(st.firsts))+'</td><td class="c-gold">'+minsToTime(avg(st.lasts))+'</td><td class="c-teal">'+(avg(st.counts)||0).toFixed(1)+'</td>';
+    tr.innerHTML='<td class="c-name">'+esc(e[0])+'</td>'
+      +'<td class="c-green">'+minsToTime(avgFirst)+'</td>'
+      +'<td class="c-gold">'+minsToTime(avgLast)+'</td>'
+      +'<td class="c-teal">'+(avg(st.counts)||0).toFixed(1)+'</td>';
     tbody.appendChild(tr);
   });
 }
@@ -464,13 +500,23 @@ function renderRevisit(){
 function renderAbsent(){
   var tbody=document.getElementById('tbl-absent');tbody.innerHTML='';
   var today=new Date();today.setHours(23,59,59,999);
+  // Find the single earliest date across ALL records — used as uniform baseline for everyone
+  var globalFirst=null;
+  RAW_DATA.forEach(function(r){if(r._visitDate&&(!globalFirst||r._visitDate<globalFirst))globalFirst=r._visitDate});
+  if(!globalFirst){tbody.innerHTML='<tr><td colspan="5" style="color:var(--dim);padding:14px">No date data</td></tr>';return}
+  var totalWorkingDays=countWorkingDays(globalFirst,today);
+  // Collect each staff's distinct Mon–Sat visit dates
   var info={};
-  RAW_DATA.forEach(function(r){var n=r[COL.STAFF_NAME];if(!n||!r._visitDate)return;if(!info[n])info[n]={first:r._visitDate,dates:new Set()};if(r._visitDate<info[n].first)info[n].first=r._visitDate;if(r._visitDate.getDay()!==0)info[n].dates.add(dateKey(r._visitDate))});
+  RAW_DATA.forEach(function(r){
+    var n=r[COL.STAFF_NAME];if(!n||!r._visitDate)return;
+    if(!info[n])info[n]=new Set();
+    if(r._visitDate.getDay()!==0)info[n].add(dateKey(r._visitDate));
+  });
   Object.entries(info).sort(function(a,b){return a[0].localeCompare(b[0])}).forEach(function(e){
-    var i=e[1],working=countWorkingDays(i.first,today),present=i.dates.size,absent=Math.max(0,working-present),pct=working?Math.round(present/working*100):0;
+    var present=e[1].size,absent=Math.max(0,totalWorkingDays-present),pct=totalWorkingDays?Math.round(present/totalWorkingDays*100):0;
     var col=pct>=90?'c-green':pct>=70?'c-gold':'c-red';
     var tr=document.createElement('tr');
-    tr.innerHTML='<td class="c-name">'+esc(e[0])+'</td><td class="c-teal">'+working+'</td><td class="c-green">'+present+'</td><td class="c-red">'+absent+'</td><td class="'+col+'">'+pct+'%</td>';
+    tr.innerHTML='<td class="c-name">'+esc(e[0])+'</td><td class="c-teal">'+totalWorkingDays+'</td><td class="c-green">'+present+'</td><td class="c-red">'+absent+'</td><td class="'+col+'">'+pct+'%</td>';
     tbody.appendChild(tr);
   });
 }
