@@ -652,6 +652,28 @@ document.getElementById('btn-export').addEventListener('click',async function(){
   finally{btn.textContent='⬇ Export PDF';btn.disabled=false}
 });
 
+// ─── AUTO-REFRESH ────────────────────────────────────────────────────────────
+var AUTO_REFRESH_MINS=5;
+var _countdown=AUTO_REFRESH_MINS*60,_countTimer=null,_refreshTimer=null;
+function startCountdown(){
+  clearInterval(_countTimer);clearInterval(_refreshTimer);
+  _countdown=AUTO_REFRESH_MINS*60;
+  _countTimer=setInterval(function(){
+    _countdown--;
+    var m=Math.floor(_countdown/60),s=_countdown%60;
+    var statusEl=document.getElementById('data-status');
+    if(statusEl&&RAW_DATA.length){
+      var base=statusEl.dataset.base||statusEl.textContent;
+      statusEl.dataset.base=base.split(' · next')[0];
+      statusEl.textContent=statusEl.dataset.base+' · next refresh in '+m+':'+(s<10?'0':'')+s;
+    }
+    if(_countdown<=0){clearInterval(_countTimer);loadData()}
+  },1000);
+}
+// Wrap loadData to restart countdown after each load
+var _origLoad=loadData;
+loadData=async function(){await _origLoad();startCountdown()};
+
 // ─── EVENTS & INIT ────────────────────────────────────────────────────────────
 document.getElementById('btn-refresh').addEventListener('click',function(){loadData()});
 document.getElementById('btn-apply').addEventListener('click',applyFilters);
@@ -666,7 +688,7 @@ window.addEventListener('DOMContentLoaded',function(){
   var to=new Date(),from=new Date();from.setDate(from.getDate()-30);
   document.getElementById('f-to').valueAsDate=to;
   document.getElementById('f-from').valueAsDate=from;
-  loadData();
+  loadData(); // countdown starts automatically after load completes
 });
 </script>
 </body>
