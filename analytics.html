@@ -208,7 +208,7 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
     <div class="chart-panel"><div class="chart-label">Visits Over Time</div><div class="chart-wrap"><canvas id="c-trend"></canvas></div></div>
   </div>
   <div class="sec-panel"><div class="sec-head"><div class="sec-label">Recent Visits <span id="tbl-count" style="color:var(--dim)"></span></div></div>
-    <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Time</th><th>Staff</th><th>Area</th><th>Type</th><th>Farmer</th><th>Dealer</th><th>Remarks</th></tr></thead><tbody id="tbl-recent"></tbody></table></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Staff</th><th>Area</th><th>Type</th><th>Farmer</th><th>Dealer</th><th>Remarks</th></tr></thead><tbody id="tbl-recent"></tbody></table></div>
   </div>
 </div>
 
@@ -219,9 +219,6 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
       <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Staff</th><th class="r">Visits</th><th class="r">Farmers</th><th class="r">Areas</th></tr></thead><tbody id="tbl-leader"></tbody></table></div>
     </div>
     <div class="chart-panel"><div class="chart-label">Visits by Day of Week</div><div class="chart-wrap"><canvas id="c-dow"></canvas></div></div>
-  </div>
-  <div class="sec-panel"><div class="sec-head"><div class="sec-label">Avg First &amp; Last Report Time per Staff</div></div>
-    <div class="tbl-wrap"><table><thead><tr><th>Staff</th><th class="r">Avg First Report</th><th class="r">Avg Last Report</th><th class="r">Avg Visits/Day</th></tr></thead><tbody id="tbl-times"></tbody></table></div>
   </div>
   <div class="sec-panel"><div class="sec-head"><div class="sec-label">Farmer Revisit Interval — avg days between visits to the same farmer</div></div>
     <div id="revisit-pills" class="staff-pills"></div>
@@ -267,7 +264,6 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
 <div id="tab-trends" class="tab-content">
   <div class="chart-panel"><div class="chart-label">Month-over-Month Visits</div><div class="chart-wrap" style="height:240px"><canvas id="c-monthly"></canvas></div></div>
   <div class="chart-panel"><div class="chart-label">Weekly Trend</div><div class="chart-wrap" style="height:200px"><canvas id="c-weekly"></canvas></div></div>
-  <div class="chart-panel"><div class="chart-label">Time of Day Distribution</div><div class="chart-wrap" style="height:200px"><canvas id="c-tod"></canvas></div></div>
 </div>
 
 <!-- DEALERS -->
@@ -562,8 +558,7 @@ function renderOverview(){
   document.getElementById('tbl-count').textContent='('+rows.length+' of '+FILTERED_DATA.length+')';
   rows.forEach(function(r){
     var tr=document.createElement('tr');tr.className='cl';
-    var rowTime=displayTime(r[COL.TIME]);
-    tr.innerHTML='<td class="c-date">'+fmtDate(r._visitDate)+'</td><td style="font-family:IBM Plex Mono,monospace;font-size:11px;white-space:nowrap;color:var(--mid)">'+rowTime+'</td><td class="c-name">'+esc(r[COL.STAFF_NAME])+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r[COL.REMARKS])+'</td>';
+    tr.innerHTML='<td class="c-date">'+fmtDate(r._visitDate)+'</td><td class="c-name">'+esc(r[COL.STAFF_NAME])+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r[COL.REMARKS])+'</td>';
     var det=document.createElement('tr');det.className='row-detail';
     var ph=r[COL.PHOTO]?'<a href="'+esc(r[COL.PHOTO])+'" target="_blank" rel="noopener">View Photo</a> &nbsp;':'';
     det.innerHTML='<td colspan="8">'+(r[COL.LOCATION]?'<b>Location:</b> '+esc(r[COL.LOCATION])+' &nbsp;':'')+( r[COL.MOBILE]?'<b>Mobile:</b> '+esc(r[COL.MOBILE])+' &nbsp;':'')+ph+(r[COL.REMARKS]?'<b>Remarks:</b> '+esc(r[COL.REMARKS]):'')+'</td>';
@@ -574,7 +569,7 @@ function renderOverview(){
 }
 
 // ─── STAFF TAB ────────────────────────────────────────────────────────────────
-function renderStaffTab(){renderLeaderboard();renderReportTimes();renderRevisit();renderAbsent();renderDow()}
+function renderStaffTab(){renderLeaderboard();renderRevisit();renderAbsent();renderDow()}
 
 function renderLeaderboard(){
   var tbody=document.getElementById('tbl-leader');tbody.innerHTML='';
@@ -587,43 +582,6 @@ function renderLeaderboard(){
     tbody.appendChild(tr);
   });
   makeSortable('tbl-leader');
-}
-
-function renderReportTimes(){
-  var tbody=document.getElementById('tbl-times');tbody.innerHTML='';
-  // Group by staff+day; for each day find the first (earliest) submission time
-  // Prefer the 'Time' column (actual visit time entered by staff) over Timestamp (auto-submit)
-  var staffDayMap={};
-  FILTERED_DATA.forEach(function(r){
-    var n=r[COL.STAFF_NAME];if(!n||!r._visitDate)return;
-    // Try Time column first (visit time), fall back to Timestamp
-    var tv=r[COL.TIME]&&String(r[COL.TIME]).trim()&&String(r[COL.TIME]).trim()!=='0'?r[COL.TIME]:r[COL.TIMESTAMP];
-    var mins=timeToMins(tv);
-    if(mins===null||mins<300||mins>1320)return; // skip midnight/implausible
-    var dk=dateKey(r._visitDate);var key=n+'|'+dk;
-    if(!staffDayMap[key])staffDayMap[key]={n:n,mins:[]};
-    staffDayMap[key].mins.push(mins);
-  });
-  // Per staff: collect the FIRST time of each working day, average them
-  var staffAcc={};
-  Object.values(staffDayMap).forEach(function(sd){
-    if(!staffAcc[sd.n])staffAcc[sd.n]={firsts:[],lasts:[],counts:[]};
-    staffAcc[sd.n].firsts.push(Math.min.apply(null,sd.mins)); // earliest visit that day
-    staffAcc[sd.n].lasts.push(Math.max.apply(null,sd.mins));  // latest visit that day
-    staffAcc[sd.n].counts.push(sd.mins.length);
-  });
-  var sorted=Object.entries(staffAcc).sort(function(a,b){return a[0].localeCompare(b[0])});
-  if(!sorted.length){tbody.innerHTML='<tr><td colspan="4" style="color:var(--dim);padding:14px">No time data — check Time / Timestamp column</td></tr>';return}
-  sorted.forEach(function(e){
-    var st=e[1],avgFirst=avg(st.firsts),avgLast=avg(st.lasts);
-    var tr=document.createElement('tr');
-    tr.innerHTML='<td class="c-name">'+esc(e[0])+'</td>'
-      +'<td class="c-green">'+minsToTime(avgFirst)+'</td>'
-      +'<td class="c-gold">'+minsToTime(avgLast)+'</td>'
-      +'<td class="c-teal">'+(avg(st.counts)||0).toFixed(1)+'</td>';
-    tbody.appendChild(tr);
-  });
-  makeSortable('tbl-times');
 }
 
 function renderRevisit(){
@@ -788,10 +746,6 @@ function renderTrendsTab(){
   var weeks=Object.keys(wc).sort();
   charts['c-weekly']=new Chart(document.getElementById('c-weekly'),{type:'line',data:{labels:weeks.map(function(w){return'Wk '+fmtDate(w)}),datasets:[{label:'Visits',data:weeks.map(function(w){return wc[w]}),borderColor:'#9b6cff',backgroundColor:'rgba(155,108,255,.12)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#9b6cff',fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxRotation:35,font:{size:10}},grid:{color:'#1a3060'}},y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#1a3060'}}}}});
 
-  destroyChart('c-tod');
-  var b={Morning:0,Afternoon:0,Evening:0};
-  FILTERED_DATA.forEach(function(r){var m=timeToMins(r[COL.TIMESTAMP]);if(m===null)return;if(m<720)b.Morning++;else if(m<1020)b.Afternoon++;else b.Evening++});
-  charts['c-tod']=new Chart(document.getElementById('c-tod'),{type:'bar',data:{labels:['Morning (before 12pm)','Afternoon (12–5pm)','Evening (after 5pm)'],datasets:[{label:'Visits',data:[b.Morning,b.Afternoon,b.Evening],backgroundColor:['rgba(230,176,32,.7)','rgba(18,196,208,.7)','rgba(155,108,255,.7)'],borderColor:['#e6b020','#12c4d0','#9b6cff'],borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1a3060'}},y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#1a3060'}}}}});
 }
 
 // ─── DEALERS TAB ──────────────────────────────────────────────────────────────
@@ -870,29 +824,18 @@ function computePerfStats(from,to){
   RAW_DATA.forEach(function(r){
     if(!r._visitDate||r._visitDate<from||r._visitDate>to)return;
     var n=r[COL.STAFF_NAME];if(!n)return;
-    if(!sm[n])sm[n]={visits:[],farmers:new Set(),areas:new Set(),dayTimes:{},dates:new Set()};
+    if(!sm[n])sm[n]={visits:[],farmers:new Set(),areas:new Set(),dates:new Set()};
     sm[n].visits.push(r);
     if(r[COL.FARMER_NAME])sm[n].farmers.add(r[COL.FARMER_NAME]);
     if(r[COL.AREA])sm[n].areas.add(r[COL.AREA]);
     var dk=dateKey(r._visitDate);sm[n].dates.add(dk);
-    // Try Time column first, fall back to Timestamp
-    var ts=(r[COL.TIME]&&String(r[COL.TIME]).trim()&&String(r[COL.TIME]).trim()!=='0')?r[COL.TIME]:r[COL.TIMESTAMP];
-    var mins=timeToMins(ts);
-    if(mins!==null&&mins>=300&&mins<=1320){ // only plausible hours 5am-10pm
-      if(!sm[n].dayTimes[dk])sm[n].dayTimes[dk]=[];
-      sm[n].dayTimes[dk].push(mins);
-    }
   });
   var totalWD=countWorkingDays(from,to);
   return Object.entries(sm).map(function(e){
     var n=e[0],d=e[1];
-    var firsts=Object.values(d.dayTimes).map(function(a){return Math.min.apply(null,a)});
-    var lasts=Object.values(d.dayTimes).map(function(a){return Math.max.apply(null,a)});
     return{name:n,visits:d.visits.length,visitList:d.visits,farmers:d.farmers.size,areas:d.areas.size,
       present:d.dates.size,totalWD:totalWD,
       att:totalWD?Math.round(d.dates.size/totalWD*100):0,
-      avgFirst:firsts.length?minsToTime(avg(firsts)):'—',
-      avgLast:lasts.length?minsToTime(avg(lasts)):'—',
       vpd:d.dates.size?(d.visits.length/d.dates.size).toFixed(1):'0'};
   }).sort(function(a,b){return b.visits-a.visits});
 }
@@ -959,15 +902,13 @@ function renderPerformanceTab(){
       +'<div class="perf-kpi"><div class="perf-kpi-lbl">Areas</div><div class="perf-kpi-val" style="color:var(--sky)">'+s.areas+'</div></div>'
       +'<div class="perf-kpi"><div class="perf-kpi-lbl">Days Present</div><div class="perf-kpi-val" style="color:var(--green)">'+s.present+'/'+s.totalWD+'</div></div>'
       +'<div class="perf-kpi"><div class="perf-kpi-lbl">Attendance</div><div class="perf-kpi-val" style="color:'+attCol+'">'+s.att+'%</div></div>'
-      +'<div class="perf-kpi"><div class="perf-kpi-lbl">First Report</div><div class="perf-kpi-val" style="color:var(--mid);font-size:14px">'+s.avgFirst+'</div></div>'
-      +'<div class="perf-kpi"><div class="perf-kpi-lbl">Last Report</div><div class="perf-kpi-val" style="color:var(--dim);font-size:14px">'+s.avgLast+'</div></div>'
       +'<div class="perf-kpi"><div class="perf-kpi-lbl">Visits/Day</div><div class="perf-kpi-val" style="color:var(--purple)">'+s.vpd+'</div></div>'
       +'</div>';
     var rows=s.visitList.slice().sort(function(a,b){return(b._visitDate||0)-(a._visitDate||0)});
     var tbl='<div style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Visits ('+rows.length+')</div>'
-      +'<div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Time</th><th>Area</th><th>Type</th><th>Farmer</th><th>Dealer</th></tr></thead><tbody>';
+      +'<div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Area</th><th>Type</th><th>Farmer</th><th>Dealer</th></tr></thead><tbody>';
     rows.forEach(function(r){
-      tbl+='<tr><td class="c-date">'+fmtDate(r._visitDate)+'</td><td style="font-family:IBM Plex Mono,monospace;font-size:10px;color:var(--dim)">'+displayTime(r[COL.TIME])+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td></tr>';
+      tbl+='<tr><td class="c-date">'+fmtDate(r._visitDate)+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td></tr>';
     });
     tbl+='</tbody></table></div>';
     det.innerHTML+=tbl;
@@ -1037,8 +978,6 @@ function shareStaffWA(name){
     +'👨‍🌾 Farmers covered: *'+s.farmers+'*\n'
     +'📍 Areas: *'+s.areas+'*\n'
     +attE+' Attendance: *'+s.att+'%* ('+s.present+' / '+s.totalWD+' days)\n'
-    +(s.avgFirst!=='—'?'🕐 First report avg: *'+s.avgFirst+'*\n':'')
-    +(s.avgLast!=='—'?'🕕 Last report avg: *'+s.avgLast+'*\n':'')
     +'📈 Avg visits/day: *'+s.vpd+'*\n\n'
     +'_Aqua Analytics_';
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
