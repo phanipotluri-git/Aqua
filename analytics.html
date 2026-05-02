@@ -901,20 +901,41 @@ function renderPerformanceTab(){
 
 function setPerfPeriod(key){PERF_PERIOD=key;renderPerformanceTab()}
 
+// ─── PDF HELPERS ─────────────────────────────────────────────────────────────
+function unclipAll(el){
+  var saved=[];
+  [el].concat(Array.from(el.querySelectorAll('*'))).forEach(function(n){
+    saved.push({n:n,oy:n.style.overflowY,ox:n.style.overflowX,mh:n.style.maxHeight,oh:n.style.overflow});
+    n.style.overflow='visible';n.style.overflowY='visible';n.style.overflowX='visible';n.style.maxHeight='none';
+  });
+  return saved;
+}
+function reclipAll(saved){saved.forEach(function(s){s.n.style.overflow=s.oh;s.n.style.overflowY=s.oy;s.n.style.overflowX=s.ox;s.n.style.maxHeight=s.mh})}
+function canvasToPDF(pdf,canvas,W,H,M,footer){
+  var pw=W-2*M,pageH=H-2*M-8,ratio=pw/canvas.width,totalH=canvas.height*ratio;
+  var pages=Math.ceil(totalH/pageH)||1;
+  for(var p=0;p<pages;p++){
+    if(p>0)pdf.addPage();
+    var sy=Math.round(p*pageH/ratio),sh=Math.min(Math.round(pageH/ratio),canvas.height-sy);
+    if(sh<=0)break;
+    var tmp=document.createElement('canvas');tmp.width=canvas.width;tmp.height=sh;
+    tmp.getContext('2d').drawImage(canvas,0,sy,canvas.width,sh,0,0,canvas.width,sh);
+    pdf.addImage(tmp.toDataURL('image/png'),'PNG',M,M,pw,sh*ratio);
+    pdf.setFontSize(8);pdf.setTextColor(140);
+    pdf.text(footer+(pages>1?' ('+(p+1)+'/'+pages+')':''),M,H-5);
+  }
+}
+
 async function exportPerfPDF(){
   var btn=document.getElementById('btn-perf-pdf');btn.textContent='⏳…';btn.disabled=true;
   try{
     var{jsPDF}=window.jspdf;
     var content=document.getElementById('perf-content');
-    // Capture cards grid only (not expanded detail panels to keep PDF compact)
-    var grid=content.querySelector('.tbl-wrap')||content;
-    var canvas=await html2canvas(grid,{backgroundColor:'#060d18',scale:2,useCORS:true});
+    var saved=unclipAll(content);
+    var canvas=await html2canvas(content,{backgroundColor:'#060d18',scale:2,useCORS:true});
+    reclipAll(saved);
     var pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,M=10;
-    var pw=W-2*M,ph=H-2*M-10;
-    var ratio=Math.min(pw/canvas.width,ph/canvas.height);
-    pdf.addImage(canvas.toDataURL('image/png'),'PNG',M,M,canvas.width*ratio,canvas.height*ratio);
-    pdf.setFontSize(8);pdf.setTextColor(140);
-    pdf.text('Aqua Analytics — '+document.getElementById('perf-period-lbl').textContent+' — '+new Date().toLocaleString('en-IN'),M,H-6);
+    canvasToPDF(pdf,canvas,W,H,M,'Aqua Analytics — '+document.getElementById('perf-period-lbl').textContent+' — '+new Date().toLocaleString('en-IN'));
     pdf.save('aqua-perf-'+PERF_PERIOD+'-'+new Date().toISOString().slice(0,10)+'.pdf');
   }catch(e){alert('PDF failed: '+e.message)}
   finally{btn.textContent='⬇ PDF';btn.disabled=false}
@@ -923,8 +944,10 @@ async function exportPerfPDF(){
 async function exportPerfImage(){
   var btn=document.getElementById('btn-perf-img');btn.textContent='⏳…';btn.disabled=true;
   try{
-    var grid=document.getElementById('perf-content').querySelector('.perf-grid')||document.getElementById('perf-content');
-    var canvas=await html2canvas(grid,{backgroundColor:'#060d18',scale:2,useCORS:true});
+    var content=document.getElementById('perf-content');
+    var saved=unclipAll(content);
+    var canvas=await html2canvas(content,{backgroundColor:'#060d18',scale:2,useCORS:true});
+    reclipAll(saved);
     var a=document.createElement('a');
     a.href=canvas.toDataURL('image/jpeg',0.93);
     a.download='aqua-perf-'+PERF_PERIOD+'-'+new Date().toISOString().slice(0,10)+'.jpg';
@@ -938,13 +961,11 @@ async function exportStaffPDF(detId,name){
   try{
     var{jsPDF}=window.jspdf;
     var target=det.tagName==='TR'?(det.querySelector('td')||det):det;
+    var saved=unclipAll(target);
     var canvas=await html2canvas(target,{backgroundColor:'#091430',scale:2,useCORS:true});
+    reclipAll(saved);
     var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}),W=210,H=297,M=12;
-    var pw=W-2*M,ph=H-2*M-10;
-    var ratio=Math.min(pw/canvas.width,ph/canvas.height);
-    pdf.addImage(canvas.toDataURL('image/png'),'PNG',M,M,canvas.width*ratio,canvas.height*ratio);
-    pdf.setFontSize(8);pdf.setTextColor(140);
-    pdf.text('Aqua Analytics — '+name+' — '+document.getElementById('perf-period-lbl').textContent+' — '+new Date().toLocaleString('en-IN'),M,H-6);
+    canvasToPDF(pdf,canvas,W,H,M,'Aqua Analytics — '+name+' — '+document.getElementById('perf-period-lbl').textContent);
     pdf.save('aqua-'+name.replace(/\s+/g,'-')+'-'+PERF_PERIOD+'.pdf');
   }catch(e){alert('PDF failed: '+e.message)}
 }
