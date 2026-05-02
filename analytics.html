@@ -332,7 +332,7 @@ Chart.defaults.color='#8ab2cc'; Chart.defaults.borderColor='#1a3060';
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function unique(arr){return[...new Set(arr.filter(Boolean))].sort()}
 function fmtDate(d){if(!d)return'';var x=new Date(d);if(isNaN(x))return String(d);return x.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
-function dateKey(d){if(!d)return'';var x=new Date(d);if(isNaN(x))return'';return x.toISOString().slice(0,10)}
+function dateKey(d){if(!d)return'';var x=new Date(d);if(isNaN(x))return'';return x.getFullYear()+'-'+(x.getMonth()<9?'0':'')+(x.getMonth()+1)+'-'+(x.getDate()<10?'0':'')+x.getDate()}
 function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
 function countBy(arr,key){var m={};arr.forEach(function(r){var v=r[key]||'(blank)';m[v]=(m[v]||0)+1});return m}
 function sortedEntries(m){return Object.entries(m).sort(function(a,b){return b[1]-a[1]})}
@@ -440,10 +440,10 @@ function countWorkingDays(start,end){
 }
 function monthKey(d){var x=new Date(d);return x.getFullYear()+'-'+(x.getMonth()<9?'0':'')+(x.getMonth()+1)}
 function fmtMonth(mk){var p=mk.split('-');var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mo[parseInt(p[1])-1]+' '+p[0]}
-function weekKey(d){var dt=new Date(d);dt.setHours(0,0,0,0);dt.setDate(dt.getDate()-dt.getDay()+1);return dt.toISOString().slice(0,10)}
+function weekKey(d){var dt=new Date(d);dt.setHours(0,0,0,0);dt.setDate(dt.getDate()-dt.getDay()+1);return dateKey(dt)}
 function avg(arr){return arr.length?arr.reduce(function(a,b){return a+b},0)/arr.length:null}
 function countWorkingDaysInMonth(mk,globalFirst,today){var p=mk.split('-'),y=parseInt(p[0]),m=parseInt(p[1])-1;var s=new Date(Math.max(new Date(y,m,1,0,0,0),globalFirst));var e=new Date(Math.min(new Date(y,m+1,0,23,59,59),today));return s<=e?countWorkingDays(s,e):0}
-function buildMonthCal(mk,presentSet,globalFirst,today){var p=mk.split('-'),y=parseInt(p[0]),m=parseInt(p[1])-1;var d=new Date(y,m,1);var last=new Date(y,m+1,0);var gf=new Date(globalFirst);gf.setHours(0,0,0,0);var td=new Date(today);td.setHours(23,59,59);var html='';while(d<=last){var isSun=d.getDay()===0;var dk=d.toISOString().slice(0,10);var inRange=d>=gf&&d<=td;var lbl=String(d.getDate()).padStart(2,' ');if(isSun||!inRange){html+='<div class="day-dot out" title="'+(isSun?'Sun ':'')+dk+'">'+d.getDate()+'</div>';}else{var present=presentSet.has(dk);html+='<div class="day-dot '+(present?'p':'a')+'" title="'+(present?'Present':'Absent')+' — '+dk+'">'+d.getDate()+'</div>';}d.setDate(d.getDate()+1);}return html;}
+function buildMonthCal(mk,presentSet,globalFirst,today){var p=mk.split('-'),y=parseInt(p[0]),m=parseInt(p[1])-1;var d=new Date(y,m,1);var last=new Date(y,m+1,0);var gf=new Date(globalFirst);gf.setHours(0,0,0,0);var td=new Date(today);td.setHours(23,59,59);var html='';while(d<=last){var isSun=d.getDay()===0;var dk=dateKey(d);var inRange=d>=gf&&d<=td;if(isSun||!inRange){html+='<div class="day-dot out" title="'+(isSun?'Sun ':'')+dk+'">'+d.getDate()+'</div>';}else{var present=presentSet.has(dk);html+='<div class="day-dot '+(present?'p':'a')+'" title="'+(present?'Present':'Absent')+' — '+dk+'">'+d.getDate()+'</div>';}d.setDate(d.getDate()+1);}return html;}
 function toggleAbsExpand(uid){var exp=document.getElementById('exp-'+uid);var arr=document.getElementById('arr-'+uid);if(!exp)return;var closing=!exp.classList.contains('closed');exp.classList.toggle('closed',closing);if(arr)arr.textContent=closing?'▶':'▼';}
 function toggleMonthCal(mUid){var cal=document.getElementById('cal-'+mUid);var arr=document.getElementById('marr-'+mUid);if(!cal)return;var open=cal.style.display==='none'||cal.style.display==='';cal.style.display=open?'block':'none';if(arr)arr.textContent=open?'▼':'▶';}
 
@@ -637,11 +637,11 @@ function renderAbsent(){
     if(!info[n].byMonth[mk])info[n].byMonth[mk]=new Set();
     info[n].byMonth[mk].add(dk);
   });
-  Object.entries(info).sort(function(a,b){return a[0].localeCompare(b[0])}).forEach(function(e){
+  Object.entries(info).sort(function(a,b){return a[0].localeCompare(b[0])}).forEach(function(e,i){
     var name=e[0],data=e[1];
     var present=data.dates.size,absent=Math.max(0,totalWorkingDays-present),pct=totalWorkingDays?Math.round(present/totalWorkingDays*100):0;
     var col=pct>=90?'c-green':pct>=70?'c-gold':'c-red';
-    var uid='abs'+name.replace(/\W/g,'_');
+    var uid='abs'+i;
     // Staff summary row
     var tr=document.createElement('tr');tr.className='cl';
     tr.innerHTML='<td class="c-name"><span id="arr-'+uid+'" style="font-size:9px;margin-right:6px;color:var(--dim);display:inline-block;width:10px">▶</span>'+esc(name)+'</td>'
