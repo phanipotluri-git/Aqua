@@ -115,6 +115,27 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
   .chart-panel{padding:10px 12px}
   .matrix-wrap{font-size:10px}
 }
+/* ── Chat Assistant ── */
+#chat-fab{position:fixed;bottom:22px;right:18px;z-index:400;width:54px;height:54px;border-radius:50%;background:var(--teal);border:2px solid var(--teal);color:#fff;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;transition:transform .15s}
+#chat-fab:hover{transform:scale(1.1)}
+#chat-panel{position:fixed;bottom:90px;right:18px;z-index:399;width:min(390px,calc(100vw - 24px));height:560px;background:var(--panel);border:1px solid var(--border);border-radius:16px;display:none;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.6);overflow:hidden}
+#chat-hdr{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--panel2)}
+#chat-hdr-title{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--teal);font-weight:700}
+#chat-hdr button{background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:0 4px}
+#chat-msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.cmsg-user{align-self:flex-end;background:var(--teal);color:#fff;border-radius:14px 14px 3px 14px;padding:8px 13px;max-width:82%;font-size:13px;word-break:break-word}
+.cmsg-bot{align-self:flex-start;background:var(--panel2);border:1px solid var(--border);border-radius:3px 14px 14px 14px;padding:10px 13px;max-width:95%;font-size:12px;color:var(--txt);word-break:break-word;line-height:1.5}
+.cmsg-bot table{font-size:11px;margin-top:7px;width:100%}
+.cmsg-bot thead th{background:var(--panel);color:var(--dim);padding:4px 8px;font-size:10px;text-align:left;border-bottom:1px solid var(--border)}
+.cmsg-bot tbody td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--txt)}
+.cmsg-bot b{color:var(--txt)}
+#chat-chips{display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px;border-top:1px solid var(--border)}
+.chat-chip{background:var(--panel2);border:1px solid var(--border);color:var(--mid);border-radius:20px;padding:4px 11px;font-size:11px;cursor:pointer;font-family:inherit}
+.chat-chip:hover{border-color:var(--teal);color:var(--teal)}
+#chat-irow{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--border)}
+#chat-inp{flex:1;background:var(--panel2);border:1px solid var(--border);color:var(--txt);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;outline:none}
+#chat-inp:focus{border-color:var(--teal)}
+#chat-send{background:var(--teal);border:none;color:#fff;border-radius:8px;width:38px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 /* ── Expandable attendance ── */
 .exp-row{background:var(--panel2)}.exp-row.closed{display:none}
 .month-row{display:flex;align-items:center;gap:10px;padding:7px 16px 7px 32px;border-bottom:1px solid rgba(26,48,96,.3);cursor:pointer;transition:background .1s}
@@ -1612,6 +1633,134 @@ document.getElementById('btn-clear').addEventListener('click',function(){
 });
 document.querySelectorAll('.tab-btn').forEach(function(btn){btn.addEventListener('click',function(){switchTab(this.dataset.tab)})});
 
+// ─── CHAT ASSISTANT ──────────────────────────────────────────────────────────
+var _chatOpen=false;
+function chatToggle(){
+  _chatOpen=!_chatOpen;
+  document.getElementById('chat-panel').style.display=_chatOpen?'flex':'none';
+  if(_chatOpen&&!document.getElementById('chat-msgs').children.length)
+    chatBotMsg('👋 Hi! Ask me about your data.<br>Try: <i>today attendance</i>, <i>weekly performance</i>, <i>sale of [customer]</i>, <i>outstanding</i>.');
+}
+function chatSend(){var inp=document.getElementById('chat-inp');var q=inp.value.trim();if(!q)return;inp.value='';chatAsk(q);}
+function chatAsk(q){chatAddMsg('user',q);setTimeout(function(){chatBotMsg(chatProcess(q));},180);}
+function chatAddMsg(role,html){
+  var msgs=document.getElementById('chat-msgs');
+  var d=document.createElement('div');d.className='cmsg-'+(role==='user'?'user':'bot');
+  d.innerHTML=html;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+}
+function chatBotMsg(html){chatAddMsg('bot',html);}
+function chatStaffName(email){
+  if(EMAIL_NAMES[email])return EMAIL_NAMES[email];
+  var r=RAW_DATA.find(function(x){return x[COL.STAFF_EMAIL]===email&&x[COL.STAFF_NAME];});
+  return r?r[COL.STAFF_NAME]:email;
+}
+function chatProcess(q){
+  var ql=q.toLowerCase().trim();
+  if(/today|attendance/.test(ql))return chatTodayAttend();
+  if(/week|7.day/.test(ql))return chatWeekly();
+  if(/outstanding|pending|due|unpaid/.test(ql))return chatOutstanding();
+  if(/top.*cust|top.*sale|highest.*sale|best.*cust/.test(ql))return chatTopCust();
+  // Customer name search
+  var strip=ql.replace(/\b(sale|balance|ledger|customer|of|for|show|me|the)\b/g,'').trim();
+  if(strip.length>=3){
+    var allCust=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.CUST_NAME];}).filter(Boolean));
+    var hit=allCust.filter(function(cn){return cn.toLowerCase().includes(strip);});
+    if(hit.length===1)return chatCustSummary(hit[0]);
+    if(hit.length>1&&hit.length<=6)return'Found '+hit.length+' matches:<br>'+hit.map(function(n){
+      var safe=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return'<button class="chat-chip" style="margin:2px" onclick="chatAsk(\'sale of '+safe+'\')">'+esc(n)+'</button>';
+    }).join(' ');
+  }
+  // Staff name search
+  var allEmails=unique(RAW_DATA.map(function(r){return r[COL.STAFF_EMAIL];}).filter(Boolean));
+  Object.keys(EMAIL_NAMES).forEach(function(e){if(allEmails.indexOf(e)<0)allEmails.push(e);});
+  var staffHit=allEmails.filter(function(e){return chatStaffName(e).toLowerCase().includes(strip);});
+  if(staffHit.length>=1)return chatStaffSummary(staffHit[0]);
+  return'❓ Didn\'t understand that.<br><br>Try:<br>• <i>today attendance</i><br>• <i>weekly performance</i><br>• <i>sale of [customer name]</i><br>• <i>outstanding</i><br>• <i>top customers</i>';
+}
+function chatTodayAttend(){
+  var today=new Date();var todayKey=today.toISOString().slice(0,10);
+  var rows=RAW_DATA.filter(function(r){return r._visitDate&&r._visitDate.toISOString().slice(0,10)===todayKey;});
+  if(!rows.length)return'📋 No visits recorded today ('+fmtDate(today)+').';
+  var byStaff={};
+  rows.forEach(function(r){
+    var n=r[COL.STAFF_NAME]||chatStaffName(r[COL.STAFF_EMAIL])||'—';
+    if(!byStaff[n])byStaff[n]={v:0,areas:new Set(),farmers:new Set()};
+    byStaff[n].v++;
+    if(r[COL.AREA])byStaff[n].areas.add(r[COL.AREA]);
+    if(r[COL.FARMER_NAME])byStaff[n].farmers.add(r[COL.FARMER_NAME]);
+  });
+  var trows=Object.keys(byStaff).sort().map(function(n){
+    var d=byStaff[n];
+    return'<tr><td>'+esc(n)+'</td><td style="text-align:center">'+d.v+'</td><td>'+esc(Array.from(d.areas).join(', '))+'</td></tr>';
+  }).join('');
+  return'📋 <b>Today\'s Attendance</b> — '+fmtDate(today)
+    +'<table><thead><tr><th>Staff</th><th>Visits</th><th>Area</th></tr></thead><tbody>'+trows+'</tbody></table>'
+    +'<br><b>'+rows.length+'</b> visits · <b>'+Object.keys(byStaff).length+'</b> staff out';
+}
+function chatWeekly(){
+  var now=new Date(),ago=new Date();ago.setDate(ago.getDate()-6);
+  var rows=RAW_DATA.filter(function(r){return r._visitDate&&r._visitDate>=ago&&r._visitDate<=now;});
+  if(!rows.length)return'📊 No visits in the last 7 days.';
+  var byStaff={};
+  rows.forEach(function(r){var n=r[COL.STAFF_NAME]||chatStaffName(r[COL.STAFF_EMAIL])||'—';if(!byStaff[n])byStaff[n]=0;byStaff[n]++;});
+  var sorted=Object.keys(byStaff).sort(function(a,b){return byStaff[b]-byStaff[a];});
+  var trows=sorted.map(function(n){return'<tr><td>'+esc(n)+'</td><td style="text-align:right"><b>'+byStaff[n]+'</b></td></tr>';}).join('');
+  return'📊 <b>Weekly Performance</b> (last 7 days)<br>'
+    +'<table><thead><tr><th>Staff</th><th>Visits</th></tr></thead><tbody>'+trows+'</tbody></table>'
+    +'<br>Total: <b>'+rows.length+'</b> visits';
+}
+function chatOutstanding(){
+  var cm={};
+  STATEMENTS_DATA.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;if(!cm[cn])cm[cn]={s:0,p:0};cm[cn].s+=r._sales;cm[cn].p+=r._payment;});
+  var list=Object.keys(cm).map(function(n){return{n:n,out:cm[n].s-cm[n].p};}).filter(function(x){return x.out>0;}).sort(function(a,b){return b.out-a.out;}).slice(0,10);
+  if(!list.length)return'✅ No outstanding balances found.';
+  var trows=list.map(function(x){return'<tr><td>'+esc(x.n)+'</td><td style="text-align:right;color:var(--red)"><b>'+fmtCurrency(x.out)+'</b></td></tr>';}).join('');
+  return'🔴 <b>Top Outstanding</b><br>'
+    +'<table><thead><tr><th>Customer</th><th>Outstanding</th></tr></thead><tbody>'+trows+'</tbody></table>';
+}
+function chatTopCust(){
+  var cm={};
+  STATEMENTS_DATA.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;if(!cm[cn])cm[cn]=0;cm[cn]+=r._sales;});
+  var list=Object.keys(cm).sort(function(a,b){return cm[b]-cm[a];}).slice(0,10);
+  if(!list.length)return'No customer data.';
+  var trows=list.map(function(n){return'<tr><td>'+esc(n)+'</td><td style="text-align:right"><b>'+fmtCurrency(cm[n])+'</b></td></tr>';}).join('');
+  return'💰 <b>Top Customers by Sales</b><br>'
+    +'<table><thead><tr><th>Customer</th><th>Total Sales</th></tr></thead><tbody>'+trows+'</tbody></table>';
+}
+function chatCustSummary(custName){
+  var stmts=STATEMENTS_DATA.filter(function(r){return r[SCOL.CUST_NAME]===custName;});
+  if(!stmts.length)return'No data for <b>'+esc(custName)+'</b>.';
+  var ts=stmts.reduce(function(s,r){return s+r._sales;},0);
+  var tp=stmts.reduce(function(s,r){return s+r._payment;},0);
+  var ob=stmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');}).reduce(function(s,r){return s+r._sales;},0);
+  var out=ts-tp;var last=stmts.slice().sort(function(a,b){return(b._date||0)-(a._date||0);})[0];
+  var safe=custName.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  var html='💰 <b>'+esc(custName)+'</b><br><br>';
+  if(ob>0){html+='Opening Balance: <b>'+fmtCurrency(ob)+'</b><br>This Period Sales: <b>'+fmtCurrency(ts-ob)+'</b><br>';}
+  else{html+='Total Billed: <b>'+fmtCurrency(ts)+'</b><br>';}
+  html+='Total Paid: <b>'+fmtCurrency(tp)+'</b><br>';
+  html+='Outstanding: <b style="color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(out))+'</b><br>';
+  if(last&&last._date)html+='Last Transaction: '+fmtDate(last._date)+'<br>';
+  html+='<br><button class="chat-chip" onclick="openCustModal(\''+safe+'\')" style="border-color:var(--teal);color:var(--teal)">View Full Ledger →</button>';
+  return html;
+}
+function chatStaffSummary(email){
+  var name=chatStaffName(email);
+  var visits=RAW_DATA.filter(function(r){return r[COL.STAFF_EMAIL]===email||r[COL.STAFF_NAME]===name;});
+  if(!visits.length)return'No visits found for <b>'+esc(name)+'</b>.';
+  var now=new Date(),ago=new Date();ago.setDate(ago.getDate()-6);
+  var wk=visits.filter(function(r){return r._visitDate&&r._visitDate>=ago;}).length;
+  var areas=unique(visits.map(function(r){return r[COL.AREA];}).filter(Boolean));
+  var farmers=unique(visits.map(function(r){return r[COL.FARMER_NAME];}).filter(Boolean));
+  return'👤 <b>'+esc(name)+'</b><br><br>'
+    +'Total Visits: <b>'+visits.length+'</b><br>'
+    +'This Week: <b>'+wk+'</b><br>'
+    +'Unique Farmers: <b>'+farmers.length+'</b><br>'
+    +'Areas: <b>'+esc(areas.slice(0,6).join(', '))+(areas.length>6?' …':'')+'</b>';
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 window.addEventListener('DOMContentLoaded',function(){
   var to=new Date(),from=new Date();from.setDate(from.getDate()-30);
   document.getElementById('f-to').valueAsDate=to;
@@ -1619,5 +1768,25 @@ window.addEventListener('DOMContentLoaded',function(){
   loadData(); // countdown starts automatically after load completes
 });
 </script>
+
+<!-- ── Chat Assistant ── -->
+<button id="chat-fab" onclick="chatToggle()" title="Aqua Assistant">💬</button>
+<div id="chat-panel">
+  <div id="chat-hdr">
+    <span id="chat-hdr-title">🤖 Aqua Assistant</span>
+    <button onclick="chatToggle()">✕</button>
+  </div>
+  <div id="chat-msgs"></div>
+  <div id="chat-chips">
+    <button class="chat-chip" onclick="chatAsk('Today attendance')">📋 Today's Attendance</button>
+    <button class="chat-chip" onclick="chatAsk('Weekly performance')">📊 Weekly Performance</button>
+    <button class="chat-chip" onclick="chatAsk('Top outstanding')">🔴 Outstanding</button>
+    <button class="chat-chip" onclick="chatAsk('Top customers by sales')">💰 Top Sales</button>
+  </div>
+  <div id="chat-irow">
+    <input id="chat-inp" type="text" placeholder="Ask about data… e.g. sale of Ramesh" onkeydown="if(event.key==='Enter')chatSend()">
+    <button id="chat-send" onclick="chatSend()">↑</button>
+  </div>
+</div>
 </body>
 </html>
