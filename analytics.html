@@ -1422,6 +1422,7 @@ function closeCustModal(){
 }
 async function exportCustModalPDF(){
   var btn=document.getElementById('cust-modal-pdf');btn.textContent='⏳…';btn.disabled=true;
+  var styleEl=null;
   try{
     var{jsPDF}=window.jspdf;
     var content=document.getElementById('cust-modal').firstElementChild;
@@ -1429,14 +1430,37 @@ async function exportCustModalPDF(){
     var btnRow=content.querySelector('div:first-child');
     var prevDisplay=btnRow?btnRow.style.display:'';
     if(btnRow)btnRow.style.display='none';
+    // Switch to light theme by overriding CSS variables on the captured element
+    var lightVars={'--bg':'#fff','--panel':'#fff','--panel2':'#f0f2f5',
+      '--border':'#ccc','--txt':'#111','--mid':'#333','--dim':'#555',
+      '--teal':'#005a8c','--gold':'#7a5000','--red':'#bb2000',
+      '--green':'#156f38','--purple':'#4422aa','--sky':'#004488'};
+    Object.keys(lightVars).forEach(function(k){content.style.setProperty(k,lightVars[k])});
+    content.style.background='#fff';content.style.color='#111';
+    // Force specific elements that use hardcoded dark backgrounds
+    styleEl=document.createElement('style');
+    styleEl.textContent=
+      '#cust-modal>div thead th{background:#e8eaed!important;color:#222!important}'
+      +'#cust-modal>div .kpi-card{background:#f0f2f5!important;border-color:#ccc!important}'
+      +'#cust-modal>div .kpi-label{color:#555!important}'
+      +'#cust-modal>div tbody tr{border-color:#ddd!important}'
+      +'#cust-modal>div tfoot tr{border-color:#999!important}';
+    document.head.appendChild(styleEl);
     var saved=unclipAll(content);
-    var canvas=await html2canvas(content,{backgroundColor:'#0c1628',scale:2,useCORS:true});
+    var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true});
     reclipAll(saved);
+    // Restore dark theme
+    Object.keys(lightVars).forEach(function(k){content.style.removeProperty(k)});
+    content.style.background='';content.style.color='';
+    document.head.removeChild(styleEl);styleEl=null;
     if(btnRow)btnRow.style.display=prevDisplay;
     var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}),W=210,H=297,M=10;
     canvasToPDF(pdf,canvas,W,H,M,'Aqua — '+CUST_MODAL_NAME+' — '+new Date().toLocaleString('en-IN'));
     pdf.save('aqua-'+CUST_MODAL_NAME.replace(/[^a-z0-9]/gi,'-')+'-ledger.pdf');
-  }catch(e){alert('PDF failed: '+e.message)}
+  }catch(e){
+    if(styleEl&&styleEl.parentNode)styleEl.parentNode.removeChild(styleEl);
+    alert('PDF failed: '+e.message);
+  }
   finally{btn.textContent='⬇ PDF';btn.disabled=false}
 }
 function shareCustModalWA(){shareCustStmtWA(CUST_MODAL_NAME)}
