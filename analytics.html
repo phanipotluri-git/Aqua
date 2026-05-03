@@ -1287,10 +1287,7 @@ function renderCustomerLedger(stmts,custStaffMap){
   var customers=Object.values(custMap).map(function(c){
     var sm=custStaffMap[c.name]||{staffName:'—',staffArea:'—'};
     c.staffName=sm.staffName;
-    // Outstanding = last Balance value in sheet order (avoids same-date sort ambiguity)
-    var lastBalRow=null;
-    for(var ji=c.stmts.length-1;ji>=0;ji--){if(!isNaN(c.stmts[ji]._balance)){lastBalRow=c.stmts[ji];break;}}
-    c.outstanding=lastBalRow?lastBalRow._balance:(c.sales-c.payment);
+    c.outstanding=c.sales-c.payment;
     c.companies=unique(c.stmts.map(function(r){return r[SCOL.COMPANY]})).join(', ');
     return c;
   });
@@ -1423,10 +1420,7 @@ function openCustModal(custName){
   });
   var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
   var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
-  // Use last row in sheet order for outstanding (avoids same-date sort ambiguity)
-  var lastBalRow=null;
-  for(var oi=stmts.length-1;oi>=0;oi--){if(!isNaN(stmts[oi]._balance)){lastBalRow=stmts[oi];break;}}
-  var outstanding=lastBalRow?lastBalRow._balance:(totalSales-totalPmt);
+  var outstanding=totalSales-totalPmt;
   stmts=stmts.sort(function(a,b){return(a._date||0)-(b._date||0)});
   document.getElementById('cust-modal-name').textContent=custName;
   document.getElementById('cust-modal-kpis').innerHTML=
@@ -1490,9 +1484,7 @@ async function exportCustDirectPDF(custName,btn){
     }).sort(function(a,b){return(a._date||0)-(b._date||0)});
     var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
     var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
-    var lastBalRow=null;
-    for(var i=stmts.length-1;i>=0;i--){if(!isNaN(stmts[i]._balance)){lastBalRow=stmts[i];break;}}
-    var outstanding=lastBalRow?lastBalRow._balance:(totalSales-totalPmt);
+    var outstanding=totalSales-totalPmt;
     var wrap=document.createElement('div');
     wrap.style.cssText='position:fixed;left:-9999px;top:0;width:860px;background:#fff;color:#111;padding:20px;font-family:IBM Plex Sans,sans-serif;font-size:13px';
     var kpi='<div style="font-size:15px;font-weight:700;margin-bottom:12px;font-family:IBM Plex Mono,monospace;color:#111">'+esc(custName)+'</div>'
