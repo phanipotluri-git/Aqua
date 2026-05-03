@@ -416,7 +416,7 @@ function sortedEntries(m){return Object.entries(m).sort(function(a,b){return b[1
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function setStatus(msg,col){var el=document.getElementById('data-status');el.textContent=msg;el.style.color=col||'var(--dim)'}
 function parseMoney(v){if(!v||v==='')return 0;return parseFloat(String(v).replace(/[₹,\s]/g,''))||0}
-function fmtCurrency(v){var n=parseMoney(v);return'₹'+Math.abs(n).toLocaleString('en-IN',{maximumFractionDigits:0})}
+function fmtCurrency(v){var n=parseMoney(v);var s=Math.abs(n).toLocaleString('en-IN',{maximumFractionDigits:0});return(n<0?'-':'')+'₹'+s}
 
 function timeToMins(ts){
   if(!ts)return null;
@@ -1481,6 +1481,8 @@ async function exportCustDirectPDF(custName,btn){
     // 720px wide → A4 190mm content → each 10px CSS ≈ 2.64mm ≈ standard table text
     var wrap=document.createElement('div');
     wrap.style.cssText='position:fixed;left:-9999px;top:0;width:720px;background:#fff;color:#111;padding:14px 16px;font-family:IBM Plex Sans,sans-serif;font-size:10px;line-height:1.4';
+    // Override CSS vars so global rules (thead th bg, tbody td color) use light values
+    Object.keys(LT_VARS).forEach(function(k){wrap.style.setProperty(k,LT_VARS[k])});
     var S='font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:2px';
     var V='font-size:13px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#111';
     var CARD='flex:1;background:#f0f2f5;border:1px solid #ccc;border-radius:5px;padding:7px 9px';
