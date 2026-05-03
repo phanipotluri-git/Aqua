@@ -367,6 +367,10 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxO-1pqk3u52gJ_LNl68RaaSZMXFVIC04pHBaGWyE1axQKc1WMemeVlUT5Tmzwrrjkv/exec';
+// Manual email → display name overrides (add more as needed)
+var EMAIL_NAMES = {
+  'alokmicrol@gmail.com': 'Aloke Maity'
+};
 
 var COL = {
   UNIQUE_ID:'UNIQUE ID', TIMESTAMP:'Timestamp', TIME:'Time',
@@ -1210,6 +1214,8 @@ function renderSalesTab(){
   var staffLookup={};
   STAFF_DATA.forEach(function(s){var e=s[STCOL.STAFF_EMAIL];if(e)staffLookup[e]={name:s[STCOL.STAFF_NAME]||e,area:s[STCOL.AREA]||''}});
   RAW_DATA.forEach(function(r){var e=r[COL.STAFF_EMAIL],n=r[COL.STAFF_NAME];if(e&&n&&!staffLookup[e])staffLookup[e]={name:n,area:r[COL.AREA]||''}});
+  // Apply manual overrides (EMAIL_NAMES config)
+  Object.keys(EMAIL_NAMES).forEach(function(e){if(!staffLookup[e])staffLookup[e]={name:EMAIL_NAMES[e],area:'—'};else staffLookup[e].name=EMAIL_NAMES[e]});
 
   // Build customer → staff map; CUSTOMER_DATA may have comma-separated emails per customer
   var custStaffMap={};
@@ -1302,7 +1308,10 @@ function renderCustomerLedger(stmts,custStaffMap){
         +'</tr>';
     });
     tbl+='</tbody></table></div>';
-    det.innerHTML='<td colspan="7">'+tbl+'</td>';
+    det.innerHTML='<td colspan="7"><div style="padding:6px 0 8px;display:flex;gap:8px">'
+      +'<button class="btn btn-primary" onclick="event.stopPropagation();openCustModal(\''+c.name.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')+'\')" style="font-size:11px;padding:4px 10px">⬇ PDF / Detail</button>'
+      +'<button class="btn wa-sm" onclick="event.stopPropagation();shareCustStmtWA(\''+c.name.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')+'\')" style="font-size:11px;padding:4px 10px">📱 WhatsApp</button>'
+      +'</div>'+tbl+'</td>';
     tr.addEventListener('click',function(){det.classList.toggle('open')});
     tbody.appendChild(tr);tbody.appendChild(det);
   });
@@ -1386,7 +1395,7 @@ function openCustModal(custName){
   }).sort(function(a,b){return(a._date||0)-(b._date||0)});
   var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
   var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
-  var outstanding=totalSales-totalPmt;
+  var outstanding=stmts.length?stmts[stmts.length-1]._balance:(totalSales-totalPmt);
   document.getElementById('cust-modal-name').textContent=custName;
   document.getElementById('cust-modal-kpis').innerHTML=
     '<div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-value" style="font-size:20px;color:var(--gold)">'+fmtCurrency(totalSales)+'</div></div>'
