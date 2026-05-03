@@ -1657,26 +1657,63 @@ function chatStaffName(email){
 function chatProcess(q){
   var ql=q.toLowerCase().trim();
   if(/today|attendance/.test(ql))return chatTodayAttend();
+  if(/\bmonth\b|30.day/.test(ql))return chatMonthly();
   if(/week|7.day/.test(ql))return chatWeekly();
   if(/outstanding|pending|due|unpaid/.test(ql))return chatOutstanding();
   if(/top.*cust|top.*sale|highest.*sale|best.*cust/.test(ql))return chatTopCust();
-  // Customer name search
-  var strip=ql.replace(/\b(sale|balance|ledger|customer|of|for|show|me|the)\b/g,'').trim();
-  if(strip.length>=3){
-    var allCust=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.CUST_NAME];}).filter(Boolean));
-    var hit=allCust.filter(function(cn){return cn.toLowerCase().includes(strip);});
-    if(hit.length===1)return chatCustSummary(hit[0]);
-    if(hit.length>1&&hit.length<=6)return'Found '+hit.length+' matches:<br>'+hit.map(function(n){
-      var safe=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      return'<button class="chat-chip" style="margin:2px" onclick="chatAsk(\'sale of '+safe+'\')">'+esc(n)+'</button>';
-    }).join(' ');
-  }
-  // Staff name search
+
+  // Strip all common query words, including "sales" (not just "sale")
+  var strip=ql
+    .replace(/\b(sales?|balance|ledger|customers?|of|for|show|me|the|data|report|performance|give|what|is|are|how|much|many|my|their|his|her)\b/g,' ')
+    .replace(/\s+/g,' ').trim();
+
+  var allCust=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.CUST_NAME];}).filter(Boolean));
   var allEmails=unique(RAW_DATA.map(function(r){return r[COL.STAFF_EMAIL];}).filter(Boolean));
   Object.keys(EMAIL_NAMES).forEach(function(e){if(allEmails.indexOf(e)<0)allEmails.push(e);});
-  var staffHit=allEmails.filter(function(e){return chatStaffName(e).toLowerCase().includes(strip);});
-  if(staffHit.length>=1)return chatStaffSummary(staffHit[0]);
-  return'❓ Didn\'t understand that.<br><br>Try:<br>• <i>today attendance</i><br>• <i>weekly performance</i><br>• <i>sale of [customer name]</i><br>• <i>outstanding</i><br>• <i>top customers</i>';
+
+  // 1. Full-string match
+  if(strip.length>=2){
+    var hit=allCust.filter(function(cn){return cn.toLowerCase().includes(strip);});
+    if(hit.length===1)return chatCustSummary(hit[0]);
+    if(hit.length>1&&hit.length<=6)return chatPickOne(hit);
+    var sHit=allEmails.filter(function(e){return chatStaffName(e).toLowerCase().includes(strip);});
+    if(sHit.length>=1)return chatStaffSummary(sHit[0]);
+  }
+
+  // 2. Word-by-word fallback — any word ≥3 chars that matches a name
+  var words=strip.split(/\s+/).filter(function(w){return w.length>=3;});
+  if(words.length){
+    var custByWord=allCust.filter(function(cn){
+      return words.some(function(w){return cn.toLowerCase().includes(w);});
+    });
+    if(custByWord.length===1)return chatCustSummary(custByWord[0]);
+    if(custByWord.length>1&&custByWord.length<=6)return chatPickOne(custByWord);
+    var staffByWord=allEmails.filter(function(e){
+      var nm=chatStaffName(e).toLowerCase();
+      return words.some(function(w){return nm.includes(w);});
+    });
+    if(staffByWord.length===1)return chatStaffSummary(staffByWord[0]);
+  }
+
+  return'❓ Didn\'t understand that.<br><br>Try:<br>• <i>today attendance</i><br>• <i>weekly performance</i><br>• <i>monthly performance</i><br>• <i>sale of [customer name]</i><br>• <i>[staff name] sales</i><br>• <i>outstanding</i><br>• <i>top customers</i>';
+}
+function chatPickOne(names){
+  return'Found '+names.length+' matches — which one?<br>'+names.map(function(n){
+    var safe=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return'<button class="chat-chip" style="margin:2px" onclick="chatAsk(\'sale of '+safe+'\')">'+esc(n)+'</button>';
+  }).join(' ');
+}
+function chatMonthly(){
+  var now=new Date(),ago=new Date();ago.setDate(ago.getDate()-29);
+  var rows=RAW_DATA.filter(function(r){return r._visitDate&&r._visitDate>=ago&&r._visitDate<=now;});
+  if(!rows.length)return'📅 No visits in the last 30 days.';
+  var byStaff={};
+  rows.forEach(function(r){var n=r[COL.STAFF_NAME]||chatStaffName(r[COL.STAFF_EMAIL])||'—';if(!byStaff[n])byStaff[n]=0;byStaff[n]++;});
+  var sorted=Object.keys(byStaff).sort(function(a,b){return byStaff[b]-byStaff[a];});
+  var trows=sorted.map(function(n){return'<tr><td>'+esc(n)+'</td><td style="text-align:right"><b>'+byStaff[n]+'</b></td></tr>';}).join('');
+  return'📅 <b>Monthly Performance</b> (last 30 days)<br>'
+    +'<table><thead><tr><th>Staff</th><th>Visits</th></tr></thead><tbody>'+trows+'</tbody></table>'
+    +'<br>Total: <b>'+rows.length+'</b> visits';
 }
 function chatTodayAttend(){
   var today=new Date();var todayKey=today.toISOString().slice(0,10);
@@ -1748,16 +1785,31 @@ function chatCustSummary(custName){
 function chatStaffSummary(email){
   var name=chatStaffName(email);
   var visits=RAW_DATA.filter(function(r){return r[COL.STAFF_EMAIL]===email||r[COL.STAFF_NAME]===name;});
-  if(!visits.length)return'No visits found for <b>'+esc(name)+'</b>.';
   var now=new Date(),ago=new Date();ago.setDate(ago.getDate()-6);
   var wk=visits.filter(function(r){return r._visitDate&&r._visitDate>=ago;}).length;
   var areas=unique(visits.map(function(r){return r[COL.AREA];}).filter(Boolean));
   var farmers=unique(visits.map(function(r){return r[COL.FARMER_NAME];}).filter(Boolean));
-  return'👤 <b>'+esc(name)+'</b><br><br>'
-    +'Total Visits: <b>'+visits.length+'</b><br>'
-    +'This Week: <b>'+wk+'</b><br>'
+  // Customer sales assigned to this staff via Customer sheet
+  var custNames=CUSTOMER_DATA.filter(function(c){
+    return (c[CCOL.STAFF_EMAIL]||'').split(/[,;\s]+/).map(function(e){return e.trim();}).indexOf(email)>=0;
+  }).map(function(c){return c[CCOL.CUST_NAME];}).filter(Boolean);
+  var ts=0,tp=0;
+  STATEMENTS_DATA.forEach(function(r){
+    if(custNames.indexOf(r[SCOL.CUST_NAME])>=0){ts+=r._sales;tp+=r._payment;}
+  });
+  var html='👤 <b>'+esc(name)+'</b><br><br>'
+    +'Total Visits: <b>'+visits.length+'</b> &nbsp;|&nbsp; This Week: <b>'+wk+'</b><br>'
     +'Unique Farmers: <b>'+farmers.length+'</b><br>'
-    +'Areas: <b>'+esc(areas.slice(0,6).join(', '))+(areas.length>6?' …':'')+'</b>';
+    +(areas.length?'Areas: <b>'+esc(areas.slice(0,6).join(', '))+(areas.length>6?' …':'')+'</b><br>':'');
+  if(custNames.length){
+    html+='<br><b>Customer Sales ('+custNames.length+' customers)</b><br>'
+      +'Total Billed: <b>'+fmtCurrency(ts)+'</b><br>'
+      +'Total Collected: <b>'+fmtCurrency(tp)+'</b><br>'
+      +'Outstanding: <b style="color:var(--red)">'+fmtCurrency(Math.abs(ts-tp))+'</b>';
+  }else if(!visits.length){
+    html='No data found for <b>'+esc(name)+'</b>.';
+  }
+  return html;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1778,8 +1830,9 @@ window.addEventListener('DOMContentLoaded',function(){
   </div>
   <div id="chat-msgs"></div>
   <div id="chat-chips">
-    <button class="chat-chip" onclick="chatAsk('Today attendance')">📋 Today's Attendance</button>
-    <button class="chat-chip" onclick="chatAsk('Weekly performance')">📊 Weekly Performance</button>
+    <button class="chat-chip" onclick="chatAsk('Today attendance')">📋 Today</button>
+    <button class="chat-chip" onclick="chatAsk('Weekly performance')">📊 This Week</button>
+    <button class="chat-chip" onclick="chatAsk('Monthly performance')">📅 This Month</button>
     <button class="chat-chip" onclick="chatAsk('Top outstanding')">🔴 Outstanding</button>
     <button class="chat-chip" onclick="chatAsk('Top customers by sales')">💰 Top Sales</button>
   </div>
