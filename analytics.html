@@ -1013,8 +1013,8 @@ function unclipAll(el){
 }
 function reclipAll(saved){saved.forEach(function(s){s.n.style.overflow=s.oh;s.n.style.overflowY=s.oy;s.n.style.overflowX=s.ox;s.n.style.maxHeight=s.mh})}
 var LT_VARS={'--bg':'#fff','--panel':'#fff','--panel2':'#f0f2f5','--border':'#ccc',
-  '--txt':'#111','--mid':'#333','--dim':'#555','--teal':'#005a8c',
-  '--gold':'#7a5000','--red':'#bb2000','--green':'#156f38','--purple':'#4422aa','--sky':'#004488'};
+  '--txt':'#111','--mid':'#111','--dim':'#111','--teal':'#111',
+  '--gold':'#111','--red':'#111','--green':'#111','--purple':'#111','--sky':'#111'};
 function applyLightTheme(el){
   var sv={vars:{},bg:el.style.background,color:el.style.color};
   Object.keys(LT_VARS).forEach(function(k){sv.vars[k]=el.style.getPropertyValue(k);el.style.setProperty(k,LT_VARS[k])});
