@@ -349,7 +349,7 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
 
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
-var APPS_SCRIPT_URL = '<https://script.google.com/macros/s/AKfycbyqJBByB3H5hS55eztnxFVb__lSKZPY1bmjtKvADq3NjRZGFCuSuBdtVkpkKOBU0Gb0-Q/exec>';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxO-1pqk3u52gJ_LNl68RaaSZMXFVIC04pHBaGWyE1axQKc1WMemeVlUT5Tmzwrrjkv/exec';
 
 var COL = {
   UNIQUE_ID:'UNIQUE ID', TIMESTAMP:'Timestamp', TIME:'Time',
@@ -509,7 +509,7 @@ async function loadData(){
   document.getElementById('loading-overlay').classList.remove('hidden');
   document.getElementById('loading-txt').textContent='Fetching data from Google Sheets…';
   try{
-    if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL==='https://script.google.com/macros/s/AKfycbxO-1pqk3u52gJ_LNl68RaaSZMXFVIC04pHBaGWyE1axQKc1WMemeVlUT5Tmzwrrjkv/exec')throw new Error('Set APPS_SCRIPT_URL in analytics.html');
+    if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL==='PASTE_YOUR_WEB_APP_URL_HERE')throw new Error('Set APPS_SCRIPT_URL in analytics.html');
     var res=await fetch(APPS_SCRIPT_URL);
     if(!res.ok){var e=await res.json().catch(function(){return{error:'HTTP '+res.status}});throw new Error(e.error||'HTTP '+res.status)}
     var json=await res.json();
