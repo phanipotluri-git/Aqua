@@ -1419,12 +1419,20 @@ function openCustModal(custName){
   var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
   var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
   var outstanding=totalSales-totalPmt;
+  var openingBal=stmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening')}).reduce(function(s,r){return s+r._sales},0);
+  var periodSales=totalSales-openingBal;
   stmts=stmts.sort(function(a,b){return(a._date||0)-(b._date||0)});
   document.getElementById('cust-modal-name').textContent=custName;
-  document.getElementById('cust-modal-kpis').innerHTML=
-    '<div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-value" style="font-size:20px;color:var(--gold)">'+fmtCurrency(totalSales)+'</div></div>'
-    +'<div class="kpi-card"><div class="kpi-label">Total Paid</div><div class="kpi-value" style="font-size:20px;color:var(--green)">'+fmtCurrency(totalPmt)+'</div></div>'
-    +'<div class="kpi-card"><div class="kpi-label">Outstanding</div><div class="kpi-value" style="font-size:20px;color:'+(outstanding>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(outstanding))+'</div></div>';
+  var kpis='';
+  if(openingBal>0){
+    kpis+='<div class="kpi-card"><div class="kpi-label">Opening Balance</div><div class="kpi-value" style="font-size:20px;color:var(--purple)">'+fmtCurrency(openingBal)+'</div></div>';
+    kpis+='<div class="kpi-card"><div class="kpi-label">This Period Sales</div><div class="kpi-value" style="font-size:20px;color:var(--gold)">'+fmtCurrency(periodSales)+'</div></div>';
+  }else{
+    kpis+='<div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-value" style="font-size:20px;color:var(--gold)">'+fmtCurrency(totalSales)+'</div></div>';
+  }
+  kpis+='<div class="kpi-card"><div class="kpi-label">Total Paid</div><div class="kpi-value" style="font-size:20px;color:var(--green)">'+fmtCurrency(totalPmt)+'</div></div>';
+  kpis+='<div class="kpi-card"><div class="kpi-label">Outstanding</div><div class="kpi-value" style="font-size:20px;color:'+(outstanding>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(outstanding))+'</div></div>';
+  document.getElementById('cust-modal-kpis').innerHTML=kpis;
   var tbl='<table><thead><tr><th>Date</th><th>Type</th><th>Invoice</th><th>Company</th><th class="r">Sales</th><th class="r">Payment</th></tr></thead><tbody>';
   stmts.forEach(function(r){
     tbl+='<tr>'
@@ -1452,22 +1460,8 @@ function closeCustModal(){
   document.body.style.overflow='';
 }
 async function exportCustModalPDF(){
-  var btn=document.getElementById('cust-modal-pdf');btn.textContent='⏳…';btn.disabled=true;
-  try{
-    var{jsPDF}=window.jspdf;
-    var content=document.getElementById('cust-modal').firstElementChild;
-    var btnRow=content.querySelector('div:first-child');
-    var prevDisplay=btnRow?btnRow.style.display:'';
-    if(btnRow)btnRow.style.display='none';
-    var ltSv=applyLightTheme(content),saved=unclipAll(content);
-    var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true});
-    reclipAll(saved);restoreLightTheme(content,ltSv);
-    if(btnRow)btnRow.style.display=prevDisplay;
-    var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}),W=210,H=297,M=10;
-    canvasToPDF(pdf,canvas,W,H,M,'Aqua — '+CUST_MODAL_NAME+' — '+new Date().toLocaleString('en-IN'));
-    pdf.save('aqua-'+CUST_MODAL_NAME.replace(/[^a-z0-9]/gi,'-')+'-ledger.pdf');
-  }catch(e){alert('PDF failed: '+e.message)}
-  finally{btn.textContent='⬇ PDF';btn.disabled=false}
+  var btn=document.getElementById('cust-modal-pdf');
+  await exportCustDirectPDF(CUST_MODAL_NAME,btn);
 }
 function shareCustModalWA(){shareCustStmtWA(CUST_MODAL_NAME)}
 
@@ -1481,39 +1475,53 @@ async function exportCustDirectPDF(custName,btn){
     var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
     var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
     var outstanding=totalSales-totalPmt;
+    var openingBal=stmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening')}).reduce(function(s,r){return s+r._sales},0);
+    var periodSales=totalSales-openingBal;
+
+    // 720px wide → A4 190mm content → each 10px CSS ≈ 2.64mm ≈ standard table text
     var wrap=document.createElement('div');
-    wrap.style.cssText='position:fixed;left:-9999px;top:0;width:860px;background:#fff;color:#111;padding:20px;font-family:IBM Plex Sans,sans-serif;font-size:13px';
-    var kpi='<div style="font-size:15px;font-weight:700;margin-bottom:12px;font-family:IBM Plex Mono,monospace;color:#111">'+esc(custName)+'</div>'
-      +'<div style="display:flex;gap:10px;margin-bottom:16px">'
-      +'<div style="flex:1;background:#f0f2f5;border:1px solid #ccc;border-radius:8px;padding:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#555;margin-bottom:4px">Total Billed</div><div style="font-size:17px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#111">'+fmtCurrency(totalSales)+'</div></div>'
-      +'<div style="flex:1;background:#f0f2f5;border:1px solid #ccc;border-radius:8px;padding:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#555;margin-bottom:4px">Total Paid</div><div style="font-size:17px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#111">'+fmtCurrency(totalPmt)+'</div></div>'
-      +'<div style="flex:1;background:#f0f2f5;border:1px solid #ccc;border-radius:8px;padding:10px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#555;margin-bottom:4px">Outstanding</div><div style="font-size:17px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#111">'+fmtCurrency(Math.abs(outstanding))+'</div></div>'
-      +'</div>';
-    var tblH='<table style="width:100%;border-collapse:collapse">'
+    wrap.style.cssText='position:fixed;left:-9999px;top:0;width:720px;background:#fff;color:#111;padding:14px 16px;font-family:IBM Plex Sans,sans-serif;font-size:10px;line-height:1.4';
+    var S='font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:2px';
+    var V='font-size:13px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#111';
+    var CARD='flex:1;background:#f0f2f5;border:1px solid #ccc;border-radius:5px;padding:7px 9px';
+    var TH='padding:4px 6px;border-bottom:1px solid #bbb;color:#222;font-size:9px;font-weight:700';
+    var TD='padding:3px 6px';
+    var html='<div style="font-size:11px;font-weight:700;margin-bottom:8px;font-family:IBM Plex Mono,monospace">'+esc(custName)+'</div>'
+      +'<div style="display:flex;gap:8px;margin-bottom:10px">';
+    if(openingBal>0){
+      html+='<div style="'+CARD+'"><div style="'+S+'">Opening Balance</div><div style="'+V+'">'+fmtCurrency(openingBal)+'</div></div>';
+      html+='<div style="'+CARD+'"><div style="'+S+'">This Period Sales</div><div style="'+V+'">'+fmtCurrency(periodSales)+'</div></div>';
+    }else{
+      html+='<div style="'+CARD+'"><div style="'+S+'">Total Billed</div><div style="'+V+'">'+fmtCurrency(totalSales)+'</div></div>';
+    }
+    html+='<div style="'+CARD+'"><div style="'+S+'">Total Paid</div><div style="'+V+'">'+fmtCurrency(totalPmt)+'</div></div>';
+    html+='<div style="'+CARD+'"><div style="'+S+'">Outstanding</div><div style="'+V+'">'+fmtCurrency(Math.abs(outstanding))+'</div></div>';
+    html+='</div>';
+    html+='<table style="width:100%;border-collapse:collapse;font-size:10px">'
       +'<thead><tr style="background:#e8eaed">'
-      +'<th style="text-align:left;padding:6px 8px;border-bottom:2px solid #bbb;color:#222;font-size:11px">Date</th>'
-      +'<th style="text-align:left;padding:6px 8px;border-bottom:2px solid #bbb;color:#222;font-size:11px">Type</th>'
-      +'<th style="text-align:left;padding:6px 8px;border-bottom:2px solid #bbb;color:#222;font-size:11px">Invoice</th>'
-      +'<th style="text-align:left;padding:6px 8px;border-bottom:2px solid #bbb;color:#222;font-size:11px">Company</th>'
-      +'<th style="text-align:right;padding:6px 8px;border-bottom:2px solid #bbb;color:#222;font-size:11px">Sales</th>'
-      +'<th style="text-align:right;padding:6px 8px;border-bottom:2px solid #bbb;color:#222;font-size:11px">Payment</th>'
+      +'<th style="text-align:left;'+TH+';white-space:nowrap">Date</th>'
+      +'<th style="text-align:left;'+TH+'">Type</th>'
+      +'<th style="text-align:left;'+TH+'">Invoice</th>'
+      +'<th style="text-align:left;'+TH+'">Company</th>'
+      +'<th style="text-align:right;'+TH+';white-space:nowrap">Sales</th>'
+      +'<th style="text-align:right;'+TH+';white-space:nowrap">Payment</th>'
       +'</tr></thead><tbody>';
     stmts.forEach(function(r){
-      tblH+='<tr style="border-bottom:1px solid #e0e0e0">'
-        +'<td style="padding:5px 8px;color:#111;font-size:12px">'+fmtDate(r._date)+'</td>'
-        +'<td style="padding:5px 8px;color:#111;font-size:12px">'+esc(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID])+'</td>'
-        +'<td style="padding:5px 8px;color:#111;font-size:11px;font-family:IBM Plex Mono,monospace">'+esc(r[SCOL.INVOICE_NO])+'</td>'
-        +'<td style="padding:5px 8px;color:#111;font-size:12px">'+esc(r[SCOL.COMPANY])+'</td>'
-        +'<td style="padding:5px 8px;text-align:right;color:#111;font-size:12px;font-weight:600">'+fmtCurrency(r._sales)+'</td>'
-        +'<td style="padding:5px 8px;text-align:right;color:#111;font-size:12px;font-weight:600">'+fmtCurrency(r._payment)+'</td>'
+      html+='<tr style="border-bottom:1px solid #ebebeb">'
+        +'<td style="'+TD+';white-space:nowrap">'+fmtDate(r._date)+'</td>'
+        +'<td style="'+TD+'">'+esc(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID])+'</td>'
+        +'<td style="'+TD+';font-family:IBM Plex Mono,monospace">'+esc(r[SCOL.INVOICE_NO])+'</td>'
+        +'<td style="'+TD+'">'+esc(r[SCOL.COMPANY])+'</td>'
+        +'<td style="'+TD+';text-align:right;font-weight:600">'+fmtCurrency(r._sales)+'</td>'
+        +'<td style="'+TD+';text-align:right;font-weight:600">'+fmtCurrency(r._payment)+'</td>'
         +'</tr>';
     });
-    tblH+='<tr style="border-top:2px solid #999">'
-      +'<td colspan="4" style="padding:6px 8px;color:#111;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.05em">Totals</td>'
-      +'<td style="padding:6px 8px;text-align:right;color:#111;font-size:12px;font-weight:700">'+fmtCurrency(totalSales)+'</td>'
-      +'<td style="padding:6px 8px;text-align:right;color:#111;font-size:12px;font-weight:700">'+fmtCurrency(totalPmt)+'</td>'
+    html+='<tr style="border-top:2px solid #999;font-weight:700">'
+      +'<td colspan="4" style="'+TD+';text-transform:uppercase;letter-spacing:.05em;font-size:9px">Totals</td>'
+      +'<td style="'+TD+';text-align:right">'+fmtCurrency(totalSales)+'</td>'
+      +'<td style="'+TD+';text-align:right">'+fmtCurrency(totalPmt)+'</td>'
       +'</tr></tbody></table>';
-    wrap.innerHTML=kpi+tblH;
+    wrap.innerHTML=html;
     document.body.appendChild(wrap);
     var canvas=await html2canvas(wrap,{backgroundColor:'#ffffff',scale:2,useCORS:true});
     document.body.removeChild(wrap);
