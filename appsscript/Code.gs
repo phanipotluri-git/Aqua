@@ -12,6 +12,10 @@
 //  9. Paste that URL into analytics.html  →  var APPS_SCRIPT_URL = '...'
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── CONFIGURATION ─────────────────────────────────────────────────────────────
+// Paste your Google Sheet ID here (the long ID from the sheet URL)
+var SPREADSHEET_ID = '1jbyn7Fka8EbXudEG9qe9YHBqAkP3Bx45TMcL_4uUjfE';
+
 // Maps sheet tab names → JSON response keys
 var SHEETS = {
   'Field Reports': 'fieldReports',
@@ -22,7 +26,9 @@ var SHEETS = {
 
 function doGet() {
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    // Works both as a bound script (Extensions→Apps Script) and standalone
+    var ss = SpreadsheetApp.getActiveSpreadsheet()
+          || SpreadsheetApp.openById(SPREADSHEET_ID);
     var tz = Session.getScriptTimeZone();
     var result = {};
 
