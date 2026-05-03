@@ -320,6 +320,7 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
     <div class="sec-head" style="flex-wrap:wrap;gap:8px">
       <div class="sec-label">Customer Ledger</div>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" id="btn-cust-pdf" onclick="exportCustLedgerPDF()" style="font-size:11px;padding:5px 10px">⬇ PDF</button>
         <input type="text" id="sales-search" placeholder="Search customer…"
           oninput="if(CURRENT_TAB==='sales')renderSalesTab()"
           style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:5px 8px;border-radius:4px;font-size:12px;min-width:140px">
@@ -1189,17 +1190,20 @@ function renderSalesTab(){
       +'<div class="kpi-card"><div class="kpi-label">Outstanding</div><div class="kpi-value" style="font-size:18px;color:var(--red)">'+fmtCurrency(totalOutstanding)+'</div></div>';
   }
 
-  // Build staff name lookup from STAFF_DATA (email → {name, area})
+  // Build staff name lookup: STAFF_DATA first, fallback to RAW_DATA (Field Reports has emails+names)
   var staffLookup={};
   STAFF_DATA.forEach(function(s){var e=s[STCOL.STAFF_EMAIL];if(e)staffLookup[e]={name:s[STCOL.STAFF_NAME]||e,area:s[STCOL.AREA]||''}});
+  RAW_DATA.forEach(function(r){var e=r[COL.STAFF_EMAIL],n=r[COL.STAFF_NAME];if(e&&n&&!staffLookup[e])staffLookup[e]={name:n,area:r[COL.AREA]||''}});
 
-  // Build customer → staff map from CUSTOMER_DATA
+  // Build customer → staff map; CUSTOMER_DATA may have comma-separated emails per customer
   var custStaffMap={};
   CUSTOMER_DATA.forEach(function(c){
     var cn=c[CCOL.CUST_NAME]||c[CCOL.CUST_ID];if(!cn)return;
-    var se=c[CCOL.STAFF_EMAIL];
-    var si=staffLookup[se]||{name:se||'—',area:'—'};
-    custStaffMap[cn]={staffName:si.name,staffArea:si.area,email:se};
+    var se=c[CCOL.STAFF_EMAIL]||'';
+    var emails=se.split(/[,;]+/).map(function(e){return e.trim()}).filter(Boolean);
+    var names=emails.map(function(e){return(staffLookup[e]&&staffLookup[e].name)||e}).filter(Boolean);
+    var areas=emails.map(function(e){return(staffLookup[e]&&staffLookup[e].area)||''}).filter(Boolean);
+    custStaffMap[cn]={staffName:names.join(', ')||'—',staffArea:[...new Set(areas)].filter(Boolean).join(', ')||'—',emails:emails};
   });
 
   // Populate staff filter dropdown
@@ -1213,7 +1217,7 @@ function renderSalesTab(){
   }
 
   renderCustomerLedger(stmts,custStaffMap);
-  renderStaffCustMapping(custStaffMap);
+  renderStaffCustMapping(custStaffMap,staffLookup);
 }
 
 function renderCustomerLedger(stmts,custStaffMap){
@@ -1289,20 +1293,24 @@ function renderCustomerLedger(stmts,custStaffMap){
   makeSortable('tbl-cust-ledger');
 }
 
-function renderStaffCustMapping(custStaffMap){
+function renderStaffCustMapping(custStaffMap,staffLookup){
   var tbody=document.getElementById('tbl-staff-cust');if(!tbody)return;
   tbody.innerHTML='';
+  staffLookup=staffLookup||{};
 
-  // Group customers by staff
+  // Group customers by individual staff member (handle comma-separated emails)
   var staffCusts={};
   CUSTOMER_DATA.forEach(function(c){
     var cn=c[CCOL.CUST_NAME]||c[CCOL.CUST_ID];if(!cn)return;
-    var se=c[CCOL.STAFF_EMAIL];
-    var si=custStaffMap[cn]||{};
-    var sname=si.staffName||(se||'Unknown');
-    var sarea=si.staffArea||'—';
-    if(!staffCusts[sname])staffCusts[sname]={name:sname,area:sarea,custs:[]};
-    staffCusts[sname].custs.push(cn);
+    var se=c[CCOL.STAFF_EMAIL]||'';
+    var emails=se.split(/[,;]+/).map(function(e){return e.trim()}).filter(Boolean);
+    if(!emails.length)emails=['Unknown'];
+    emails.forEach(function(email){
+      var si=staffLookup[email]||{name:email,area:'—'};
+      var sname=si.name||email;
+      if(!staffCusts[sname])staffCusts[sname]={name:sname,area:si.area||'—',custs:[]};
+      if(staffCusts[sname].custs.indexOf(cn)===-1)staffCusts[sname].custs.push(cn);
+    });
   });
 
   if(!Object.keys(staffCusts).length){
@@ -1336,6 +1344,21 @@ function renderStaffCustMapping(custStaffMap){
     tbody.appendChild(tr);tbody.appendChild(det);
   });
   makeSortable('tbl-staff-cust');
+}
+
+async function exportCustLedgerPDF(){
+  var btn=document.getElementById('btn-cust-pdf');btn.textContent='⏳…';btn.disabled=true;
+  try{
+    var{jsPDF}=window.jspdf;
+    var content=document.getElementById('tbl-cust-ledger').closest('.sec-panel');
+    var saved=unclipAll(content);
+    var canvas=await html2canvas(content,{backgroundColor:'#060d18',scale:2,useCORS:true});
+    reclipAll(saved);
+    var pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,M=10;
+    canvasToPDF(pdf,canvas,W,H,M,'Aqua — Customer Ledger'+(SALES_COMPANY?' ('+SALES_COMPANY+')':'')+' — '+new Date().toLocaleString('en-IN'));
+    pdf.save('aqua-customer-ledger-'+new Date().toISOString().slice(0,10)+'.pdf');
+  }catch(e){alert('PDF failed: '+e.message)}
+  finally{btn.textContent='⬇ PDF';btn.disabled=false}
 }
 
 function shareCustStmtWA(custName){
