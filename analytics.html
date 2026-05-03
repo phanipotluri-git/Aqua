@@ -532,7 +532,11 @@ async function loadData(){
       });
     }
     RAW_DATA.forEach(function(r){r._visitDate=new Date(r[COL.VISIT_DATE]||r[COL.TIMESTAMP]);if(isNaN(r._visitDate))r._visitDate=null});
-    setStatus('Updated '+new Date().toLocaleTimeString('en-IN')+' · '+RAW_DATA.length+' visits'+(STATEMENTS_DATA.length?' · '+STATEMENTS_DATA.length+' statements':''));
+    var isMultiSheet=!Array.isArray(json);
+    setStatus('Updated '+new Date().toLocaleTimeString('en-IN')+' · '+RAW_DATA.length+' visits'
+      +(isMultiSheet
+        ?' · Staff:'+STAFF_DATA.length+' Cust:'+CUSTOMER_DATA.length+' Stmts:'+STATEMENTS_DATA.length
+        :' · ⚠ OLD API FORMAT — redeploy Code.gs'));
     populateFilters();applyFilters();
   }catch(e){setStatus('Error: '+e.message,'var(--red)');document.getElementById('loading-txt').textContent='Error: '+e.message}
   finally{document.getElementById('loading-overlay').classList.add('hidden')}
