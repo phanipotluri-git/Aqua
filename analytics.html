@@ -189,6 +189,7 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
   <button class="tab-btn" data-tab="dealers">Dealers</button>
   <button class="tab-btn" data-tab="remarks">Remarks</button>
   <button class="tab-btn" data-tab="performance">Performance</button>
+  <button class="tab-btn" data-tab="sales">Sales</button>
 </div>
 
 <!-- OVERVIEW -->
@@ -305,6 +306,47 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
   <div id="perf-content"></div>
 </div>
 
+<!-- SALES -->
+<div id="tab-sales" class="tab-content">
+  <div class="sec-panel">
+    <div class="sec-head" style="flex-wrap:wrap;gap:8px">
+      <div class="sec-label" id="sales-company-lbl">Sales Ledger</div>
+      <button class="btn wa-sm" onclick="shareSalesSummaryWA()" title="Share on WhatsApp">📱 Share Summary</button>
+    </div>
+    <div id="sales-company-pills" class="staff-pills"></div>
+  </div>
+  <div id="sales-kpi-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px"></div>
+  <div class="sec-panel">
+    <div class="sec-head" style="flex-wrap:wrap;gap:8px">
+      <div class="sec-label">Customer Ledger</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="sales-search" placeholder="Search customer…"
+          oninput="if(CURRENT_TAB==='sales')renderSalesTab()"
+          style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:5px 8px;border-radius:4px;font-size:12px;min-width:140px">
+        <select id="sales-staff-filter" onchange="if(CURRENT_TAB==='sales')renderSalesTab()"
+          style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:5px 8px;border-radius:4px;font-size:12px">
+          <option value="">All Staff</option>
+        </select>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table><thead><tr>
+        <th>Customer</th><th>Staff</th><th>Company</th>
+        <th class="r">Total Billed</th><th class="r">Total Paid</th>
+        <th class="r">Outstanding</th><th style="width:36px"></th>
+      </tr></thead><tbody id="tbl-cust-ledger"></tbody></table>
+    </div>
+  </div>
+  <div class="sec-panel">
+    <div class="sec-head"><div class="sec-label">Staff → Customer Mapping</div></div>
+    <div class="tbl-wrap">
+      <table><thead><tr>
+        <th>Staff</th><th>Area</th><th class="r">Customers</th>
+      </tr></thead><tbody id="tbl-staff-cust"></tbody></table>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxO-1pqk3u52gJ_LNl68RaaSZMXFVIC04pHBaGWyE1axQKc1WMemeVlUT5Tmzwrrjkv/exec';
@@ -317,6 +359,17 @@ var COL = {
   MOBILE:'Shop / Farmer Mobile Number', PHOTO:'Photo (Farm/Shop)',
   REMARKS:'Remarks', LOCATION:'Location', VISIT_DATE:'Visit Date'
 };
+// Staff sheet columns
+var STCOL = {STAFF_EMAIL:'Staff ID (Email)', STAFF_NAME:'Staff Name', AREA:'Area'};
+// Customer sheet columns
+var CCOL = {CUST_ID:'Customer ID', CUST_NAME:'Customer Name', STAFF_EMAIL:'Staff ID (Email)'};
+// Statements sheet columns
+var SCOL = {
+  STMT_ID:'Statement ID', CUST_ID:'Customer ID', CUST_NAME:'Customer Name',
+  DATE:'Date', BILLED_PAID:'Billed/Paid', TRANS_TYPE:'Transaction Type',
+  INVOICE_NO:'Invoice No', MRP:'MRP Value', SALES:'Sales',
+  PAYMENT:'Payment', BALANCE:'Balance', COMPANY:'Company'
+};
 
 var PALETTE = ['#12c4d0','#e6b020','#9b6cff','#48ccff','#44d488','#f08840','#f06060','#c4e012','#ff6eb4','#7ecfff'];
 var STOP_WORDS = new Set(['a','an','the','and','or','but','in','on','at','to','for','of','with','by','from','is','are','was','were','be','been','have','has','had','do','does','did','not','no','yes','i','me','my','we','our','you','your','he','she','it','they','their','this','that','which','who','what','when','where','how','why','will','would','could','should','may','might','can','so','if','as','than','then','also','more','very','just','up','out','about','into','after','before','over','under','again','all','any','both','each','few','other','same','too','its','him','her','them','there','here','am','sir','ok','okay','na','ne','ke','hai','ka','ki','ko','se','please','per','mr','mrs','dr','ji','bhi','koi','ek','was','got','did']);
@@ -327,6 +380,8 @@ var NEG_KW = ['not interested','rejected','refused','bad','problem','issue','com
 var RAW_DATA=[], FILTERED_DATA=[], charts={}, CURRENT_TAB='overview';
 var REVISIT_FILTER='', REVISIT_SORT={col:'gap',dir:1};
 var PERF_PERIOD='week';
+var STAFF_DATA=[], CUSTOMER_DATA=[], STATEMENTS_DATA=[];
+var SALES_COMPANY='';
 Chart.defaults.color='#8ab2cc'; Chart.defaults.borderColor='#1a3060';
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -338,6 +393,8 @@ function countBy(arr,key){var m={};arr.forEach(function(r){var v=r[key]||'(blank
 function sortedEntries(m){return Object.entries(m).sort(function(a,b){return b[1]-a[1]})}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function setStatus(msg,col){var el=document.getElementById('data-status');el.textContent=msg;el.style.color=col||'var(--dim)'}
+function parseMoney(v){if(!v||v==='')return 0;return parseFloat(String(v).replace(/[₹,\s]/g,''))||0}
+function fmtCurrency(v){var n=parseMoney(v);return'₹'+Math.abs(n).toLocaleString('en-IN',{maximumFractionDigits:0})}
 
 function timeToMins(ts){
   if(!ts)return null;
@@ -457,9 +514,25 @@ async function loadData(){
     if(!res.ok){var e=await res.json().catch(function(){return{error:'HTTP '+res.status}});throw new Error(e.error||'HTTP '+res.status)}
     var json=await res.json();
     if(json&&json.error)throw new Error(json.error);
-    RAW_DATA=Array.isArray(json)?json:[];
+    // Support both old (plain array) and new (multi-sheet object) response formats
+    if(Array.isArray(json)){
+      RAW_DATA=json;STAFF_DATA=[];CUSTOMER_DATA=[];STATEMENTS_DATA=[];
+    }else{
+      RAW_DATA=Array.isArray(json.fieldReports)?json.fieldReports:[];
+      STAFF_DATA=Array.isArray(json.staff)?json.staff:[];
+      CUSTOMER_DATA=Array.isArray(json.customers)?json.customers:[];
+      STATEMENTS_DATA=Array.isArray(json.statements)?json.statements:[];
+      STATEMENTS_DATA.forEach(function(r){
+        r._date=r[SCOL.DATE]?new Date(r[SCOL.DATE]):null;
+        if(r._date&&isNaN(r._date))r._date=null;
+        r._sales=parseMoney(r[SCOL.SALES]);
+        r._payment=parseMoney(r[SCOL.PAYMENT]);
+        r._balance=parseMoney(r[SCOL.BALANCE]);
+        r._mrp=parseMoney(r[SCOL.MRP]);
+      });
+    }
     RAW_DATA.forEach(function(r){r._visitDate=new Date(r[COL.VISIT_DATE]||r[COL.TIMESTAMP]);if(isNaN(r._visitDate))r._visitDate=null});
-    setStatus('Updated '+new Date().toLocaleTimeString('en-IN')+' · '+RAW_DATA.length+' records');
+    setStatus('Updated '+new Date().toLocaleTimeString('en-IN')+' · '+RAW_DATA.length+' visits'+(STATEMENTS_DATA.length?' · '+STATEMENTS_DATA.length+' statements':''));
     populateFilters();applyFilters();
   }catch(e){setStatus('Error: '+e.message,'var(--red)');document.getElementById('loading-txt').textContent='Error: '+e.message}
   finally{document.getElementById('loading-overlay').classList.add('hidden')}
@@ -522,6 +595,7 @@ function renderTab(name){
   else if(name==='dealers')renderDealersTab();
   else if(name==='remarks')renderRemarksTab();
   else if(name==='performance')renderPerformanceTab();
+  else if(name==='sales')renderSalesTab();
 }
 function switchTab(name){
   CURRENT_TAB=name;
@@ -1073,6 +1147,232 @@ function sendPerfWhatsApp(){
   stats.slice(0,5).forEach(function(s){
     msg+='• '+s.name+' — '+s.visits+' visits, '+s.att+'% att\n';
   });
+  msg+='\n_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+// ─── SALES TAB ───────────────────────────────────────────────────────────────
+function setSalesCompany(c){SALES_COMPANY=c;renderSalesTab()}
+
+function renderSalesTab(){
+  // Company pills
+  var companies=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.COMPANY]}));
+  var pillsEl=document.getElementById('sales-company-pills');
+  if(pillsEl){
+    pillsEl.innerHTML='<span class="staff-pill'+(SALES_COMPANY===''?' active':'')+'" onclick="setSalesCompany(\'\')">All Companies</span>'
+      +companies.map(function(c){return'<span class="staff-pill'+(SALES_COMPANY===c?' active':'')+'" onclick="setSalesCompany(\''+c.replace(/'/g,'\\\'')+'\')" title="'+esc(c)+'">'+esc(c)+'</span>'}).join('');
+  }
+  var lbl=document.getElementById('sales-company-lbl');
+  if(lbl)lbl.textContent='Sales Ledger'+(SALES_COMPANY?' — '+SALES_COMPANY:'');
+
+  // Filtered statements
+  var stmts=SALES_COMPANY?STATEMENTS_DATA.filter(function(r){return r[SCOL.COMPANY]===SALES_COMPANY}):STATEMENTS_DATA;
+
+  // KPI Cards
+  var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
+  var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
+  var custNames=unique(stmts.map(function(r){return r[SCOL.CUST_NAME]}));
+  var lastBal={};
+  stmts.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn||!r._date)return;if(!lastBal[cn]||r._date>lastBal[cn].date)lastBal[cn]={date:r._date,bal:r._balance}});
+  var totalOutstanding=Object.values(lastBal).reduce(function(s,x){return s+x.bal},0);
+
+  var kpiRow=document.getElementById('sales-kpi-row');
+  if(kpiRow){
+    kpiRow.innerHTML=
+      '<div class="kpi-card"><div class="kpi-label">Customers</div><div class="kpi-value">'+custNames.length+'</div></div>'
+      +'<div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-value" style="font-size:18px;color:var(--gold)">'+fmtCurrency(totalSales)+'</div></div>'
+      +'<div class="kpi-card"><div class="kpi-label">Total Collected</div><div class="kpi-value" style="font-size:18px;color:var(--green)">'+fmtCurrency(totalPmt)+'</div></div>'
+      +'<div class="kpi-card"><div class="kpi-label">Outstanding</div><div class="kpi-value" style="font-size:18px;color:var(--red)">'+fmtCurrency(totalOutstanding)+'</div></div>';
+  }
+
+  // Build staff name lookup from STAFF_DATA (email → {name, area})
+  var staffLookup={};
+  STAFF_DATA.forEach(function(s){var e=s[STCOL.STAFF_EMAIL];if(e)staffLookup[e]={name:s[STCOL.STAFF_NAME]||e,area:s[STCOL.AREA]||''}});
+
+  // Build customer → staff map from CUSTOMER_DATA
+  var custStaffMap={};
+  CUSTOMER_DATA.forEach(function(c){
+    var cn=c[CCOL.CUST_NAME]||c[CCOL.CUST_ID];if(!cn)return;
+    var se=c[CCOL.STAFF_EMAIL];
+    var si=staffLookup[se]||{name:se||'—',area:'—'};
+    custStaffMap[cn]={staffName:si.name,staffArea:si.area,email:se};
+  });
+
+  // Populate staff filter dropdown
+  var staffSel=document.getElementById('sales-staff-filter');
+  if(staffSel){
+    var prev=staffSel.value;
+    var staffNames=unique(Object.values(custStaffMap).map(function(x){return x.staffName}).filter(Boolean));
+    while(staffSel.options.length>1)staffSel.remove(1);
+    staffNames.forEach(function(n){var o=document.createElement('option');o.value=o.textContent=n;staffSel.appendChild(o)});
+    if(prev)staffSel.value=prev;
+  }
+
+  renderCustomerLedger(stmts,custStaffMap);
+  renderStaffCustMapping(custStaffMap);
+}
+
+function renderCustomerLedger(stmts,custStaffMap){
+  var tbody=document.getElementById('tbl-cust-ledger');if(!tbody)return;
+  tbody.innerHTML='';
+  var search=((document.getElementById('sales-search')||{}).value||'').toLowerCase();
+  var staffF=(document.getElementById('sales-staff-filter')||{}).value||'';
+
+  // Group by customer name
+  var custMap={};
+  stmts.forEach(function(r){
+    var cn=r[SCOL.CUST_NAME];if(!cn)return;
+    if(!custMap[cn])custMap[cn]={name:cn,stmts:[],sales:0,payment:0};
+    custMap[cn].stmts.push(r);
+    custMap[cn].sales+=r._sales;
+    custMap[cn].payment+=r._payment;
+  });
+
+  var customers=Object.values(custMap).map(function(c){
+    var sm=custStaffMap[c.name]||{staffName:'—',staffArea:'—'};
+    c.staffName=sm.staffName;
+    // Outstanding = last balance value for this customer (sorted by date)
+    var sorted=c.stmts.filter(function(r){return r._date}).sort(function(a,b){return a._date-b._date});
+    c.outstanding=sorted.length?sorted[sorted.length-1]._balance:(c.sales-c.payment);
+    c.companies=unique(c.stmts.map(function(r){return r[SCOL.COMPANY]})).join(', ');
+    return c;
+  });
+
+  if(search)customers=customers.filter(function(c){return c.name.toLowerCase().includes(search)});
+  if(staffF)customers=customers.filter(function(c){return c.staffName===staffF});
+  customers.sort(function(a,b){return b.outstanding-a.outstanding});
+
+  if(!customers.length){
+    tbody.innerHTML='<tr><td colspan="7" style="color:var(--dim);padding:14px">'+(stmts.length?'No customers match filter':'No statements data — deploy updated Code.gs')+'</td></tr>';
+    return;
+  }
+
+  customers.forEach(function(c,i){
+    var outCol=c.outstanding>0?'c-red':c.outstanding<0?'c-green':'c-teal';
+    var tr=document.createElement('tr');tr.className='cl';
+    tr.innerHTML='<td class="c-name">'+esc(c.name)+'</td>'
+      +'<td>'+esc(c.staffName)+'</td>'
+      +'<td style="color:var(--purple)">'+esc(c.companies)+'</td>'
+      +'<td class="c-gold">'+fmtCurrency(c.sales)+'</td>'
+      +'<td class="c-green">'+fmtCurrency(c.payment)+'</td>'
+      +'<td class="'+outCol+'">'+fmtCurrency(c.outstanding)+'</td>'
+      +'<td><button class="btn wa-sm" onclick="event.stopPropagation();shareCustStmtWA(\''+c.name.replace(/'/g,'\\\'')+'\')" title="WhatsApp">📱</button></td>';
+
+    var det=document.createElement('tr');det.className='row-detail';det.id='cust-det-'+i;
+    var sorted=c.stmts.slice().sort(function(a,b){return(a._date||0)-(b._date||0)});
+    var tbl='<div style="overflow-x:auto"><table><thead><tr>'
+      +'<th>Date</th><th>Type</th><th>Invoice No</th><th>Company</th>'
+      +'<th class="r">MRP</th><th class="r">Sales</th><th class="r">Payment</th><th class="r">Balance</th>'
+      +'</tr></thead><tbody>';
+    sorted.forEach(function(r){
+      var balCol=r._balance>0?'var(--red)':r._balance<0?'var(--green)':'var(--teal)';
+      tbl+='<tr>'
+        +'<td class="c-date">'+fmtDate(r._date)+'</td>'
+        +'<td class="c-type">'+esc(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID])+'</td>'
+        +'<td style="font-family:IBM Plex Mono,monospace;font-size:11px">'+esc(r[SCOL.INVOICE_NO])+'</td>'
+        +'<td style="color:var(--purple)">'+esc(r[SCOL.COMPANY])+'</td>'
+        +'<td style="text-align:right;color:var(--mid)">'+fmtCurrency(r._mrp)+'</td>'
+        +'<td class="c-gold">'+fmtCurrency(r._sales)+'</td>'
+        +'<td class="c-green">'+fmtCurrency(r._payment)+'</td>'
+        +'<td style="text-align:right;font-family:IBM Plex Mono,monospace;color:'+balCol+'">'+fmtCurrency(r._balance)+'</td>'
+        +'</tr>';
+    });
+    tbl+='</tbody></table></div>';
+    det.innerHTML='<td colspan="7">'+tbl+'</td>';
+    tr.addEventListener('click',function(){det.classList.toggle('open')});
+    tbody.appendChild(tr);tbody.appendChild(det);
+  });
+  makeSortable('tbl-cust-ledger');
+}
+
+function renderStaffCustMapping(custStaffMap){
+  var tbody=document.getElementById('tbl-staff-cust');if(!tbody)return;
+  tbody.innerHTML='';
+
+  // Group customers by staff
+  var staffCusts={};
+  CUSTOMER_DATA.forEach(function(c){
+    var cn=c[CCOL.CUST_NAME]||c[CCOL.CUST_ID];if(!cn)return;
+    var se=c[CCOL.STAFF_EMAIL];
+    var si=custStaffMap[cn]||{};
+    var sname=si.staffName||(se||'Unknown');
+    var sarea=si.staffArea||'—';
+    if(!staffCusts[sname])staffCusts[sname]={name:sname,area:sarea,custs:[]};
+    staffCusts[sname].custs.push(cn);
+  });
+
+  if(!Object.keys(staffCusts).length){
+    tbody.innerHTML='<tr><td colspan="3" style="color:var(--dim);padding:14px">No customer mapping data — deploy updated Code.gs</td></tr>';
+    return;
+  }
+
+  Object.values(staffCusts).sort(function(a,b){return b.custs.length-a.custs.length}).forEach(function(s,i){
+    var uid='scm'+i;
+    var tr=document.createElement('tr');tr.className='cl';
+    tr.innerHTML='<td class="c-name"><span id="scm-arr-'+uid+'" style="font-size:9px;margin-right:6px;color:var(--dim);display:inline-block;width:10px">▶</span>'+esc(s.name)+'</td>'
+      +'<td class="c-area">'+esc(s.area)+'</td>'
+      +'<td class="c-teal">'+s.custs.length+'</td>';
+
+    var det=document.createElement('tr');det.className='row-detail';det.id='scm-det-'+uid;
+    var custList=s.custs.map(function(cn){
+      var cStmts=STATEMENTS_DATA.filter(function(r){return r[SCOL.CUST_NAME]===cn&&(!SALES_COMPANY||r[SCOL.COMPANY]===SALES_COMPANY)});
+      var sorted=cStmts.filter(function(r){return r._date}).sort(function(a,b){return a._date-b._date});
+      var bal=sorted.length?sorted[sorted.length-1]._balance:0;
+      return'<span style="display:inline-block;margin:2px 8px 2px 0;font-size:12px">'+esc(cn)
+        +(bal>0?' <span style="color:var(--red);font-family:IBM Plex Mono,monospace;font-size:10px">('+fmtCurrency(bal)+' due)</span>':'')
+        +'</span>';
+    }).join('');
+    det.innerHTML='<td colspan="3" style="padding:8px 16px 12px 30px;color:var(--mid);line-height:2">'+custList+'</td>';
+
+    tr.addEventListener('click',function(){
+      det.classList.toggle('open');
+      var arr=document.getElementById('scm-arr-'+uid);
+      if(arr)arr.textContent=det.classList.contains('open')?'▼':'▶';
+    });
+    tbody.appendChild(tr);tbody.appendChild(det);
+  });
+  makeSortable('tbl-staff-cust');
+}
+
+function shareCustStmtWA(custName){
+  var stmts=STATEMENTS_DATA.filter(function(r){
+    return r[SCOL.CUST_NAME]===custName&&(!SALES_COMPANY||r[SCOL.COMPANY]===SALES_COMPANY);
+  }).sort(function(a,b){return(a._date||0)-(b._date||0)});
+  var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
+  var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
+  var lastBalance=stmts.length?stmts[stmts.length-1]._balance:(totalSales-totalPmt);
+  var msg='🌊 *AQUA — Customer Statement*\n'
+    +'👤 *'+custName+'*\n'
+    +(SALES_COMPANY?'🏢 '+SALES_COMPANY+'\n':'')
+    +'📅 '+new Date().toLocaleDateString('en-IN')+'\n\n'
+    +'💰 Total Billed: ₹'+totalSales.toLocaleString('en-IN')+'\n'
+    +'✅ Total Paid: ₹'+totalPmt.toLocaleString('en-IN')+'\n'
+    +(lastBalance>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(lastBalance).toLocaleString('en-IN')+'\n\n'
+    +'_Recent Transactions:_\n';
+  stmts.slice(-5).forEach(function(r){
+    if(r._sales>0)msg+='📋 '+fmtDate(r._date)+' Invoice '+esc(r[SCOL.INVOICE_NO])+': ₹'+r._sales.toLocaleString('en-IN')+'\n';
+    if(r._payment>0)msg+='💳 '+fmtDate(r._date)+' Payment: ₹'+r._payment.toLocaleString('en-IN')+'\n';
+  });
+  msg+='\n_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+function shareSalesSummaryWA(){
+  var stmts=SALES_COMPANY?STATEMENTS_DATA.filter(function(r){return r[SCOL.COMPANY]===SALES_COMPANY}):STATEMENTS_DATA;
+  var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
+  var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
+  var lastBal={};
+  stmts.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn||!r._date)return;if(!lastBal[cn]||r._date>lastBal[cn].date)lastBal[cn]={date:r._date,bal:r._balance}});
+  var outstanding=Object.values(lastBal).reduce(function(s,x){return s+x.bal},0);
+  var msg='🌊 *AQUA — Sales Summary*\n'
+    +(SALES_COMPANY?'🏢 '+SALES_COMPANY+'\n':'')
+    +'📅 '+new Date().toLocaleDateString('en-IN')+'\n\n'
+    +'👥 Customers: '+Object.keys(lastBal).length+'\n'
+    +'💰 Total Billed: ₹'+totalSales.toLocaleString('en-IN')+'\n'
+    +'✅ Total Collected: ₹'+totalPmt.toLocaleString('en-IN')+'\n'
+    +(outstanding>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(outstanding).toLocaleString('en-IN')+'\n\n';
+  var tops=Object.entries(lastBal).filter(function(e){return e[1].bal>0}).sort(function(a,b){return b[1].bal-a[1].bal}).slice(0,5);
+  if(tops.length){msg+='_Top Outstanding:_\n';tops.forEach(function(e){msg+='⚠ '+e[0]+': ₹'+e[1].bal.toLocaleString('en-IN')+'\n'})}
   msg+='\n_Aqua Analytics_';
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }

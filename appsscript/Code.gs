@@ -12,41 +12,50 @@
 //  9. Paste that URL into analytics.html  →  var APPS_SCRIPT_URL = '...'
 // ─────────────────────────────────────────────────────────────────────────────
 
-var SHEET_NAME = 'Field Reports'; // exact tab name in the Google Sheet
+// Maps sheet tab names → JSON response keys
+var SHEETS = {
+  'Field Reports': 'fieldReports',
+  'Staff':         'staff',
+  'Customer':      'customers',
+  'Statements':    'statements'
+};
 
 function doGet() {
   try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-    if (!sheet) throw new Error('Sheet "' + SHEET_NAME + '" not found');
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var tz = Session.getScriptTimeZone();
+    var result = {};
 
-    var values = sheet.getDataRange().getValues();
-    if (values.length < 2) return respond([]);
+    Object.keys(SHEETS).forEach(function(sheetName) {
+      var key = SHEETS[sheetName];
+      var sheet = ss.getSheetByName(sheetName);
+      if (!sheet) { result[key] = []; return; }
 
-    var headers = values[0].map(function(h) { return String(h).trim(); });
-    var tz = Session.getScriptTimeZone(); // use the script's configured timezone (IST)
+      var values = sheet.getDataRange().getValues();
+      if (values.length < 2) { result[key] = []; return; }
 
-    var records = values.slice(1).map(function(row) {
-      var obj = {};
-      headers.forEach(function(h, i) {
-        var v = row[i];
-        if (v instanceof Date) {
-          // TIME-only cells use the 1899-12-30 epoch in Apps Script.
-          // Output them as plain "HH:mm:ss" text so the dashboard can parse
-          // them simply without any epoch/timezone confusion.
-          if (v.getFullYear() <= 1899) {
-            obj[h] = Utilities.formatDate(v, tz, 'HH:mm:ss');
+      var headers = values[0].map(function(h) { return String(h).trim(); });
+
+      result[key] = values.slice(1).map(function(row) {
+        var obj = {};
+        headers.forEach(function(h, i) {
+          var v = row[i];
+          if (v instanceof Date) {
+            // TIME-only cells use the 1899-12-30 epoch in Apps Script.
+            if (v.getFullYear() <= 1899) {
+              obj[h] = Utilities.formatDate(v, tz, 'HH:mm:ss');
+            } else {
+              obj[h] = v.toISOString();
+            }
           } else {
-            // Full date/datetime cells — keep as ISO string (UTC)
-            obj[h] = v.toISOString();
+            obj[h] = (v === null || v === undefined) ? '' : String(v).trim();
           }
-        } else {
-          obj[h] = (v === null || v === undefined) ? '' : String(v).trim();
-        }
+        });
+        return obj;
       });
-      return obj;
     });
 
-    return respond(records);
+    return respond(result);
   } catch (e) {
     return respond({ error: e.message });
   }
