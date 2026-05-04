@@ -1242,18 +1242,23 @@ function renderSalesTab(){
   // KPI Cards
   var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
   var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
+  var openingBal=stmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');}).reduce(function(s,r){return s+r._sales;},0);
+  var periodSales=totalSales-openingBal;
   var custNames=unique(stmts.map(function(r){return r[SCOL.CUST_NAME]}));
-  var lastBal={};
-  stmts.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn||!r._date)return;if(!lastBal[cn]||r._date>lastBal[cn].date)lastBal[cn]={date:r._date,bal:r._balance}});
-  var totalOutstanding=Object.values(lastBal).reduce(function(s,x){return s+x.bal},0);
+  var totalOutstanding=totalSales-totalPmt;
 
   var kpiRow=document.getElementById('sales-kpi-row');
   if(kpiRow){
-    kpiRow.innerHTML=
-      '<div class="kpi-card"><div class="kpi-label">Customers</div><div class="kpi-value">'+custNames.length+'</div></div>'
-      +'<div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-value" style="font-size:18px;color:var(--gold)">'+fmtCurrency(totalSales)+'</div></div>'
-      +'<div class="kpi-card"><div class="kpi-label">Total Collected</div><div class="kpi-value" style="font-size:18px;color:var(--green)">'+fmtCurrency(totalPmt)+'</div></div>'
-      +'<div class="kpi-card"><div class="kpi-label">Outstanding</div><div class="kpi-value" style="font-size:18px;color:var(--red)">'+fmtCurrency(totalOutstanding)+'</div></div>';
+    var kpiHtml='<div class="kpi-card"><div class="kpi-label">Customers</div><div class="kpi-value">'+custNames.length+'</div></div>';
+    if(openingBal>0){
+      kpiHtml+='<div class="kpi-card"><div class="kpi-label">Opening Balance</div><div class="kpi-value" style="font-size:18px;color:var(--purple)">'+fmtCurrency(openingBal)+'</div></div>';
+      kpiHtml+='<div class="kpi-card"><div class="kpi-label">This Period Sales</div><div class="kpi-value" style="font-size:18px;color:var(--gold)">'+fmtCurrency(periodSales)+'</div></div>';
+    }else{
+      kpiHtml+='<div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-value" style="font-size:18px;color:var(--gold)">'+fmtCurrency(totalSales)+'</div></div>';
+    }
+    kpiHtml+='<div class="kpi-card"><div class="kpi-label">Total Collected</div><div class="kpi-value" style="font-size:18px;color:var(--green)">'+fmtCurrency(totalPmt)+'</div></div>';
+    kpiHtml+='<div class="kpi-card"><div class="kpi-label">Outstanding</div><div class="kpi-value" style="font-size:18px;color:var(--red)">'+fmtCurrency(totalOutstanding)+'</div></div>';
+    kpiRow.innerHTML=kpiHtml;
   }
 
   // Build staff name lookup: STAFF_DATA first, fallback to RAW_DATA (Field Reports has emails+names)
@@ -1654,67 +1659,136 @@ function chatStaffName(email){
   var r=RAW_DATA.find(function(x){return x[COL.STAFF_EMAIL]===email&&x[COL.STAFF_NAME];});
   return r?r[COL.STAFF_NAME]:email;
 }
-function chatProcess(q){
-  var ql=q.toLowerCase().trim();
-  if(/today|attendance/.test(ql))return chatTodayAttend();
-  if(/\bmonth\b|30.day/.test(ql))return chatMonthly();
-  if(/week|7.day/.test(ql))return chatWeekly();
-  if(/outstanding|pending|due|unpaid/.test(ql))return chatOutstanding();
-  if(/top.*cust|top.*sale|highest.*sale|best.*cust/.test(ql))return chatTopCust();
-
-  // Strip all common query words, including "sales" (not just "sale")
-  var strip=ql
-    .replace(/\b(sales?|balance|ledger|customers?|of|for|show|me|the|data|report|performance|give|what|is|are|how|much|many|my|their|his|her)\b/g,' ')
+// ── NLP helpers ──────────────────────────────────────────────────────────────
+function chatExtractPeriod(ql){
+  var now=new Date();
+  if(/\btoday\b/.test(ql)){var d=new Date();d.setHours(0,0,0,0);return{from:d,to:now,label:'today'};}
+  if(/\byesterday\b/.test(ql)){var d=new Date();d.setDate(d.getDate()-1);d.setHours(0,0,0,0);var e=new Date(d);e.setHours(23,59,59,999);return{from:d,to:e,label:'yesterday'};}
+  if(/\bthis\s+week\b/.test(ql)){var d=new Date();d.setDate(d.getDate()-d.getDay());d.setHours(0,0,0,0);return{from:d,to:now,label:'this week'};}
+  if(/\blast\s+week\b/.test(ql)){
+    var d=new Date();var day=d.getDay()||7;
+    var mon=new Date(d);mon.setDate(d.getDate()-day-6);mon.setHours(0,0,0,0);
+    var sun=new Date(mon);sun.setDate(mon.getDate()+6);sun.setHours(23,59,59,999);
+    return{from:mon,to:sun,label:'last week'};
+  }
+  if(/\bthis\s+month\b/.test(ql)){var d=new Date();d.setDate(1);d.setHours(0,0,0,0);return{from:d,to:now,label:'this month'};}
+  if(/\blast\s+month\b/.test(ql)){
+    var d=new Date();d.setDate(1);d.setDate(d.getDate()-1);var e=new Date(d);e.setHours(23,59,59,999);d.setDate(1);d.setHours(0,0,0,0);
+    return{from:d,to:e,label:'last month'};
+  }
+  if(/\b(last\s+)?(7|seven)\s+days?\b/.test(ql)){var d=new Date();d.setDate(d.getDate()-6);d.setHours(0,0,0,0);return{from:d,to:now,label:'last 7 days'};}
+  if(/\b(last\s+)?(30|thirty)\s+days?\b/.test(ql)){var d=new Date();d.setDate(d.getDate()-29);d.setHours(0,0,0,0);return{from:d,to:now,label:'last 30 days'};}
+  if(/\bweek\b|7.day/.test(ql)){var d=new Date();d.setDate(d.getDate()-6);d.setHours(0,0,0,0);return{from:d,to:now,label:'last 7 days'};}
+  if(/\bmonth\b|30.day/.test(ql)){var d=new Date();d.setDate(d.getDate()-29);d.setHours(0,0,0,0);return{from:d,to:now,label:'last 30 days'};}
+  return null;
+}
+function chatExtractMetric(ql){
+  if(/\b(visit|attend|check.?in|trip|tour)\b/.test(ql))return'visits';
+  if(/\b(collect|payment|paid|receipt|recover)\b/.test(ql))return'collection';
+  if(/\b(outstanding|pending|due|unpaid|overdue)\b/.test(ql))return'outstanding';
+  if(/\b(sales?|billed?|invoice|sold|billing)\b/.test(ql))return'sales';
+  return null;
+}
+function chatStripName(ql){
+  return ql
+    .replace(/\b(what|is|are|the|of|for|show|me|give|tell|get|find|fetch|check|display|report|data|detail|info|information|performance|activity|record|summary)\b/g,' ')
+    .replace(/\b(today|yesterday|this|last|week|month|day|days?|seven|thirty)\b/g,' ')
+    .replace(/\b(sales?|billed?|invoice|sold|billing|collect|payment|paid|receipt|visit|attend|trip|outstanding|pending|due|unpaid|balance)\b/g,' ')
     .replace(/\s+/g,' ').trim();
-
+}
+function chatFindCustomer(str){
+  if(!str||str.length<2)return null;
   var allCust=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.CUST_NAME];}).filter(Boolean));
+  var hit=allCust.filter(function(cn){return cn.toLowerCase().includes(str);});
+  if(hit.length===1)return{name:hit[0],multi:false};
+  if(hit.length>1&&hit.length<=8)return{name:null,multi:true,matches:hit};
+  var words=str.split(/\s+/).filter(function(w){return w.length>=3;});
+  if(words.length){
+    var wHit=allCust.filter(function(cn){return words.some(function(w){return cn.toLowerCase().includes(w);});});
+    if(wHit.length===1)return{name:wHit[0],multi:false};
+    if(wHit.length>1&&wHit.length<=8)return{name:null,multi:true,matches:wHit};
+  }
+  return null;
+}
+function chatFindStaff(str){
+  if(!str||str.length<2)return null;
   var allEmails=unique(RAW_DATA.map(function(r){return r[COL.STAFF_EMAIL];}).filter(Boolean));
   Object.keys(EMAIL_NAMES).forEach(function(e){if(allEmails.indexOf(e)<0)allEmails.push(e);});
-
-  // 1. Full-string match
-  if(strip.length>=2){
-    var hit=allCust.filter(function(cn){return cn.toLowerCase().includes(strip);});
-    if(hit.length===1)return chatCustSummary(hit[0]);
-    if(hit.length>1&&hit.length<=6)return chatPickOne(hit);
-    var sHit=allEmails.filter(function(e){return chatStaffName(e).toLowerCase().includes(strip);});
-    if(sHit.length>=1)return chatStaffSummary(sHit[0]);
-  }
-
-  // 2. Word-by-word fallback — any word ≥3 chars that matches a name
-  var words=strip.split(/\s+/).filter(function(w){return w.length>=3;});
+  var hit=allEmails.filter(function(e){return chatStaffName(e).toLowerCase().includes(str);});
+  if(hit.length===1)return{email:hit[0],multi:false};
+  if(hit.length>1)return{email:null,multi:true,matches:hit};
+  var words=str.split(/\s+/).filter(function(w){return w.length>=3;});
   if(words.length){
-    var custByWord=allCust.filter(function(cn){
-      return words.some(function(w){return cn.toLowerCase().includes(w);});
-    });
-    if(custByWord.length===1)return chatCustSummary(custByWord[0]);
-    if(custByWord.length>1&&custByWord.length<=6)return chatPickOne(custByWord);
-    var staffByWord=allEmails.filter(function(e){
-      var nm=chatStaffName(e).toLowerCase();
-      return words.some(function(w){return nm.includes(w);});
-    });
-    if(staffByWord.length===1)return chatStaffSummary(staffByWord[0]);
+    var wHit=allEmails.filter(function(e){var nm=chatStaffName(e).toLowerCase();return words.some(function(w){return nm.includes(w);});});
+    if(wHit.length===1)return{email:wHit[0],multi:false};
+    if(wHit.length>1&&wHit.length<=6)return{email:null,multi:true,matches:wHit};
   }
-
-  return'❓ Didn\'t understand that.<br><br>Try:<br>• <i>today attendance</i><br>• <i>weekly performance</i><br>• <i>monthly performance</i><br>• <i>sale of [customer name]</i><br>• <i>[staff name] sales</i><br>• <i>outstanding</i><br>• <i>top customers</i>';
+  return null;
 }
-function chatPickOne(names){
+function chatDateFilter(rows,period,field){
+  if(!period)return rows;
+  return rows.filter(function(r){return r[field]&&r[field]>=period.from&&r[field]<=period.to;});
+}
+function chatPeriodLabel(period){return period?'('+period.label+')':'(all time)';}
+
+// ── Main dispatcher ───────────────────────────────────────────────────────────
+function chatProcess(q){
+  var ql=q.toLowerCase().trim();
+  var period=chatExtractPeriod(ql);
+  var metric=chatExtractMetric(ql);
+  var nameStr=chatStripName(ql);
+
+  // Today attendance (no entity)
+  if((metric==='visits'||/attend/.test(ql))&&!nameStr&&period&&period.label==='today')return chatTodayAttend();
+  // Visits aggregate (no entity)
+  if(metric==='visits'&&!nameStr)return chatVisitsPeriod(period||{from:new Date(new Date().getTime()-6*86400000),to:new Date(),label:'last 7 days'});
+  // Outstanding (no entity)
+  if(metric==='outstanding'&&!nameStr)return chatOutstanding();
+  // Top customers
+  if(/top.*cust|top.*sale|highest.*sale|best.*cust/.test(ql))return chatTopCust(period);
+
+  // Entity lookup
+  var custMatch=nameStr.length>=2?chatFindCustomer(nameStr):null;
+  var staffMatch=(!custMatch&&nameStr.length>=2)?chatFindStaff(nameStr):null;
+
+  if(custMatch&&custMatch.multi)return chatPickOne(custMatch.matches,'cust');
+  if(staffMatch&&staffMatch.multi)return chatPickStaff(staffMatch.matches);
+  if(custMatch&&custMatch.name)return chatCustData(custMatch.name,metric,period);
+  if(staffMatch&&staffMatch.email)return chatStaffData(staffMatch.email,metric,period);
+
+  // Aggregate by metric
+  if(metric==='collection')return chatCollectionAll(period);
+  if(metric==='sales')return chatSalesAll(period);
+  if(period)return chatVisitsPeriod(period);
+
+  // Fallback today attendance
+  if(/today|attend/.test(ql))return chatTodayAttend();
+
+  return'❓ Didn\'t understand.<br><br>Try:<br>• <i>today attendance</i><br>• <i>last week visits</i><br>• <i>this month sales</i><br>• <i>[staff name] last month collection</i><br>• <i>sale of [customer]</i><br>• <i>outstanding</i><br>• <i>top customers</i>';
+}
+
+// ── Disambiguation ────────────────────────────────────────────────────────────
+function chatPickOne(names,type){
   return'Found '+names.length+' matches — which one?<br>'+names.map(function(n){
     var safe=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return'<button class="chat-chip" style="margin:2px" onclick="chatAsk(\'sale of '+safe+'\')">'+esc(n)+'</button>';
+    var cmd=type==='cust'?'sale of '+safe:safe+' performance';
+    return'<button class="chat-chip" style="margin:2px" onclick="chatAsk(\''+cmd+'\')">'+esc(n)+'</button>';
   }).join(' ');
 }
-function chatMonthly(){
-  var now=new Date(),ago=new Date();ago.setDate(ago.getDate()-29);
-  var rows=RAW_DATA.filter(function(r){return r._visitDate&&r._visitDate>=ago&&r._visitDate<=now;});
-  if(!rows.length)return'📅 No visits in the last 30 days.';
-  var byStaff={};
-  rows.forEach(function(r){var n=r[COL.STAFF_NAME]||chatStaffName(r[COL.STAFF_EMAIL])||'—';if(!byStaff[n])byStaff[n]=0;byStaff[n]++;});
-  var sorted=Object.keys(byStaff).sort(function(a,b){return byStaff[b]-byStaff[a];});
-  var trows=sorted.map(function(n){return'<tr><td>'+esc(n)+'</td><td style="text-align:right"><b>'+byStaff[n]+'</b></td></tr>';}).join('');
-  return'📅 <b>Monthly Performance</b> (last 30 days)<br>'
-    +'<table><thead><tr><th>Staff</th><th>Visits</th></tr></thead><tbody>'+trows+'</tbody></table>'
-    +'<br>Total: <b>'+rows.length+'</b> visits';
+function chatPickStaff(emails){
+  return'Found '+emails.length+' staff — which one?<br>'+emails.map(function(e){
+    var nm=chatStaffName(e);var safe=nm.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return'<button class="chat-chip" style="margin:2px" onclick="chatAsk(\''+safe+' performance\')">'+esc(nm)+'</button>';
+  }).join(' ');
 }
+
+// ── Open ledger: close chat first to avoid z-index conflict ───────────────────
+function chatOpenLedger(custName){
+  _chatOpen=false;document.getElementById('chat-panel').style.display='none';
+  openCustModal(custName);
+}
+
+// ── Aggregate queries ─────────────────────────────────────────────────────────
 function chatTodayAttend(){
   var today=new Date();var todayKey=today.toISOString().slice(0,10);
   var rows=RAW_DATA.filter(function(r){return r._visitDate&&r._visitDate.toISOString().slice(0,10)===todayKey;});
@@ -1722,91 +1796,181 @@ function chatTodayAttend(){
   var byStaff={};
   rows.forEach(function(r){
     var n=r[COL.STAFF_NAME]||chatStaffName(r[COL.STAFF_EMAIL])||'—';
-    if(!byStaff[n])byStaff[n]={v:0,areas:new Set(),farmers:new Set()};
-    byStaff[n].v++;
-    if(r[COL.AREA])byStaff[n].areas.add(r[COL.AREA]);
-    if(r[COL.FARMER_NAME])byStaff[n].farmers.add(r[COL.FARMER_NAME]);
+    if(!byStaff[n])byStaff[n]={v:0,areas:new Set()};
+    byStaff[n].v++;if(r[COL.AREA])byStaff[n].areas.add(r[COL.AREA]);
   });
-  var trows=Object.keys(byStaff).sort().map(function(n){
-    var d=byStaff[n];
-    return'<tr><td>'+esc(n)+'</td><td style="text-align:center">'+d.v+'</td><td>'+esc(Array.from(d.areas).join(', '))+'</td></tr>';
-  }).join('');
-  return'📋 <b>Today\'s Attendance</b> — '+fmtDate(today)
+  var trows=Object.keys(byStaff).sort().map(function(n){var d=byStaff[n];return'<tr><td>'+esc(n)+'</td><td style="text-align:center">'+d.v+'</td><td>'+esc(Array.from(d.areas).join(', '))+'</td></tr>';}).join('');
+  return'📋 <b>Today\'s Attendance</b> — '+fmtDate(today)+'<br>'
     +'<table><thead><tr><th>Staff</th><th>Visits</th><th>Area</th></tr></thead><tbody>'+trows+'</tbody></table>'
     +'<br><b>'+rows.length+'</b> visits · <b>'+Object.keys(byStaff).length+'</b> staff out';
 }
-function chatWeekly(){
-  var now=new Date(),ago=new Date();ago.setDate(ago.getDate()-6);
-  var rows=RAW_DATA.filter(function(r){return r._visitDate&&r._visitDate>=ago&&r._visitDate<=now;});
-  if(!rows.length)return'📊 No visits in the last 7 days.';
+function chatVisitsPeriod(period){
+  var rows=chatDateFilter(RAW_DATA,period,'_visitDate');
+  if(!rows.length)return'📋 No visits '+chatPeriodLabel(period)+'.';
   var byStaff={};
-  rows.forEach(function(r){var n=r[COL.STAFF_NAME]||chatStaffName(r[COL.STAFF_EMAIL])||'—';if(!byStaff[n])byStaff[n]=0;byStaff[n]++;});
-  var sorted=Object.keys(byStaff).sort(function(a,b){return byStaff[b]-byStaff[a];});
-  var trows=sorted.map(function(n){return'<tr><td>'+esc(n)+'</td><td style="text-align:right"><b>'+byStaff[n]+'</b></td></tr>';}).join('');
-  return'📊 <b>Weekly Performance</b> (last 7 days)<br>'
-    +'<table><thead><tr><th>Staff</th><th>Visits</th></tr></thead><tbody>'+trows+'</tbody></table>'
-    +'<br>Total: <b>'+rows.length+'</b> visits';
+  rows.forEach(function(r){
+    var n=r[COL.STAFF_NAME]||chatStaffName(r[COL.STAFF_EMAIL])||'—';
+    if(!byStaff[n])byStaff[n]={v:0,areas:new Set()};
+    byStaff[n].v++;if(r[COL.AREA])byStaff[n].areas.add(r[COL.AREA]);
+  });
+  var sorted=Object.keys(byStaff).sort(function(a,b){return byStaff[b].v-byStaff[a].v;});
+  var trows=sorted.map(function(n){var d=byStaff[n];return'<tr><td>'+esc(n)+'</td><td style="text-align:right"><b>'+d.v+'</b></td><td>'+esc(Array.from(d.areas).slice(0,3).join(', '))+'</td></tr>';}).join('');
+  return'📋 <b>Visits '+chatPeriodLabel(period)+'</b><br>'
+    +'<table><thead><tr><th>Staff</th><th>Visits</th><th>Areas</th></tr></thead><tbody>'+trows+'</tbody></table>'
+    +'<br>Total: <b>'+rows.length+'</b> visits · <b>'+sorted.length+'</b> staff';
 }
 function chatOutstanding(){
   var cm={};
   STATEMENTS_DATA.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;if(!cm[cn])cm[cn]={s:0,p:0};cm[cn].s+=r._sales;cm[cn].p+=r._payment;});
   var list=Object.keys(cm).map(function(n){return{n:n,out:cm[n].s-cm[n].p};}).filter(function(x){return x.out>0;}).sort(function(a,b){return b.out-a.out;}).slice(0,10);
   if(!list.length)return'✅ No outstanding balances found.';
-  var trows=list.map(function(x){return'<tr><td>'+esc(x.n)+'</td><td style="text-align:right;color:var(--red)"><b>'+fmtCurrency(x.out)+'</b></td></tr>';}).join('');
+  var trows=list.map(function(x){
+    var safe=x.n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return'<tr><td><button class="chat-chip" style="margin:1px;padding:2px 6px;font-size:11px" onclick="chatOpenLedger(\''+safe+'\')">'+esc(x.n)+'</button></td>'
+      +'<td style="text-align:right;color:var(--red)"><b>'+fmtCurrency(x.out)+'</b></td></tr>';
+  }).join('');
   return'🔴 <b>Top Outstanding</b><br>'
     +'<table><thead><tr><th>Customer</th><th>Outstanding</th></tr></thead><tbody>'+trows+'</tbody></table>';
 }
-function chatTopCust(){
+function chatTopCust(period){
+  var stmts=chatDateFilter(STATEMENTS_DATA,period,'_date');
   var cm={};
-  STATEMENTS_DATA.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;if(!cm[cn])cm[cn]=0;cm[cn]+=r._sales;});
+  stmts.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;if(!cm[cn])cm[cn]=0;cm[cn]+=r._sales;});
   var list=Object.keys(cm).sort(function(a,b){return cm[b]-cm[a];}).slice(0,10);
   if(!list.length)return'No customer data.';
-  var trows=list.map(function(n){return'<tr><td>'+esc(n)+'</td><td style="text-align:right"><b>'+fmtCurrency(cm[n])+'</b></td></tr>';}).join('');
-  return'💰 <b>Top Customers by Sales</b><br>'
+  var trows=list.map(function(n){
+    var safe=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return'<tr><td><button class="chat-chip" style="margin:1px;padding:2px 6px;font-size:11px" onclick="chatOpenLedger(\''+safe+'\')">'+esc(n)+'</button></td>'
+      +'<td style="text-align:right"><b>'+fmtCurrency(cm[n])+'</b></td></tr>';
+  }).join('');
+  return'💰 <b>Top Customers by Sales '+chatPeriodLabel(period)+'</b><br>'
     +'<table><thead><tr><th>Customer</th><th>Total Sales</th></tr></thead><tbody>'+trows+'</tbody></table>';
 }
-function chatCustSummary(custName){
-  var stmts=STATEMENTS_DATA.filter(function(r){return r[SCOL.CUST_NAME]===custName;});
-  if(!stmts.length)return'No data for <b>'+esc(custName)+'</b>.';
-  var ts=stmts.reduce(function(s,r){return s+r._sales;},0);
-  var tp=stmts.reduce(function(s,r){return s+r._payment;},0);
-  var ob=stmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');}).reduce(function(s,r){return s+r._sales;},0);
-  var out=ts-tp;var last=stmts.slice().sort(function(a,b){return(b._date||0)-(a._date||0);})[0];
-  var safe=custName.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  var html='💰 <b>'+esc(custName)+'</b><br><br>';
-  if(ob>0){html+='Opening Balance: <b>'+fmtCurrency(ob)+'</b><br>This Period Sales: <b>'+fmtCurrency(ts-ob)+'</b><br>';}
-  else{html+='Total Billed: <b>'+fmtCurrency(ts)+'</b><br>';}
-  html+='Total Paid: <b>'+fmtCurrency(tp)+'</b><br>';
-  html+='Outstanding: <b style="color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(out))+'</b><br>';
-  if(last&&last._date)html+='Last Transaction: '+fmtDate(last._date)+'<br>';
-  html+='<br><button class="chat-chip" onclick="openCustModal(\''+safe+'\')" style="border-color:var(--teal);color:var(--teal)">View Full Ledger →</button>';
+function chatCollectionAll(period){
+  var stmts=chatDateFilter(STATEMENTS_DATA,period,'_date');
+  var total=stmts.reduce(function(s,r){return s+r._payment;},0);
+  var staffLookup={};
+  CUSTOMER_DATA.forEach(function(c){
+    (c[CCOL.STAFF_EMAIL]||'').split(/[,;\s]+/).map(function(e){return e.trim();}).filter(Boolean).forEach(function(e){
+      if(!staffLookup[c[CCOL.CUST_NAME]])staffLookup[c[CCOL.CUST_NAME]]=e;
+    });
+  });
+  var byStaff={};
+  stmts.forEach(function(r){
+    var e=staffLookup[r[SCOL.CUST_NAME]];
+    if(!e)return;var n=chatStaffName(e);
+    if(!byStaff[n])byStaff[n]=0;byStaff[n]+=r._payment;
+  });
+  var sorted=Object.keys(byStaff).sort(function(a,b){return byStaff[b]-byStaff[a];});
+  var html='💵 <b>Collections '+chatPeriodLabel(period)+'</b><br>Total: <b>'+fmtCurrency(total)+'</b><br>';
+  if(sorted.length){
+    var trows=sorted.slice(0,10).map(function(n){return'<tr><td>'+esc(n)+'</td><td style="text-align:right"><b>'+fmtCurrency(byStaff[n])+'</b></td></tr>';}).join('');
+    html+='<table><thead><tr><th>Staff</th><th>Collection</th></tr></thead><tbody>'+trows+'</tbody></table>';
+  }
   return html;
 }
-function chatStaffSummary(email){
+function chatSalesAll(period){
+  var stmts=chatDateFilter(STATEMENTS_DATA,period,'_date');
+  var total=stmts.reduce(function(s,r){return s+r._sales;},0);
+  var cm={};
+  stmts.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;if(!cm[cn])cm[cn]=0;cm[cn]+=r._sales;});
+  var list=Object.keys(cm).sort(function(a,b){return cm[b]-cm[a];}).slice(0,10);
+  var trows=list.map(function(n){
+    var safe=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return'<tr><td><button class="chat-chip" style="margin:1px;padding:2px 6px;font-size:11px" onclick="chatOpenLedger(\''+safe+'\')">'+esc(n)+'</button></td>'
+      +'<td style="text-align:right"><b>'+fmtCurrency(cm[n])+'</b></td></tr>';
+  }).join('');
+  return'💰 <b>Sales '+chatPeriodLabel(period)+'</b><br>Total: <b>'+fmtCurrency(total)+'</b><br>'
+    +(trows?'<table><thead><tr><th>Customer</th><th>Sales</th></tr></thead><tbody>'+trows+'</tbody></table>':'');
+}
+
+// ── Entity-specific queries ───────────────────────────────────────────────────
+function chatCustData(custName,metric,period){
+  var allStmts=STATEMENTS_DATA.filter(function(r){return r[SCOL.CUST_NAME]===custName;});
+  if(!allStmts.length)return'No data for <b>'+esc(custName)+'</b>.';
+  var stmts=period?chatDateFilter(allStmts,period,'_date'):allStmts;
+  var ts=stmts.reduce(function(s,r){return s+r._sales;},0);
+  var tp=stmts.reduce(function(s,r){return s+r._payment;},0);
+  var allTs=allStmts.reduce(function(s,r){return s+r._sales;},0);
+  var allTp=allStmts.reduce(function(s,r){return s+r._payment;},0);
+  var ob=allStmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');}).reduce(function(s,r){return s+r._sales;},0);
+  var out=allTs-allTp;
+  var last=allStmts.slice().sort(function(a,b){return(b._date||0)-(a._date||0);})[0];
+  var safe=custName.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  var html='💰 <b>'+esc(custName)+'</b> '+chatPeriodLabel(period)+'<br><br>';
+  if(metric==='outstanding'){
+    html+='Outstanding: <b style="color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(out))+'</b><br>';
+    html+='(Billed: '+fmtCurrency(allTs)+' | Paid: '+fmtCurrency(allTp)+')<br>';
+  }else if(metric==='collection'){
+    html+='Collected '+chatPeriodLabel(period)+': <b style="color:var(--green)">'+fmtCurrency(tp)+'</b><br>';
+    html+='All-time Outstanding: <b style="color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(out))+'</b><br>';
+  }else{
+    if(ob>0&&!period){html+='Opening Balance: <b>'+fmtCurrency(ob)+'</b><br>This Period Sales: <b>'+fmtCurrency(ts-ob)+'</b><br>';}
+    else{html+='Total Billed: <b>'+fmtCurrency(ts)+'</b><br>';}
+    html+='Total Paid: <b>'+fmtCurrency(tp)+'</b><br>';
+    html+='Outstanding: <b style="color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(out))+'</b><br>';
+    if(last&&last._date)html+='Last Transaction: '+fmtDate(last._date)+'<br>';
+  }
+  html+='<br><button class="chat-chip" onclick="chatOpenLedger(\''+safe+'\')" style="border-color:var(--teal);color:var(--teal)">View Full Ledger →</button>';
+  return html;
+}
+function chatStaffData(email,metric,period){
   var name=chatStaffName(email);
-  var visits=RAW_DATA.filter(function(r){return r[COL.STAFF_EMAIL]===email||r[COL.STAFF_NAME]===name;});
-  var now=new Date(),ago=new Date();ago.setDate(ago.getDate()-6);
-  var wk=visits.filter(function(r){return r._visitDate&&r._visitDate>=ago;}).length;
-  var areas=unique(visits.map(function(r){return r[COL.AREA];}).filter(Boolean));
-  var farmers=unique(visits.map(function(r){return r[COL.FARMER_NAME];}).filter(Boolean));
-  // Customer sales assigned to this staff via Customer sheet
+  var allVisits=RAW_DATA.filter(function(r){return r[COL.STAFF_EMAIL]===email||r[COL.STAFF_NAME]===name;});
+  var filtVisits=period?chatDateFilter(allVisits,period,'_visitDate'):allVisits;
+  var areas=unique(filtVisits.map(function(r){return r[COL.AREA];}).filter(Boolean));
+  var farmers=unique(filtVisits.map(function(r){return r[COL.FARMER_NAME];}).filter(Boolean));
+
+  if(metric==='visits'){
+    return'👤 <b>'+esc(name)+'</b> — Visits '+chatPeriodLabel(period)+'<br><br>'
+      +'Total Visits: <b>'+filtVisits.length+'</b><br>'
+      +'Unique Farmers: <b>'+farmers.length+'</b><br>'
+      +(areas.length?'Areas: <b>'+esc(areas.slice(0,6).join(', '))+(areas.length>6?' …':'')+'</b>':'');
+  }
+
   var custNames=CUSTOMER_DATA.filter(function(c){
-    return (c[CCOL.STAFF_EMAIL]||'').split(/[,;\s]+/).map(function(e){return e.trim();}).indexOf(email)>=0;
+    return(c[CCOL.STAFF_EMAIL]||'').split(/[,;\s]+/).map(function(e){return e.trim();}).indexOf(email)>=0;
   }).map(function(c){return c[CCOL.CUST_NAME];}).filter(Boolean);
-  var ts=0,tp=0;
-  STATEMENTS_DATA.forEach(function(r){
-    if(custNames.indexOf(r[SCOL.CUST_NAME])>=0){ts+=r._sales;tp+=r._payment;}
-  });
-  var html='👤 <b>'+esc(name)+'</b><br><br>'
-    +'Total Visits: <b>'+visits.length+'</b> &nbsp;|&nbsp; This Week: <b>'+wk+'</b><br>'
-    +'Unique Farmers: <b>'+farmers.length+'</b><br>'
-    +(areas.length?'Areas: <b>'+esc(areas.slice(0,6).join(', '))+(areas.length>6?' …':'')+'</b><br>':'');
-  if(custNames.length){
-    html+='<br><b>Customer Sales ('+custNames.length+' customers)</b><br>'
-      +'Total Billed: <b>'+fmtCurrency(ts)+'</b><br>'
-      +'Total Collected: <b>'+fmtCurrency(tp)+'</b><br>'
-      +'Outstanding: <b style="color:var(--red)">'+fmtCurrency(Math.abs(ts-tp))+'</b>';
-  }else if(!visits.length){
+
+  var stmts=period
+    ?STATEMENTS_DATA.filter(function(r){return custNames.indexOf(r[SCOL.CUST_NAME])>=0&&r._date&&r._date>=period.from&&r._date<=period.to;})
+    :STATEMENTS_DATA.filter(function(r){return custNames.indexOf(r[SCOL.CUST_NAME])>=0;});
+
+  var ts=stmts.reduce(function(s,r){return s+r._sales;},0);
+  var tp=stmts.reduce(function(s,r){return s+r._payment;},0);
+
+  // Per-customer breakdown
+  var cm={};
+  stmts.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;if(!cm[cn])cm[cn]={s:0,p:0};cm[cn].s+=r._sales;cm[cn].p+=r._payment;});
+  var custList=Object.keys(cm).sort(function(a,b){return cm[b].s-cm[a].s;});
+
+  var html='👤 <b>'+esc(name)+'</b> '+chatPeriodLabel(period)+'<br>';
+  html+='Visits: <b>'+filtVisits.length+'</b>'+(areas.length?' | Areas: '+esc(areas.slice(0,3).join(', '))+(areas.length>3?' …':''):'')+'<br><br>';
+
+  if(metric==='collection'){
+    html+='💵 Collected: <b style="color:var(--green)">'+fmtCurrency(tp)+'</b><br>';
+  }else if(metric==='outstanding'){
+    var allS=STATEMENTS_DATA.filter(function(r){return custNames.indexOf(r[SCOL.CUST_NAME])>=0;});
+    var aTs=allS.reduce(function(s,r){return s+r._sales;},0);
+    var aTp=allS.reduce(function(s,r){return s+r._payment;},0);
+    html+='🔴 Outstanding: <b style="color:var(--red)">'+fmtCurrency(aTs-aTp)+'</b><br>';
+  }else{
+    html+='💰 Total Billed: <b style="color:var(--gold)">'+fmtCurrency(ts)+'</b><br>';
+    html+='💵 Total Collected: <b style="color:var(--green)">'+fmtCurrency(tp)+'</b><br>';
+    html+='🔴 Outstanding: <b style="color:var(--red)">'+fmtCurrency(ts-tp)+'</b><br>';
+  }
+
+  if(custList.length){
+    var trows=custList.map(function(cn){
+      var out=cm[cn].s-cm[cn].p;var safe=cn.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return'<tr><td><button class="chat-chip" style="margin:1px;padding:2px 6px;font-size:11px" onclick="chatOpenLedger(\''+safe+'\')">'+esc(cn)+'</button></td>'
+        +'<td style="text-align:right">'+fmtCurrency(cm[cn].s)+'</td>'
+        +'<td style="text-align:right">'+fmtCurrency(cm[cn].p)+'</td>'
+        +'<td style="text-align:right;color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(out)+'</td></tr>';
+    }).join('');
+    html+='<br><b>Customers ('+custList.length+')</b><br>'
+      +'<table><thead><tr><th>Customer</th><th>Billed</th><th>Paid</th><th>Outstanding</th></tr></thead><tbody>'+trows+'</tbody></table>';
+  }else if(!allVisits.length){
     html='No data found for <b>'+esc(name)+'</b>.';
   }
   return html;
