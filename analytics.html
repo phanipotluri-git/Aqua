@@ -1423,9 +1423,14 @@ function renderStaffCustMapping(custStaffMap,staffLookup){
 
 async function exportCustLedgerPDF(){
   var btn=document.getElementById('btn-cust-pdf');btn.textContent='⏳…';btn.disabled=true;
+  var _hidden=[];
   try{
     var{jsPDF}=window.jspdf;
     var content=document.getElementById('tbl-cust-ledger').closest('.sec-panel');
+    // Hide controls + WhatsApp buttons before capture
+    var ctrlWrap=btn.parentElement;
+    if(ctrlWrap){ctrlWrap.style.display='none';_hidden.push({el:ctrlWrap,prop:'display',val:''});}
+    content.querySelectorAll('.wa-sm').forEach(function(el){el.style.visibility='hidden';_hidden.push({el:el,prop:'visibility',val:''});});
     var ltSv=applyLightTheme(content),saved=unclipAll(content);
     var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true});
     reclipAll(saved);restoreLightTheme(content,ltSv);
@@ -1433,7 +1438,10 @@ async function exportCustLedgerPDF(){
     canvasToPDF(pdf,canvas,W,H,M,'Aqua — Customer Ledger'+(SALES_COMPANY?' ('+SALES_COMPANY+')':'')+' — '+new Date().toLocaleString('en-IN'));
     pdf.save('aqua-customer-ledger-'+new Date().toISOString().slice(0,10)+'.pdf');
   }catch(e){alert('PDF failed: '+e.message)}
-  finally{btn.textContent='⬇ PDF';btn.disabled=false}
+  finally{
+    _hidden.forEach(function(x){x.el.style[x.prop]=x.val;});
+    btn.textContent='⬇ PDF';btn.disabled=false;
+  }
 }
 
 var CUST_MODAL_NAME='';
