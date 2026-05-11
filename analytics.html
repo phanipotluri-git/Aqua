@@ -1232,8 +1232,9 @@ function unclipAll(el){
 }
 function reclipAll(saved){saved.forEach(function(s){s.n.style.overflow=s.oh;s.n.style.overflowY=s.oy;s.n.style.overflowX=s.ox;s.n.style.maxHeight=s.mh})}
 var LT_VARS={'--bg':'#fff','--panel':'#fff','--panel2':'#f0f2f5','--border':'#ccc',
-  '--txt':'#111','--mid':'#111','--dim':'#111','--teal':'#111',
-  '--gold':'#111','--red':'#111','--green':'#111','--purple':'#111','--sky':'#111'};
+  '--txt':'#111','--mid':'#333','--dim':'#666',
+  '--teal':'#0e9baa','--gold':'#b45309','--red':'#dc2626',
+  '--green':'#16a34a','--purple':'#7c3aed','--sky':'#0369a1'};
 function applyLightTheme(el){
   var sv={vars:{},bg:el.style.background,color:el.style.color};
   Object.keys(LT_VARS).forEach(function(k){sv.vars[k]=el.style.getPropertyValue(k);el.style.setProperty(k,LT_VARS[k])});
@@ -1272,17 +1273,20 @@ function canvasToPDF(pdf,canvas,W,H,M,footer){
 
 async function exportPerfPDF(){
   var btn=document.getElementById('btn-perf-pdf');btn.textContent='⏳…';btn.disabled=true;
+  var _act=[];
   try{
     var{jsPDF}=window.jspdf;
     var content=document.getElementById('perf-content');
+    // Hide action buttons (PDF/WhatsApp/chevron) from all cards in the summary export
+    content.querySelectorAll('.pc-actions').forEach(function(el){el.style.display='none';_act.push(el)});
     var ltSv=applyLightTheme(content),saved=unclipAll(content);
-    var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true});
+    var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false});
     reclipAll(saved);restoreLightTheme(content,ltSv);
-    var pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,M=10;
+    var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}),W=210,H=297,M=10;
     canvasToPDF(pdf,canvas,W,H,M,'Aqua Analytics — '+document.getElementById('perf-period-lbl').textContent+' — '+new Date().toLocaleString('en-IN'));
     pdf.save('aqua-perf-'+PERF_PERIOD+'-'+new Date().toISOString().slice(0,10)+'.pdf');
   }catch(e){alert('PDF failed: '+e.message)}
-  finally{btn.textContent='⬇ PDF';btn.disabled=false}
+  finally{_act.forEach(function(el){el.style.display=''});btn.textContent='⬇ PDF';btn.disabled=false}
 }
 
 async function exportPerfImage(){
@@ -1301,34 +1305,38 @@ async function exportPerfImage(){
 }
 
 async function exportStaffPDF(i,name){
+  var content=document.getElementById('perf-content');if(!content)return;
   var card=document.getElementById('pc-'+i);if(!card)return;
+  // Hide every OTHER card so only this one is captured
+  var allCards=Array.from(content.querySelectorAll('.pc-card'));
+  allCards.forEach(function(c){if(c!==card)c.style.display='none'});
+  // Expand this card
   var wasOpen=card.classList.contains('open');
   if(!wasOpen)card.classList.add('open');
-  var _hidden=[],_scroll=[];
+  // Hide action buttons (PDF / WhatsApp / chevron) on this card
+  var _act=[];
+  card.querySelectorAll('.pc-actions').forEach(function(el){el.style.display='none';_act.push(el)});
+  // Expand any max-height scrollers (customer table)
+  var _scroll=[];
+  card.querySelectorAll('[style*="max-height"]').forEach(function(el){
+    _scroll.push({el:el,mh:el.style.maxHeight,oy:el.style.overflowY});
+    el.style.maxHeight='none';el.style.overflowY='visible';
+  });
   try{
     var{jsPDF}=window.jspdf;
-    card.classList.add('pc-pdf-mode');
-    // Hide interactive controls
-    card.querySelectorAll('.wa-sm,.btn-primary,.pc-chevron').forEach(function(el){el.style.visibility='hidden';_hidden.push(el)});
-    // Expand only elements with an inline max-height (the customer table scroller)
-    // — do NOT unclipAll() since that balloons the canvas to thousands of pages
-    card.querySelectorAll('[style*="max-height"]').forEach(function(el){
-      _scroll.push({el:el,mh:el.style.maxHeight,oy:el.style.overflowY});
-      el.style.maxHeight='none';el.style.overflowY='visible';
-    });
-    var ltSv=applyLightTheme(card);
-    // No windowWidth override — use actual viewport so layout matches screen
-    var canvas=await html2canvas(card,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false});
-    restoreLightTheme(card,ltSv);
+    // Capture #perf-content (same target as exportPerfPDF — known to work)
+    var ltSv=applyLightTheme(content),saved=unclipAll(content);
+    var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false});
+    reclipAll(saved);restoreLightTheme(content,ltSv);
     var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}),W=210,H=297,M=10;
     var period=document.getElementById('perf-period-lbl').textContent.replace('Performance — ','');
     canvasToPDF(pdf,canvas,W,H,M,'Aqua — '+name+' — '+period+' — '+new Date().toLocaleDateString('en-IN'));
     pdf.save('aqua-staff-'+name.replace(/\s+/g,'-').toLowerCase()+'-'+PERF_PERIOD+'.pdf');
   }catch(e){alert('PDF failed: '+e.message)}
   finally{
-    _hidden.forEach(function(el){el.style.visibility=''});
+    _act.forEach(function(el){el.style.display=''});
     _scroll.forEach(function(x){x.el.style.maxHeight=x.mh;x.el.style.overflowY=x.oy});
-    card.classList.remove('pc-pdf-mode');
+    allCards.forEach(function(c){c.style.display=''});
     if(!wasOpen)card.classList.remove('open');
   }
 }
