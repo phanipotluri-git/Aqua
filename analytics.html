@@ -1161,7 +1161,7 @@ function renderPerformanceTab(){
         +'<div class="pc-kpi pc-goto" onclick="perfGoto(\'staff\',\'tbl-leader\')" title="View visit leaderboard ↗">'
           +'<div class="pc-kpi-lbl">Field Visits</div>'
           +'<div class="pc-kpi-val" style="color:var(--teal)">'+s.visits+'</div>'
-          +'<div class="pc-kpi-sub">'+s.vpd+'/day · '+s.farmers+' farmers · '+s.areas+' areas</div>'
+          +'<div class="pc-kpi-sub">'+s.vpd+'/day · '+s.farmers+' farmer'+(s.farmers===1?'':'s')+' · '+s.areas+' area'+(s.areas===1?'':'s')+'</div>'
         +'</div>'
         +'<div class="pc-kpi pc-goto" onclick="perfGoto(\'staff\',\'tbl-leader\')" title="View staff breakdown ↗">'
           +'<div class="pc-kpi-lbl">Visit Mix</div>'
@@ -1304,15 +1304,22 @@ async function exportStaffPDF(i,name){
   var card=document.getElementById('pc-'+i);if(!card)return;
   var wasOpen=card.classList.contains('open');
   if(!wasOpen)card.classList.add('open');
-  var _hidden=[];
+  var _hidden=[],_scroll=[];
   try{
     var{jsPDF}=window.jspdf;
-    // Switch to single-column layout so sections stack cleanly in portrait PDF
     card.classList.add('pc-pdf-mode');
+    // Hide interactive controls
     card.querySelectorAll('.wa-sm,.btn-primary,.pc-chevron').forEach(function(el){el.style.visibility='hidden';_hidden.push(el)});
-    var ltSv=applyLightTheme(card),saved=unclipAll(card);
-    var canvas=await html2canvas(card,{backgroundColor:'#ffffff',scale:2,useCORS:true,windowWidth:900});
-    reclipAll(saved);restoreLightTheme(card,ltSv);
+    // Expand only elements with an inline max-height (the customer table scroller)
+    // — do NOT unclipAll() since that balloons the canvas to thousands of pages
+    card.querySelectorAll('[style*="max-height"]').forEach(function(el){
+      _scroll.push({el:el,mh:el.style.maxHeight,oy:el.style.overflowY});
+      el.style.maxHeight='none';el.style.overflowY='visible';
+    });
+    var ltSv=applyLightTheme(card);
+    // No windowWidth override — use actual viewport so layout matches screen
+    var canvas=await html2canvas(card,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false});
+    restoreLightTheme(card,ltSv);
     var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}),W=210,H=297,M=10;
     var period=document.getElementById('perf-period-lbl').textContent.replace('Performance — ','');
     canvasToPDF(pdf,canvas,W,H,M,'Aqua — '+name+' — '+period+' — '+new Date().toLocaleDateString('en-IN'));
@@ -1320,6 +1327,7 @@ async function exportStaffPDF(i,name){
   }catch(e){alert('PDF failed: '+e.message)}
   finally{
     _hidden.forEach(function(el){el.style.visibility=''});
+    _scroll.forEach(function(x){x.el.style.maxHeight=x.mh;x.el.style.overflowY=x.oy});
     card.classList.remove('pc-pdf-mode');
     if(!wasOpen)card.classList.remove('open');
   }
