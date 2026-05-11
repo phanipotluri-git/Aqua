@@ -183,6 +183,10 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
 .pc-sal-kpi{background:var(--panel2);border-radius:6px;padding:8px 10px;text-align:center}
 .pc-sal-kpi-lbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;font-family:'IBM Plex Mono',monospace}
 .pc-sal-kpi-val{font-size:13px;font-weight:600}
+.pc-goto{cursor:pointer;transition:background .15s}
+.pc-goto:hover{background:rgba(18,196,208,0.07)}
+.pc-pdf-mode .pc-sections{grid-template-columns:1fr!important}
+.pc-pdf-mode .pc-section{border-right:none!important;border-bottom:1px solid #ccc!important}
 @media(max-width:700px){.pc-kpis{grid-template-columns:repeat(2,1fr)}.pc-sections{grid-template-columns:1fr}.pc-section{border-right:none!important}.day-dot{width:26px;height:26px;font-size:10px}}
 </style>
 </head>
@@ -432,7 +436,7 @@ var NEG_KW = ['not interested','rejected','refused','bad','problem','issue','com
 // ─── STATE ───────────────────────────────────────────────────────────────────
 var RAW_DATA=[], FILTERED_DATA=[], charts={}, CURRENT_TAB='overview';
 var REVISIT_FILTER='', REVISIT_SORT={col:'gap',dir:1};
-var PERF_PERIOD='week';
+var PERF_PERIOD='month';
 var STAFF_DATA=[], CUSTOMER_DATA=[], STATEMENTS_DATA=[];
 var SALES_COMPANY='';
 Chart.defaults.color='#8ab2cc'; Chart.defaults.borderColor='#1a3060';
@@ -1022,7 +1026,7 @@ function renderPerformanceTab(){
   var periods=[{key:'week',label:'This Week'},{key:'month',label:'This Month'}]
     .concat(months.map(function(m){return{key:m,label:fmtMonth(m)}}))
     .concat([{key:'all',label:'All Time'}]);
-  if(!periods.find(function(p){return p.key===PERF_PERIOD}))PERF_PERIOD='week';
+  if(!periods.find(function(p){return p.key===PERF_PERIOD}))PERF_PERIOD='month';
 
   var pillsEl=document.getElementById('perf-pills');
   pillsEl.innerHTML=periods.map(function(p){
@@ -1065,23 +1069,44 @@ function renderPerformanceTab(){
         +'</div>';
     }).join('');
 
-    // Visit rows table
-    var visitRows=s.visitList.slice().sort(function(a,b){return(b._visitDate||0)-(a._visitDate||0)}).map(function(r){
-      return'<tr><td class="c-date">'+fmtDate(r._visitDate)+'</td>'
-        +'<td class="c-area">'+esc(r[COL.AREA])+'</td>'
-        +'<td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td>'
-        +'<td>'+esc(r[COL.FARMER_NAME])+'</td>'
-        +'<td>'+esc(r[COL.DEALER_NAME])+'</td></tr>';
-    }).join('');
+    // Monthly grouped field visits (click month → expand visit table)
+    var vstByMon={};
+    s.visitList.forEach(function(r){if(!r._visitDate)return;var mk=monthKey(r._visitDate);if(!vstByMon[mk])vstByMon[mk]=[];vstByMon[mk].push(r)});
+    var visitMonthHtml='';
+    Object.keys(vstByMon).sort().reverse().forEach(function(mk){
+      var mv=vstByMon[mk];
+      var mVt={};mv.forEach(function(r){var vt=r[COL.VISIT_TYPE]||'Other';mVt[vt]=(mVt[vt]||0)+1});
+      var typeSumm=Object.entries(mVt).sort(function(a,b){return b[1]-a[1]}).map(function(e){return esc(e[0])+': <b>'+e[1]+'</b>'}).join(' · ');
+      var mUid='pcv'+i+'k'+mk.replace('-','');
+      var mRows=mv.slice().sort(function(a,b){return(b._visitDate||0)-(a._visitDate||0)}).map(function(r){
+        return'<tr><td class="c-date">'+fmtDate(r._visitDate)+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td>'
+          +'<td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td></tr>';
+      }).join('');
+      visitMonthHtml+='<div style="margin-bottom:4px">'
+        +'<div style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 0;border-bottom:1px solid var(--border)" onclick="toggleMonthCal(\''+mUid+'\')">'
+          +'<span id="marr-'+mUid+'" style="font-size:9px;color:var(--dim);width:10px;flex-shrink:0">▶</span>'
+          +'<span style="font-family:IBM Plex Mono,monospace;font-size:12px;min-width:88px;color:var(--txt)">'+fmtMonth(mk)+'</span>'
+          +'<span style="font-size:11px;color:var(--teal);font-weight:600">'+mv.length+' visits</span>'
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--dim);padding:4px 18px 2px">'+typeSumm+'</div>'
+        +'<div id="cal-'+mUid+'" style="display:none;overflow-x:auto">'
+          +'<table><thead><tr><th>Date</th><th>Area</th><th>Type</th><th>Farmer</th><th>Dealer</th></tr></thead>'
+          +'<tbody>'+mRows+'</tbody></table>'
+        +'</div>'
+      +'</div>';
+    });
+    if(!visitMonthHtml)visitMonthHtml='<div style="color:var(--dim);font-size:12px">No visits</div>';
 
-    // Sales customer table
+    // Sales customer table — customer names clickable → opens ledger modal
     var salesRows=s.customers.filter(function(cn){return s.custSales[cn]}).sort(function(a,b){
       return(s.custSales[b]?s.custSales[b].billed-s.custSales[b].paid:0)-(s.custSales[a]?s.custSales[a].billed-s.custSales[a].paid:0);
     }).map(function(cn){
       var cs=s.custSales[cn];
       var out=cs.billed-cs.paid;
-      return'<tr><td>'+esc(cn)+'</td>'
-        +'<td class="r" style="color:var(--teal)">'+fmtCurrency(cs.billed)+'</td>'
+      var cnEsc=cn.replace(/\\/g,'\\\\').replace(/'/g,'\\\'');
+      return'<tr>'
+        +'<td style="cursor:pointer;color:var(--teal)" onclick="event.stopPropagation();openCustModal(\''+cnEsc+'\')">'+esc(cn)+'</td>'
+        +'<td class="r" style="color:var(--gold)">'+fmtCurrency(cs.billed)+'</td>'
         +'<td class="r" style="color:var(--green)">'+fmtCurrency(cs.paid)+'</td>'
         +'<td class="r" style="color:'+(out>0?'var(--red)':'var(--dim)')+'">'+fmtCurrency(out)+'</td></tr>';
     }).join('');
@@ -1095,7 +1120,7 @@ function renderPerformanceTab(){
         var mTotal=countWorkingDaysInMonth(mk,s.globalFirst,today);
         var mPct=mTotal?Math.round(mDays.size/mTotal*100):0;
         var mCol=mPct>=90?'var(--green)':mPct>=70?'var(--gold)':'var(--red)';
-        var mUid='pc'+i+'m'+mk.replace('-','');
+        var mUid='pca'+i+'m'+mk.replace('-','');
         attnHtml+='<div style="margin-bottom:8px">'
           +'<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="toggleMonthCal(\''+mUid+'\')">'
           +'<span id="marr-'+mUid+'" style="font-size:9px;color:var(--dim);width:10px">▶</span>'
@@ -1126,17 +1151,25 @@ function renderPerformanceTab(){
           +'<span class="pc-chevron">▼</span>'
         +'</div>'
       +'</div>'
+      // KPI badges — each clickable, navigates to relevant tab
       +'<div class="pc-kpis">'
-        +'<div class="pc-kpi"><div class="pc-kpi-lbl">Attendance</div>'
+        +'<div class="pc-kpi pc-goto" onclick="perfGoto(\'staff\',\'tbl-absent\')" title="View detailed attendance ↗">'
+          +'<div class="pc-kpi-lbl">Attendance</div>'
           +'<div class="pc-kpi-val" style="color:'+attCol+'">'+s.att+'%</div>'
-          +'<div class="pc-kpi-sub">'+s.present+' / '+s.totalWD+' working days</div></div>'
-        +'<div class="pc-kpi"><div class="pc-kpi-lbl">Field Visits</div>'
+          +'<div class="pc-kpi-sub">'+s.present+' / '+s.totalWD+' working days</div>'
+        +'</div>'
+        +'<div class="pc-kpi pc-goto" onclick="perfGoto(\'staff\',\'tbl-leader\')" title="View visit leaderboard ↗">'
+          +'<div class="pc-kpi-lbl">Field Visits</div>'
           +'<div class="pc-kpi-val" style="color:var(--teal)">'+s.visits+'</div>'
-          +'<div class="pc-kpi-sub">'+s.vpd+'/day · '+s.farmers+' farmers · '+s.areas+' areas</div></div>'
-        +'<div class="pc-kpi"><div class="pc-kpi-lbl">Visit Mix</div>'
+          +'<div class="pc-kpi-sub">'+s.vpd+'/day · '+s.farmers+' farmers · '+s.areas+' areas</div>'
+        +'</div>'
+        +'<div class="pc-kpi pc-goto" onclick="perfGoto(\'staff\',\'tbl-leader\')" title="View staff breakdown ↗">'
+          +'<div class="pc-kpi-lbl">Visit Mix</div>'
           +'<div class="pc-kpi-val" style="color:var(--purple)">'+topTypeLbl+'</div>'
-          +'<div class="pc-kpi-sub">'+secTypeLbl+'</div></div>'
-        +'<div class="pc-kpi"><div class="pc-kpi-lbl">Sales</div>'
+          +'<div class="pc-kpi-sub">'+secTypeLbl+'</div>'
+        +'</div>'
+        +'<div class="pc-kpi pc-goto" onclick="perfGoto(\'sales\',\'tbl-cust-ledger\')" title="View customer ledger ↗">'
+          +'<div class="pc-kpi-lbl">Sales</div>'
           +(s.billed>0
             ?'<div class="pc-kpi-val" style="color:var(--teal)">'+fmtCurrency(s.billed)+'</div>'
               +'<div class="pc-kpi-sub" style="color:var(--red)">'+fmtCurrency(s.outstanding)+' outstanding</div>'
@@ -1146,27 +1179,24 @@ function renderPerformanceTab(){
       +'</div>'
       +'<div class="pc-detail" id="pd-'+i+'">'
         +'<div class="pc-sections">'
-          // Attendance section
+          // Attendance (detailed calendar)
           +'<div class="pc-section">'
             +'<div class="pc-sec-lbl">Attendance</div>'
             +attnHtml
           +'</div>'
-          // Field Visits section
+          // Field Visits (monthly grouped, expand for details)
           +'<div class="pc-section">'
-            +'<div class="pc-sec-lbl">Field Visits</div>'
-            +'<div style="overflow-x:auto;max-height:260px;overflow-y:auto">'
-              +'<table><thead><tr><th>Date</th><th>Area</th><th>Type</th><th>Farmer</th><th>Dealer</th></tr></thead>'
-              +'<tbody>'+visitRows+'</tbody></table>'
-            +'</div>'
+            +'<div class="pc-sec-lbl">Field Visits — by Month</div>'
+            +visitMonthHtml
           +'</div>'
-          // Visit Analysis section
+          // Visit Analysis (type + area bars)
           +'<div class="pc-section">'
             +'<div class="pc-sec-lbl">By Visit Type</div>'
             +vtBars
             +'<div class="pc-sec-lbl" style="margin-top:12px">By Area</div>'
             +areaBars
           +'</div>'
-          // Sales section
+          // Sales (KPIs + clickable customer rows)
           +'<div class="pc-section">'
             +'<div class="pc-sec-lbl">Sales Summary</div>'
             +'<div class="pc-sal-kpis">'
@@ -1175,8 +1205,8 @@ function renderPerformanceTab(){
               +'<div class="pc-sal-kpi"><div class="pc-sal-kpi-lbl">Outstanding</div><div class="pc-sal-kpi-val" style="color:var(--red)">'+fmtCurrency(s.outstanding)+'</div></div>'
             +'</div>'
             +(salesRows
-              ?'<div style="overflow-x:auto;max-height:180px;overflow-y:auto">'
-                +'<table><thead><tr><th>Customer</th><th class="r">Billed</th><th class="r">Paid</th><th class="r">Outstanding</th></tr></thead>'
+              ?'<div style="overflow-x:auto;max-height:200px;overflow-y:auto">'
+                +'<table><thead><tr><th>Customer ↗</th><th class="r">Billed</th><th class="r">Paid</th><th class="r">Outstanding</th></tr></thead>'
                 +'<tbody>'+salesRows+'</tbody></table></div>'
               :'<div style="font-size:12px;color:var(--dim)">No customers linked to this staff.</div>')
           +'</div>'
@@ -1189,6 +1219,7 @@ function renderPerformanceTab(){
 
 function setPerfPeriod(key){PERF_PERIOD=key;renderPerformanceTab()}
 function togglePerfCard(i){var c=document.getElementById('pc-'+i);if(c)c.classList.toggle('open')}
+function perfGoto(tab,scrollId){switchTab(tab);if(scrollId)setTimeout(function(){var el=document.getElementById(scrollId);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})},200)}
 
 // ─── PDF HELPERS ─────────────────────────────────────────────────────────────
 function unclipAll(el){
@@ -1276,11 +1307,11 @@ async function exportStaffPDF(i,name){
   var _hidden=[];
   try{
     var{jsPDF}=window.jspdf;
-    card.querySelectorAll('.wa-sm,.btn-primary').forEach(function(el){el.style.visibility='hidden';_hidden.push(el)});
+    // Switch to single-column layout so sections stack cleanly in portrait PDF
+    card.classList.add('pc-pdf-mode');
+    card.querySelectorAll('.wa-sm,.btn-primary,.pc-chevron').forEach(function(el){el.style.visibility='hidden';_hidden.push(el)});
     var ltSv=applyLightTheme(card),saved=unclipAll(card);
-    // Expand all overflow scrollers so full content is captured
-    card.querySelectorAll('[style*="max-height"]').forEach(function(el){el.style.maxHeight='none'});
-    var canvas=await html2canvas(card,{backgroundColor:'#ffffff',scale:2,useCORS:true});
+    var canvas=await html2canvas(card,{backgroundColor:'#ffffff',scale:2,useCORS:true,windowWidth:900});
     reclipAll(saved);restoreLightTheme(card,ltSv);
     var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}),W=210,H=297,M=10;
     var period=document.getElementById('perf-period-lbl').textContent.replace('Performance — ','');
@@ -1289,6 +1320,7 @@ async function exportStaffPDF(i,name){
   }catch(e){alert('PDF failed: '+e.message)}
   finally{
     _hidden.forEach(function(el){el.style.visibility=''});
+    card.classList.remove('pc-pdf-mode');
     if(!wasOpen)card.classList.remove('open');
   }
 }
