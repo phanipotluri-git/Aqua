@@ -562,40 +562,50 @@ function toggleAbsExpand(uid){var exp=document.getElementById('exp-'+uid);var ar
 function toggleMonthCal(mUid){var cal=document.getElementById('cal-'+mUid);var arr=document.getElementById('marr-'+mUid);if(!cal)return;var open=cal.style.display==='none'||cal.style.display==='';cal.style.display=open?'block':'none';if(arr)arr.textContent=open?'▼':'▶';}
 
 // ─── DATA LOAD ────────────────────────────────────────────────────────────────
-async function loadData(){
-  document.getElementById('loading-overlay').classList.remove('hidden');
-  document.getElementById('loading-txt').textContent='Fetching data from Google Sheets…';
+function parseAndRender(json){
+  if(Array.isArray(json)){
+    RAW_DATA=json;STAFF_DATA=[];CUSTOMER_DATA=[];STATEMENTS_DATA=[];
+  }else{
+    RAW_DATA=Array.isArray(json.fieldReports)?json.fieldReports:[];
+    STAFF_DATA=Array.isArray(json.staff)?json.staff:[];
+    CUSTOMER_DATA=Array.isArray(json.customers)?json.customers:[];
+    STATEMENTS_DATA=Array.isArray(json.statements)?json.statements:[];
+    STATEMENTS_DATA.forEach(function(r){
+      r._date=r[SCOL.DATE]?new Date(r[SCOL.DATE]):null;
+      if(r._date&&isNaN(r._date))r._date=null;
+      r._sales=parseMoney(r[SCOL.SALES]);
+      r._payment=parseMoney(r[SCOL.PAYMENT]);
+      r._balance=parseMoney(r[SCOL.BALANCE]);
+    });
+  }
+  RAW_DATA.forEach(function(r){r._visitDate=new Date(r[COL.VISIT_DATE]||r[COL.TIMESTAMP]);if(isNaN(r._visitDate))r._visitDate=null});
+  return !Array.isArray(json);
+}
+async function loadData(silent){
+  if(!silent){
+    document.getElementById('loading-overlay').classList.remove('hidden');
+    document.getElementById('loading-txt').textContent='Fetching data from Google Sheets…';
+  }else{
+    setStatus('Refreshing…');
+  }
   try{
     if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL==='PASTE_YOUR_WEB_APP_URL_HERE')throw new Error('Set APPS_SCRIPT_URL in analytics.html');
     var res=await fetch(APPS_SCRIPT_URL);
     if(!res.ok){var e=await res.json().catch(function(){return{error:'HTTP '+res.status}});throw new Error(e.error||'HTTP '+res.status)}
     var json=await res.json();
     if(json&&json.error)throw new Error(json.error);
-    // Support both old (plain array) and new (multi-sheet object) response formats
-    if(Array.isArray(json)){
-      RAW_DATA=json;STAFF_DATA=[];CUSTOMER_DATA=[];STATEMENTS_DATA=[];
-    }else{
-      RAW_DATA=Array.isArray(json.fieldReports)?json.fieldReports:[];
-      STAFF_DATA=Array.isArray(json.staff)?json.staff:[];
-      CUSTOMER_DATA=Array.isArray(json.customers)?json.customers:[];
-      STATEMENTS_DATA=Array.isArray(json.statements)?json.statements:[];
-      STATEMENTS_DATA.forEach(function(r){
-        r._date=r[SCOL.DATE]?new Date(r[SCOL.DATE]):null;
-        if(r._date&&isNaN(r._date))r._date=null;
-        r._sales=parseMoney(r[SCOL.SALES]);
-        r._payment=parseMoney(r[SCOL.PAYMENT]);
-        r._balance=parseMoney(r[SCOL.BALANCE]);
-        });
-    }
-    RAW_DATA.forEach(function(r){r._visitDate=new Date(r[COL.VISIT_DATE]||r[COL.TIMESTAMP]);if(isNaN(r._visitDate))r._visitDate=null});
-    var isMultiSheet=!Array.isArray(json);
+    var isMultiSheet=parseAndRender(json);
     setStatus('Updated '+new Date().toLocaleTimeString('en-IN')+' · '+RAW_DATA.length+' visits'
       +(isMultiSheet
         ?' · Staff:'+STAFF_DATA.length+' Cust:'+CUSTOMER_DATA.length+' Stmts:'+STATEMENTS_DATA.length
         :' · ⚠ OLD API FORMAT — redeploy Code.gs'));
     populateFilters();applyFilters();
-  }catch(e){setStatus('Error: '+e.message,'var(--red)');document.getElementById('loading-txt').textContent='Error: '+e.message}
-  finally{document.getElementById('loading-overlay').classList.add('hidden')}
+    try{localStorage.setItem('aqua_cache',JSON.stringify({ts:Date.now(),data:json}));}catch(e){}
+  }catch(e){
+    setStatus('Error: '+e.message,'var(--red)');
+    if(!silent)document.getElementById('loading-txt').textContent='Error: '+e.message;
+  }
+  finally{if(!silent)document.getElementById('loading-overlay').classList.add('hidden')}
 }
 
 function populateFilters(){
@@ -1850,7 +1860,7 @@ function shareSalesSummaryWA(){
 }
 
 // ─── AUTO-REFRESH ────────────────────────────────────────────────────────────
-var AUTO_REFRESH_MINS=5;
+var AUTO_REFRESH_MINS=15;
 var _countdown=AUTO_REFRESH_MINS*60,_countTimer=null,_refreshTimer=null;
 function startCountdown(){
   clearInterval(_countTimer);clearInterval(_refreshTimer);
@@ -1864,12 +1874,12 @@ function startCountdown(){
       statusEl.dataset.base=base.split(' · next')[0];
       statusEl.textContent=statusEl.dataset.base+' · next refresh in '+m+':'+(s<10?'0':'')+s;
     }
-    if(_countdown<=0){clearInterval(_countTimer);loadData()}
+    if(_countdown<=0){clearInterval(_countTimer);loadData(true)}
   },1000);
 }
 // Wrap loadData to restart countdown after each load
 var _origLoad=loadData;
-loadData=async function(){await _origLoad();startCountdown()};
+loadData=async function(silent){await _origLoad(silent);startCountdown()};
 
 // ─── EVENTS & INIT ────────────────────────────────────────────────────────────
 document.getElementById('btn-refresh').addEventListener('click',function(){loadData()});
@@ -2227,7 +2237,19 @@ window.addEventListener('DOMContentLoaded',function(){
   var to=new Date(),from=new Date();from.setDate(from.getDate()-30);
   document.getElementById('f-to').valueAsDate=to;
   document.getElementById('f-from').valueAsDate=from;
-  loadData(); // countdown starts automatically after load completes
+  (function(){
+    try{
+      var cached=JSON.parse(localStorage.getItem('aqua_cache')||'null');
+      if(cached&&cached.data&&(Date.now()-cached.ts)<3600000){
+        parseAndRender(cached.data);
+        setStatus('Cached · '+new Date(cached.ts).toLocaleTimeString('en-IN')+' — refreshing…');
+        populateFilters();applyFilters();
+        loadData(true);
+        return;
+      }
+    }catch(e){}
+    loadData();
+  })();
 });
 </script>
 
