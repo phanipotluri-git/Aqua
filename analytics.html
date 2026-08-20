@@ -253,7 +253,7 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
 <div id="tab-staff" class="tab-content">
   <div class="two-col">
     <div class="sec-panel"><div class="sec-head"><div class="sec-label">Leaderboard</div><button class="btn wa-sm" onclick="shareLeaderboardWA()" title="Share on WhatsApp">📱</button></div>
-      <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Staff</th><th class="r">Visits</th><th class="r">Farmers</th><th class="r">Areas</th></tr></thead><tbody id="tbl-leader"></tbody></table></div>
+      <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Staff</th><th class="r">Visits</th><th class="r">Farmers</th><th class="r">Areas</th><th class="r">Billed</th><th class="r">Paid</th></tr></thead><tbody id="tbl-leader"></tbody></table></div>
     </div>
     <div class="chart-panel"><div class="chart-label">Visits by Day of Week</div><div class="chart-wrap"><canvas id="c-dow"></canvas></div></div>
   </div>
@@ -720,10 +720,23 @@ function renderLeaderboard(){
   var tbody=document.getElementById('tbl-leader');tbody.innerHTML='';
   var map={};
   FILTERED_DATA.forEach(function(r){var n=r[COL.STAFF_NAME];if(!n)return;if(!map[n])map[n]={v:0,f:new Set(),a:new Set()};map[n].v++;if(r[COL.FARMER_NAME])map[n].f.add(r[COL.FARMER_NAME]);if(r[COL.AREA])map[n].a.add(r[COL.AREA])});
+  // Build email→name lookup
+  var emailToName={};
+  STAFF_DATA.forEach(function(s){var e=s[STCOL.STAFF_EMAIL];if(e)emailToName[e]=s[STCOL.STAFF_NAME]||e});
+  Object.keys(EMAIL_NAMES).forEach(function(e){emailToName[e]=EMAIL_NAMES[e]});
+  // Build custName→staffName from CUSTOMER_DATA
+  var custToStaff={};
+  CUSTOMER_DATA.forEach(function(c){var cn=c[CCOL.CUST_NAME];if(!cn)return;var email=(c[CCOL.STAFF_EMAIL]||'').split(/[,;]+/)[0].trim();if(email)custToStaff[cn]=emailToName[email]||email});
+  // Aggregate all-time billed/paid per staff from statements
+  var billing={};
+  STATEMENTS_DATA.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;var sn=custToStaff[cn];if(!sn)return;if(!billing[sn])billing[sn]={billed:0,paid:0};if(r._sales>0)billing[sn].billed+=r._sales;if(r._payment>0)billing[sn].paid+=r._payment});
   Object.entries(map).sort(function(a,b){return b[1].v-a[1].v}).forEach(function(e,i){
     var cls=i===0?'r1':i===1?'r2':i===2?'r3':'';
+    var b=billing[e[0]]||{billed:0,paid:0};
     var tr=document.createElement('tr');
-    tr.innerHTML='<td><span class="rank '+cls+'">'+(i+1)+'</span></td><td class="c-name">'+esc(e[0])+'</td><td class="c-teal">'+e[1].v+'</td><td class="c-gold">'+e[1].f.size+'</td><td class="c-green">'+e[1].a.size+'</td>';
+    tr.innerHTML='<td><span class="rank '+cls+'">'+(i+1)+'</span></td><td class="c-name">'+esc(e[0])+'</td><td class="c-teal">'+e[1].v+'</td><td class="c-gold">'+e[1].f.size+'</td><td class="c-green">'+e[1].a.size+'</td>'
+      +'<td class="r" style="color:var(--teal)">'+(b.billed>0?fmtCurrency(b.billed):'—')+'</td>'
+      +'<td class="r" style="color:var(--green)">'+(b.paid>0?fmtCurrency(b.paid):'—')+'</td>';
     tbody.appendChild(tr);
   });
   makeSortable('tbl-leader');
