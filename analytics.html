@@ -359,6 +359,10 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
         <input type="text" id="sales-search" placeholder="Search customer…"
           oninput="if(CURRENT_TAB==='sales')renderSalesTab()"
           style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:5px 8px;border-radius:4px;font-size:12px;min-width:140px">
+        <select id="ledger-company-filter" onchange="setSalesCompany(this.value)"
+          style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:5px 8px;border-radius:4px;font-size:12px">
+          <option value="">All Companies</option>
+        </select>
         <select id="sales-staff-filter" onchange="if(CURRENT_TAB==='sales')renderSalesTab()"
           style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:5px 8px;border-radius:4px;font-size:12px">
           <option value="">All Staff</option>
@@ -406,6 +410,10 @@ var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxO-1pqk3u52gJ_LN
 var EMAIL_NAMES = {
   'alokmicrol@gmail.com':   'Aloke Maity',
   'monirulmicrol@gmail.com':'Monirull Islam'
+};
+// Payment details shown on customer statements, keyed by company name
+var PAYMENT_INFO = {
+  // 'Microl Remedies Pvt Ltd': 'A/c No: 1234567890\nIFSC: HDFC0001234\nBank: HDFC Bank, Branch Name\nUPI: company@upi'
 };
 
 var COL = {
@@ -1484,7 +1492,12 @@ function sendPerfWhatsApp(){
 }
 
 // ─── SALES TAB ───────────────────────────────────────────────────────────────
-function setSalesCompany(c){SALES_COMPANY=c;renderSalesTab()}
+function setSalesCompany(c){
+  SALES_COMPANY=c;
+  var sel=document.getElementById('ledger-company-filter');
+  if(sel)sel.value=c;
+  renderSalesTab();
+}
 
 function renderSalesTab(){
   // Company pills
@@ -1539,6 +1552,14 @@ function renderSalesTab(){
     var areas=emails.map(function(e){return(staffLookup[e]&&staffLookup[e].area)||''}).filter(Boolean);
     custStaffMap[cn]={staffName:names.join(', ')||'—',staffArea:[...new Set(areas)].filter(Boolean).join(', ')||'—',emails:emails};
   });
+
+  // Populate company filter dropdown in Customer Ledger header
+  var companySel=document.getElementById('ledger-company-filter');
+  if(companySel){
+    while(companySel.options.length>1)companySel.remove(1);
+    companies.forEach(function(c){var o=document.createElement('option');o.value=o.textContent=c;companySel.appendChild(o)});
+    companySel.value=SALES_COMPANY||'';
+  }
 
   // Populate staff filter dropdown
   var staffSel=document.getElementById('sales-staff-filter');
@@ -1746,6 +1767,20 @@ function openCustModal(custName){
     +'<td style="text-align:right;padding:8px 12px;color:var(--green);font-family:IBM Plex Mono,monospace;font-weight:700">'+fmtCurrency(totalPmt)+'</td>'
     +'</tr></tfoot></table>';
   if(!stmts.length)tbl='<div style="color:var(--dim);padding:20px">No transactions found for this customer.</div>';
+  // Payment details block
+  var custCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
+  var payCompany=SALES_COMPANY||(custCompanies.length===1?custCompanies[0]:'');
+  var payInfo=payCompany?PAYMENT_INFO[payCompany]:'';
+  if(!payInfo&&custCompanies.length>1){
+    // show all companies that have payment info
+    payInfo=custCompanies.filter(function(c){return PAYMENT_INFO[c]}).map(function(c){return'🏢 '+c+'\n'+PAYMENT_INFO[c]}).join('\n\n');
+  }
+  if(payInfo){
+    tbl+='<div style="margin-top:16px;padding:12px 16px;background:var(--panel2);border:1px solid var(--border);border-radius:8px">'
+      +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">💳 Payment Details'+(payCompany?' — '+esc(payCompany):'')+'</div>'
+      +'<div style="font-size:13px;color:var(--txt);white-space:pre-line;line-height:1.6">'+esc(payInfo)+'</div>'
+      +'</div>';
+  }
   document.getElementById('cust-modal-tbl').innerHTML=tbl;
   document.getElementById('cust-modal').style.display='block';
   document.body.style.overflow='hidden';
@@ -1848,6 +1883,12 @@ function shareCustStmtWA(custName){
     if(r._sales>0)msg+='📋 '+fmtDate(r._date)+' Invoice '+esc(r[SCOL.INVOICE_NO])+': ₹'+r._sales.toLocaleString('en-IN')+'\n';
     if(r._payment>0)msg+='💳 '+fmtDate(r._date)+' Payment: ₹'+r._payment.toLocaleString('en-IN')+'\n';
   });
+  // Payment details
+  var waCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
+  var waPayCo=SALES_COMPANY||(waCompanies.length===1?waCompanies[0]:'');
+  var waPayInfo=waPayCo?PAYMENT_INFO[waPayCo]:'';
+  if(!waPayInfo)waPayInfo=waCompanies.filter(function(c){return PAYMENT_INFO[c]}).map(function(c){return'🏢 '+c+'\n'+PAYMENT_INFO[c]}).join('\n\n');
+  if(waPayInfo)msg+='\n💳 *Payment Details:*\n'+waPayInfo+'\n';
   msg+='\n_Aqua Analytics_';
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
