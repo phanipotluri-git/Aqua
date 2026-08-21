@@ -2173,8 +2173,40 @@ var _chatOpen=false;
 function chatToggle(){
   _chatOpen=!_chatOpen;
   document.getElementById('chat-panel').style.display=_chatOpen?'flex':'none';
-  if(_chatOpen&&!document.getElementById('chat-msgs').children.length)
-    chatBotMsg('👋 Hi! Ask me about your data.<br>Try: <i>today attendance</i>, <i>weekly performance</i>, <i>sale of [customer]</i>, <i>outstanding</i>.');
+  if(_chatOpen&&!document.getElementById('chat-msgs').children.length){
+    // Live greeting with today's key numbers
+    var today=new Date(),tdk=dateKey(today);
+    var todayRows=RAW_DATA.filter(function(r){return r._visitDate&&dateKey(r._visitDate)===tdk});
+    var totalStaff=unique((STAFF_DATA.length?STAFF_DATA.map(function(s){return s[STCOL.STAFF_NAME]}):RAW_DATA.map(function(r){return r[COL.STAFF_NAME]})).filter(Boolean)).length;
+    var outStaff=new Set(todayRows.map(function(r){return r[COL.STAFF_NAME]}).filter(Boolean)).size;
+    var totalOut=STATEMENTS_DATA.reduce(function(s,r){return s+(r._sales-r._payment)},0);
+    var greeting='👋 <b>Good '+(today.getHours()<12?'morning':today.getHours()<17?'afternoon':'evening')+'!</b><br><br>';
+    if(RAW_DATA.length){
+      greeting+='📋 Today: <b>'+todayRows.length+' visits</b>, <b>'+outStaff+'/'+totalStaff+'</b> staff out<br>';
+    }
+    if(STATEMENTS_DATA.length&&totalOut>0){
+      greeting+='🔴 Total outstanding: <b style="color:var(--red)">'+fmtCurrency(totalOut)+'</b><br>';
+    }
+    greeting+='<br>Ask me anything — try the chips below or type a question.';
+    chatBotMsg(greeting);
+    chatUpdateChips();
+  }
+}
+function chatUpdateChips(){
+  var chips=document.getElementById('chat-chips');if(!chips)return;
+  var companies=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
+  var hasStmts=STATEMENTS_DATA.length>0;
+  var rows=[
+    {label:'📋 Today',q:'today attendance'},
+    {label:'📊 This Month',q:'this month visits'},
+    {label:'🔴 Outstanding',q:'top outstanding'},
+    hasStmts?{label:'💰 Top Sales',q:'top customers by sales'}:{label:'📈 Weekly',q:'last week visits'},
+    companies.length>0?{label:'🏢 '+companies[0],q:'company '+companies[0]}:{label:'👥 Staff',q:'best performer'},
+    {label:'📅 Summary',q:'daily summary'},
+  ];
+  chips.innerHTML=rows.map(function(c){
+    return'<button class="chat-chip" onclick="chatAsk(\''+c.q+'\')">'+c.label+'</button>';
+  }).join('');
 }
 function chatSend(){var inp=document.getElementById('chat-inp');var q=inp.value.trim();if(!q)return;inp.value='';chatAsk(q);}
 function chatAsk(q){chatAddMsg('user',q);setTimeout(function(){chatBotMsg(chatProcess(q));},180);}
@@ -2276,6 +2308,17 @@ function chatProcess(q){
   if(metric==='outstanding'&&!nameStr)return chatOutstanding();
   // Top customers
   if(/top.*cust|top.*sale|highest.*sale|best.*cust/.test(ql))return chatTopCust(period);
+  // Best performer / top staff
+  if(/best.*(perform|staff|sales?man|rep)|top.*staff|performer/.test(ql))return chatBestStaff(period);
+  // Daily summary
+  if(/daily.?summary|summary.?today|day.?summ/.test(ql))return chatDailySummary();
+  // Company breakdown
+  var compMatch=null;
+  (function(){var companies=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
+    companies.forEach(function(c){if(ql.indexOf(c.toLowerCase())!==-1)compMatch=c;});
+    if(!compMatch){var m=ql.match(/company\s+(.+)/);if(m){var partial=m[1].trim();companies.forEach(function(c){if(c.toLowerCase().indexOf(partial)!==-1)compMatch=c;});}}
+  })();
+  if(compMatch)return chatCompanyBreakdown(compMatch);
 
   // Entity lookup
   var custMatch=nameStr.length>=2?chatFindCustomer(nameStr):null;
@@ -2375,6 +2418,61 @@ function chatTopCust(period){
   }).join('');
   return'💰 <b>Top Customers by Sales '+chatPeriodLabel(period)+'</b><br>'
     +'<table><thead><tr><th>Customer</th><th>Total Sales</th></tr></thead><tbody>'+trows+'</tbody></table>';
+}
+function chatBestStaff(period){
+  var p=period||{from:new Date(new Date().getFullYear(),new Date().getMonth(),1),to:new Date(),label:'this month'};
+  var rows=chatDateFilter(RAW_DATA,p,'_visitDate');
+  if(!rows.length)return'📋 No visit data '+chatPeriodLabel(p)+'.';
+  var sm={};
+  rows.forEach(function(r){
+    var n=r[COL.STAFF_NAME]||chatStaffName(r[COL.STAFF_EMAIL])||'—';
+    if(!sm[n])sm[n]={v:0,cust:new Set(),areas:new Set()};
+    sm[n].v++;if(r[COL.CUST_NAME])sm[n].cust.add(r[COL.CUST_NAME]);if(r[COL.AREA])sm[n].areas.add(r[COL.AREA]);
+  });
+  var stmts=chatDateFilter(STATEMENTS_DATA,p,'_date');
+  var billing={};stmts.forEach(function(r){var rn=r[SCOL.STAFF_NAME]||r['Salesman']||'';if(!rn)return;if(!billing[rn])billing[rn]=0;billing[rn]+=r._sales;});
+  var sorted=Object.keys(sm).sort(function(a,b){return sm[b].v-sm[a].v;}).slice(0,8);
+  var trows=sorted.map(function(n,i){
+    var d=sm[n];var bill=billing[n]||0;
+    var medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    return'<tr><td>'+medal+' <b>'+esc(n)+'</b></td><td style="text-align:center">'+d.v+'</td><td style="text-align:center">'+d.cust.size+'</td>'
+      +(bill>0?'<td style="text-align:right">'+fmtCurrency(bill)+'</td>':'<td>—</td>')+'</tr>';
+  }).join('');
+  return'🏆 <b>Top Performers — '+chatPeriodLabel(p)+'</b><br>'
+    +'<table><thead><tr><th>Staff</th><th>Visits</th><th>Custs</th><th>Billed</th></tr></thead><tbody>'+trows+'</tbody></table>';
+}
+function chatDailySummary(){
+  var today=new Date();var todayKey=today.toISOString().slice(0,10);
+  var rows=RAW_DATA.filter(function(r){return r._visitDate&&r._visitDate.toISOString().slice(0,10)===todayKey;});
+  var totalStaff=unique((STAFF_DATA.length?STAFF_DATA.map(function(s){return s[STCOL.STAFF_NAME]}):RAW_DATA.map(function(r){return r[COL.STAFF_NAME]})).filter(Boolean)).length;
+  var outStaff=new Set(rows.map(function(r){return r[COL.STAFF_NAME]}).filter(Boolean)).size;
+  var totalOut=STATEMENTS_DATA.reduce(function(s,r){return s+(r._sales-r._payment);},0);
+  var totalSales=STATEMENTS_DATA.reduce(function(s,r){return s+r._sales;},0);
+  var custs=new Set(rows.map(function(r){return r[COL.CUST_NAME]}).filter(Boolean));
+  var areas=unique(rows.map(function(r){return r[COL.AREA]}).filter(Boolean));
+  var out='📅 <b>Daily Summary — '+fmtDate(today)+'</b><br><br>';
+  out+='👥 <b>Staff:</b> '+outStaff+'/'+totalStaff+' out today<br>';
+  out+='📋 <b>Visits:</b> '+rows.length+' visits · '+custs.size+' customers<br>';
+  if(areas.length)out+='📍 <b>Areas:</b> '+esc(areas.slice(0,5).join(', '))+(areas.length>5?' +more':'')+' <br>';
+  if(totalSales>0)out+='💰 <b>Total Billed:</b> '+fmtCurrency(totalSales)+'<br>';
+  if(totalOut>0)out+='🔴 <b>Outstanding:</b> <span style="color:var(--red)">'+fmtCurrency(totalOut)+'</span><br>';
+  out+='<br><button class="chat-chip" onclick="chatAsk(\'today attendance\')">📋 Attendance</button> ';
+  out+='<button class="chat-chip" onclick="chatAsk(\'top outstanding\')">🔴 Outstanding</button>';
+  return out;
+}
+function chatCompanyBreakdown(company){
+  var stmts=STATEMENTS_DATA.filter(function(r){return r[SCOL.COMPANY]&&r[SCOL.COMPANY].toLowerCase()===company.toLowerCase();});
+  if(!stmts.length)return'No statements found for <b>'+esc(company)+'</b>.';
+  var totalSales=stmts.reduce(function(s,r){return s+r._sales;},0);
+  var totalPaid=stmts.reduce(function(s,r){return s+r._payment;},0);
+  var outstanding=totalSales-totalPaid;
+  var custs={};stmts.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;if(!custs[cn])custs[cn]={s:0,p:0};custs[cn].s+=r._sales;custs[cn].p+=r._payment;});
+  var topCusts=Object.keys(custs).sort(function(a,b){return custs[b].s-custs[a].s;}).slice(0,5);
+  var trows=topCusts.map(function(n){var d=custs[n];var out=d.s-d.p;return'<tr><td>'+esc(n)+'</td><td style="text-align:right">'+fmtCurrency(d.s)+'</td><td style="text-align:right;color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(out)+'</td></tr>';}).join('');
+  return'🏢 <b>'+esc(company)+'</b><br>'
+    +'💰 Sales: <b>'+fmtCurrency(totalSales)+'</b> · Collected: <b>'+fmtCurrency(totalPaid)+'</b><br>'
+    +(outstanding>0?'🔴 Outstanding: <b style="color:var(--red)">'+fmtCurrency(outstanding)+'</b><br>':'✅ Fully collected<br>')
+    +(trows?'<br><b>Top Customers:</b><br><table><thead><tr><th>Customer</th><th>Sales</th><th>Balance</th></tr></thead><tbody>'+trows+'</tbody></table>':'');
 }
 function chatCollectionAll(period){
   var stmts=chatDateFilter(STATEMENTS_DATA,period,'_date');
