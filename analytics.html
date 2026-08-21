@@ -1939,6 +1939,8 @@ async function exportCustLedgerPDF(){
     var ctrlWrap=btn.parentElement;
     if(ctrlWrap){ctrlWrap.style.display='none';_hidden.push({el:ctrlWrap,prop:'display',val:''});}
     content.querySelectorAll('.wa-sm').forEach(function(el){el.style.visibility='hidden';_hidden.push({el:el,prop:'visibility',val:''});});
+    // Disable sticky thead so html2canvas captures header at top of table, not mid-viewport
+    content.querySelectorAll('thead th').forEach(function(el){_hidden.push({el:el,prop:'position',val:el.style.position});el.style.position='static';});
     var ltSv=applyLightTheme(content),saved=unclipAll(content);
     var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true});
     reclipAll(saved);restoreLightTheme(content,ltSv);
@@ -2094,7 +2096,10 @@ async function exportCustDirectPDF(custName,btn){
         +'<div style="font-size:11px;color:#111;white-space:pre-line;line-height:1.7;font-family:IBM Plex Mono,monospace">'+esc(pdfPayInfo)+'</div>'
         +'</div>';
     }
-    wrap.innerHTML=html;
+    // Neutralise sticky thead — global CSS has position:sticky on thead th which
+    // causes html2canvas to render the header at the viewport top (mid-table) instead
+    // of at the top of the table in the off-screen div.
+    wrap.innerHTML='<style>thead,thead tr,thead th{position:static!important;z-index:auto!important}</style>'+html;
     document.body.appendChild(wrap);
     var canvas=await html2canvas(wrap,{backgroundColor:'#ffffff',scale:2,useCORS:true});
     document.body.removeChild(wrap);
