@@ -1885,25 +1885,18 @@ function shareCustStmtWA(custName){
   var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
   var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
   var lastBalance=stmts.length?stmts[stmts.length-1]._balance:(totalSales-totalPmt);
-  var msg='🌊 *AQUA — Customer Statement*\n'
-    +'👤 *'+custName+'*\n'
+  var msg='👤 *'+custName+'*\n'
     +(SALES_COMPANY?'🏢 '+SALES_COMPANY+'\n':'')
     +'📅 '+new Date().toLocaleDateString('en-IN')+'\n\n'
     +'💰 Total Billed: ₹'+totalSales.toLocaleString('en-IN')+'\n'
     +'✅ Total Paid: ₹'+totalPmt.toLocaleString('en-IN')+'\n'
-    +(lastBalance>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(lastBalance).toLocaleString('en-IN')+'\n\n'
-    +'_Recent Transactions:_\n';
-  stmts.slice(-5).forEach(function(r){
-    if(r._sales>0)msg+='📋 '+fmtDate(r._date)+' Invoice '+esc(r[SCOL.INVOICE_NO])+': ₹'+r._sales.toLocaleString('en-IN')+'\n';
-    if(r._payment>0)msg+='💳 '+fmtDate(r._date)+' Payment: ₹'+r._payment.toLocaleString('en-IN')+'\n';
-  });
+    +(lastBalance>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(lastBalance).toLocaleString('en-IN')+'\n';
   // Payment details
   var waCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
   var waPayCo=SALES_COMPANY||(waCompanies.length===1?waCompanies[0]:'');
   var waPayInfo=waPayCo?PAYMENT_INFO[waPayCo]:'';
   if(!waPayInfo)waPayInfo=waCompanies.filter(function(c){return PAYMENT_INFO[c]}).map(function(c){return'🏢 '+c+'\n'+PAYMENT_INFO[c]}).join('\n\n');
   if(waPayInfo)msg+='\n💳 *Payment Details:*\n'+waPayInfo+'\n';
-  msg+='\n_Aqua Analytics_';
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
