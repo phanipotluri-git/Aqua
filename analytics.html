@@ -746,7 +746,7 @@ async function loadData(silent){
         ?' · Staff:'+STAFF_DATA.length+' Cust:'+CUSTOMER_DATA.length+' Stmts:'+STATEMENTS_DATA.length
         :' · ⚠ OLD API FORMAT — redeploy Code.gs'));
     populateFilters();applyFilters();
-    try{localStorage.setItem('aqua_cache_v3',JSON.stringify({ts:Date.now(),data:json}));}catch(e){}
+    if(!json.error){try{localStorage.setItem('aqua_cache_v3',JSON.stringify({ts:Date.now(),data:json}));}catch(e){}}
   }catch(e){
     setStatus('Error: '+e.message,'var(--red)');
     if(!silent)document.getElementById('loading-txt').textContent='Error: '+e.message;
@@ -2612,12 +2612,17 @@ window.addEventListener('DOMContentLoaded',function(){
   (function(){
     try{
       var cached=JSON.parse(localStorage.getItem('aqua_cache_v3')||'null');
-      if(cached&&cached.data&&!Array.isArray(cached.data)&&Array.isArray(cached.data.statements)){
+      if(cached&&cached.data&&cached.ts&&typeof cached.data==='object'&&!Array.isArray(cached.data)&&!cached.data.error){
         parseAndRender(cached.data);
-        var age=Math.round((Date.now()-cached.ts)/60000);
-        setStatus('Cached · '+(age<60?age+'m ago':Math.round(age/60)+'h ago')+' — refreshing…');
         populateFilters();applyFilters();
-        loadData(true);
+        var age=Math.round((Date.now()-cached.ts)/60000);
+        if(age<10){
+          setStatus('● '+age+'m ago · auto-refreshes at 15m');
+          startCountdown();
+        }else{
+          setStatus('Cached · '+(age<60?age+'m ago':Math.round(age/60)+'h ago')+' — refreshing…');
+          loadData(true);
+        }
         return;
       }
     }catch(e){}
