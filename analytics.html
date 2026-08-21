@@ -124,7 +124,7 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
   #filter-bar select,#filter-bar input[type="date"]{min-width:0;flex:1 1 calc(50% - 8px);font-size:12px;padding:6px 8px}
   #filter-bar .btn{flex:1 1 calc(50% - 8px)}
   .tab-btn{padding:9px 10px;font-size:9px;letter-spacing:.5px}
-  .tab-content{padding:10px;gap:12px}
+  .tab-content{padding-top:64px;padding-bottom:72px;padding-left:10px;padding-right:10px;gap:12px}
   #kpi-row{grid-template-columns:1fr 1fr;gap:8px}
   .kpi-card{padding:10px 12px}
   .kpi-value{font-size:22px}
@@ -2495,7 +2495,7 @@ window.addEventListener('DOMContentLoaded',function(){
   (function(){
     try{
       var cached=JSON.parse(localStorage.getItem('aqua_cache')||'null');
-      if(cached&&cached.data){
+      if(cached&&cached.data&&!Array.isArray(cached.data)&&cached.data.statements){
         parseAndRender(cached.data);
         var age=Math.round((Date.now()-cached.ts)/60000);
         setStatus('Cached · '+(age<60?age+'m ago':Math.round(age/60)+'h ago')+' — refreshing…');
