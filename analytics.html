@@ -1220,8 +1220,9 @@ function computePerfStats(from,to){
   var custSales={};
   STATEMENTS_DATA.forEach(function(r){
     var cn=r[SCOL.CUST_NAME];if(!cn)return;
-    if(!custSales[cn])custSales[cn]={billed:0,paid:0};
-    if(r._sales>0)custSales[cn].billed+=r._sales;
+    var isOpening=(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');
+    if(!custSales[cn])custSales[cn]={billed:0,paid:0,opening:0};
+    if(r._sales>0){if(isOpening)custSales[cn].opening+=r._sales;else custSales[cn].billed+=r._sales;}
     if(r._payment>0)custSales[cn].paid+=r._payment;
   });
   // Find global first date
@@ -1249,8 +1250,8 @@ function computePerfStats(from,to){
     var email=d.email;
     var si=staffLookup[email]||{area:''};
     var custs=emailToCusts[email]||[];
-    var billed=0,paid=0;
-    custs.forEach(function(cn){if(custSales[cn]){billed+=custSales[cn].billed;paid+=custSales[cn].paid}});
+    var billed=0,paid=0,opening=0;
+    custs.forEach(function(cn){if(custSales[cn]){billed+=custSales[cn].billed;paid+=custSales[cn].paid;opening+=custSales[cn].opening}});
     return{name:n,email:email,area:si.area||'',
       visits:d.visits.length,visitList:d.visits,
       farmers:d.farmers.size,areas:d.areas.size,
@@ -1259,7 +1260,7 @@ function computePerfStats(from,to){
       vpd:d.dates.size?(d.visits.length/d.dates.size).toFixed(1):'0',
       visitTypes:d.visitTypes,areaBreakdown:d.areaBreakdown,
       customers:custs,custSales:custSales,
-      billed:billed,paid:paid,outstanding:billed-paid,
+      billed:billed,paid:paid,opening:opening,outstanding:billed+opening-paid,
       globalFirst:globalFirst};
   }).sort(function(a,b){return b.visits-a.visits});
 }
@@ -1413,9 +1414,10 @@ function renderPerformanceTab(){
         +'</div>'
         +'<div class="pc-kpi pc-goto" onclick="perfGoto(\'sales\',\'tbl-cust-ledger\')" title="View customer ledger ↗">'
           +'<div class="pc-kpi-lbl">Sales</div>'
-          +(s.billed>0
+          +(s.billed>0||s.opening>0
             ?'<div class="pc-kpi-val" style="color:var(--teal)">'+fmtCurrency(s.billed)+'</div>'
-              +'<div class="pc-kpi-sub" style="color:var(--red)">'+fmtCurrency(s.outstanding)+' outstanding</div>'
+              +(s.opening>0?'<div class="pc-kpi-sub" style="color:var(--purple)">+'+fmtCurrency(s.opening)+' OB</div>':'')
+              +'<div class="pc-kpi-sub" style="color:var(--red)">'+fmtCurrency(s.outstanding)+' due</div>'
             :'<div class="pc-kpi-val" style="color:var(--dim)">—</div>'
               +'<div class="pc-kpi-sub">No linked customers</div>')
         +'</div>'
@@ -1443,6 +1445,7 @@ function renderPerformanceTab(){
           +'<div class="pc-section">'
             +'<div class="pc-sec-lbl">Sales Summary</div>'
             +'<div class="pc-sal-kpis">'
+              +(s.opening>0?'<div class="pc-sal-kpi"><div class="pc-sal-kpi-lbl" style="color:var(--purple)">Opening Bal</div><div class="pc-sal-kpi-val" style="color:var(--purple)">'+fmtCurrency(s.opening)+'</div></div>':'')
               +'<div class="pc-sal-kpi"><div class="pc-sal-kpi-lbl">Billed</div><div class="pc-sal-kpi-val" style="color:var(--teal)">'+fmtCurrency(s.billed)+'</div></div>'
               +'<div class="pc-sal-kpi"><div class="pc-sal-kpi-lbl">Collected</div><div class="pc-sal-kpi-val" style="color:var(--green)">'+fmtCurrency(s.paid)+'</div></div>'
               +'<div class="pc-sal-kpi"><div class="pc-sal-kpi-lbl">Outstanding</div><div class="pc-sal-kpi-val" style="color:var(--red)">'+fmtCurrency(s.outstanding)+'</div></div>'
@@ -1564,27 +1567,24 @@ async function exportPerfImage(){
 }
 
 async function exportStaffPDF(i,name){
-  var content=document.getElementById('perf-content');if(!content)return;
   var card=document.getElementById('pc-'+i);if(!card)return;
-  // Hide every OTHER card so only this one is captured
-  var allCards=Array.from(content.querySelectorAll('.pc-card'));
-  allCards.forEach(function(c){if(c!==card)c.style.display='none'});
-  // Expand this card
+  // Expand the card before capture
   var wasOpen=card.classList.contains('open');
   if(!wasOpen)card.classList.add('open');
-  // Hide action buttons (PDF / WhatsApp / chevron) on this card
+  // Hide action buttons
   var _act=[];
   card.querySelectorAll('.pc-actions').forEach(function(el){el.style.display='none';_act.push(el)});
-  // Expand any max-height scrollers (customer table)
+  // Expand all max-height / overflow clipped scrollers within card
   var _scroll=[];
   card.querySelectorAll('[style*="max-height"]').forEach(function(el){
     _scroll.push({el:el,mh:el.style.maxHeight,oy:el.style.overflowY});
     el.style.maxHeight='none';el.style.overflowY='visible';
   });
   try{
-    var ltSv=applyLightTheme(content),saved=unclipAll(content);
-    var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false});
-    reclipAll(saved);restoreLightTheme(content,ltSv);
+    // Capture the card element directly — avoids blank space from hidden siblings
+    var ltSv=applyLightTheme(card),saved=unclipAll(card);
+    var canvas=await html2canvas(card,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false});
+    reclipAll(saved);restoreLightTheme(card,ltSv);
     var M=10,auto=autoOrientPDF(canvas);
     var period=document.getElementById('perf-period-lbl').textContent.replace('Performance — ','');
     canvasToPDF(auto.pdf,canvas,auto.W,auto.H,M,'Aqua — '+name+' — '+period+' — '+new Date().toLocaleDateString('en-IN'),'auto');
@@ -1593,7 +1593,6 @@ async function exportStaffPDF(i,name){
   finally{
     _act.forEach(function(el){el.style.display=''});
     _scroll.forEach(function(x){x.el.style.maxHeight=x.mh;x.el.style.overflowY=x.oy});
-    allCards.forEach(function(c){c.style.display=''});
     if(!wasOpen)card.classList.remove('open');
   }
 }
@@ -1616,9 +1615,10 @@ function shareStaffWA(name){
     +(vtTop?'🔖 Visit Mix: '+vtTop+'\n':'')+'\n'
     +'*Attendance*\n'
     +attE+' '+s.att+'% ('+s.present+' / '+s.totalWD+' working days)\n\n'
-    +(s.billed>0
+    +(s.billed>0||s.opening>0
       ?'*Sales (All-time)*\n'
-        +'💰 Billed: ₹'+s.billed.toLocaleString('en-IN')+'\n'
+        +(s.opening>0?'📂 Opening Balance: ₹'+s.opening.toLocaleString('en-IN')+'\n':'')
+        +'💰 '+(s.opening>0?'Period ':'')+'Billed: ₹'+s.billed.toLocaleString('en-IN')+'\n'
         +'✅ Collected: ₹'+s.paid.toLocaleString('en-IN')+'\n'
         +(s.outstanding>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(s.outstanding).toLocaleString('en-IN')+'\n\n'
       :'')
