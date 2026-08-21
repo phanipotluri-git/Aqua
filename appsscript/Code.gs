@@ -4,19 +4,12 @@
 //  1. Open your Google Sheet
 //  2. Click Extensions → Apps Script
 //  3. Delete any existing code, paste this entire file
-//  4. Click Save (💾), then Deploy → New deployment
-//  5. Type: Web app
-//  6. Execute as:        Me
-//  7. Who has access:    Anyone
-//  8. Click Deploy → copy the Web App URL
-//  9. Paste that URL into analytics.html  →  var APPS_SCRIPT_URL = '...'
+//  4. Click Save (💾), then Deploy → Manage deployments → Edit → New version → Deploy
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── CONFIGURATION ─────────────────────────────────────────────────────────────
-// Paste your Google Sheet ID here (the long ID from the sheet URL)
 var SPREADSHEET_ID = '1jbyn7Fka8EbXudEG9qe9YHBqAkP3Bx45TMcL_4uUjfE';
 
-// Maps sheet tab names → JSON response keys
+// Expected tab names — matched case-insensitively
 var SHEETS = {
   'Field Reports': 'fieldReports',
   'Staff':         'staff',
@@ -26,15 +19,26 @@ var SHEETS = {
 
 function doGet() {
   try {
-    // Works both as a bound script (Extensions→Apps Script) and standalone
     var ss = SpreadsheetApp.getActiveSpreadsheet()
           || SpreadsheetApp.openById(SPREADSHEET_ID);
     var tz = Session.getScriptTimeZone();
     var result = {};
 
+    // Build a case-insensitive map of actual sheet names
+    var allSheets = ss.getSheets();
+    var sheetMap = {};
+    allSheets.forEach(function(s) {
+      sheetMap[s.getName().toLowerCase().trim()] = s;
+    });
+
+    // Include actual tab names in response for debugging
+    result._sheets = allSheets.map(function(s) { return s.getName(); });
+
     Object.keys(SHEETS).forEach(function(sheetName) {
       var key = SHEETS[sheetName];
-      var sheet = ss.getSheetByName(sheetName);
+      // Try exact match first, then case-insensitive
+      var sheet = ss.getSheetByName(sheetName)
+               || sheetMap[sheetName.toLowerCase().trim()];
       if (!sheet) { result[key] = []; return; }
 
       var values = sheet.getDataRange().getValues();
@@ -47,7 +51,6 @@ function doGet() {
         headers.forEach(function(h, i) {
           var v = row[i];
           if (v instanceof Date) {
-            // TIME-only cells use the 1899-12-30 epoch in Apps Script.
             if (v.getFullYear() <= 1899) {
               obj[h] = Utilities.formatDate(v, tz, 'HH:mm:ss');
             } else {
