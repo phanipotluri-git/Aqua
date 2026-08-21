@@ -229,23 +229,109 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
 
 <!-- OVERVIEW -->
 <div id="tab-overview" class="tab-content active">
-  <div id="kpi-row">
-    <div class="kpi-card"><div class="kpi-label">Total Visits</div><div class="kpi-value" id="kpi-total">—</div></div>
-    <div class="kpi-card"><div class="kpi-label">Unique Farmers</div><div class="kpi-value" id="kpi-farmers">—</div></div>
-    <div class="kpi-card"><div class="kpi-label">Areas Covered</div><div class="kpi-value" id="kpi-areas">—</div></div>
-    <div class="kpi-card"><div class="kpi-label">Active Staff</div><div class="kpi-value" id="kpi-staff">—</div></div>
-    <div class="kpi-card"><div class="kpi-label">Top Staff</div><div class="kpi-value" id="kpi-top-staff" style="font-size:15px;padding-top:4px">—</div><div class="kpi-sub" id="kpi-top-staff-sub"></div></div>
-    <div class="kpi-card"><div class="kpi-label">Top Area</div><div class="kpi-value" id="kpi-top-area" style="font-size:15px;padding-top:4px">—</div><div class="kpi-sub" id="kpi-top-area-sub"></div></div>
+  <!-- hidden stubs so renderKPI/renderAlerts don't throw -->
+  <div style="display:none">
+    <span id="kpi-total"></span><span id="kpi-farmers"></span><span id="kpi-areas"></span>
+    <span id="kpi-staff"></span><span id="kpi-top-staff"></span><span id="kpi-top-staff-sub"></span>
+    <span id="kpi-top-area"></span><span id="kpi-top-area-sub"></span>
+    <div id="alert-banner"><div id="alert-items"></div></div>
+    <tbody id="tbl-recent"></tbody><span id="tbl-count"></span>
+    <canvas id="c-staff"></canvas><canvas id="c-area"></canvas>
+    <canvas id="c-type"></canvas><canvas id="c-trend"></canvas>
   </div>
-  <div id="alert-banner" style="display:none"><div class="alert-title">⚠ Staff inactive &gt; 7 days</div><div id="alert-items"></div></div>
-  <div class="charts-grid">
-    <div class="chart-panel"><div class="chart-label">Visits by Staff</div><div class="chart-wrap"><canvas id="c-staff"></canvas></div></div>
-    <div class="chart-panel"><div class="chart-label">Visits by Area</div><div class="chart-wrap"><canvas id="c-area"></canvas></div></div>
-    <div class="chart-panel"><div class="chart-label">Visit Type Breakdown</div><div class="chart-wrap"><canvas id="c-type"></canvas></div></div>
-    <div class="chart-panel"><div class="chart-label">Visits Over Time</div><div class="chart-wrap"><canvas id="c-trend"></canvas></div></div>
+
+  <!-- Date / attendance bar -->
+  <div style="padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--border)">
+    <div>
+      <div id="ov-date" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px"></div>
+      <div id="ov-today-line" style="font-size:15px;font-weight:700;color:var(--txt);margin-top:3px"></div>
+    </div>
+    <div style="text-align:right">
+      <div id="ov-att-pct" style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;color:var(--teal);line-height:1"></div>
+      <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Attendance</div>
+    </div>
   </div>
-  <div class="sec-panel"><div class="sec-head"><div class="sec-label">Recent Visits <span id="tbl-count" style="color:var(--dim)"></span></div><button class="btn wa-sm" onclick="shareRecentWA()" title="Share on WhatsApp">📱</button></div>
-    <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Staff</th><th>Area</th><th>Type</th><th>Farmer</th><th>Dealer</th><th>Remarks</th></tr></thead><tbody id="tbl-recent"></tbody></table></div>
+
+  <div style="padding:14px;display:flex;flex-direction:column;gap:12px">
+
+    <!-- STAFF card -->
+    <div onclick="switchTab('performance')" style="background:var(--panel);border:1.5px solid var(--border);border-radius:14px;padding:16px;cursor:pointer;transition:border-color .18s,box-shadow .18s" onmouseover="this.style.borderColor='var(--teal)';this.style.boxShadow='0 0 0 3px rgba(18,196,208,.1)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="width:46px;height:46px;border-radius:12px;background:rgba(18,196,208,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">👥</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:17px;font-weight:700;color:var(--teal)">Staff</div>
+          <div id="ov-staff-sub" style="font-size:12px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+        </div>
+        <div style="font-size:26px;color:var(--teal);font-weight:300;flex-shrink:0">›</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center">
+          <div id="ov-s-month" style="font-size:22px;font-weight:700;color:var(--teal);font-family:'IBM Plex Mono',monospace;line-height:1.1">—</div>
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">This Month</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center">
+          <div id="ov-s-today" style="font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1.1">—</div>
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Today</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center">
+          <div id="ov-s-top" style="font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div>
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Top Today</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SALES card -->
+    <div onclick="switchTab('sales')" style="background:var(--panel);border:1.5px solid var(--border);border-radius:14px;padding:16px;cursor:pointer;transition:border-color .18s,box-shadow .18s" onmouseover="this.style.borderColor='var(--gold)';this.style.boxShadow='0 0 0 3px rgba(230,176,32,.1)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="width:46px;height:46px;border-radius:12px;background:rgba(230,176,32,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">💰</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:17px;font-weight:700;color:var(--gold)">Sales</div>
+          <div id="ov-sales-sub" style="font-size:12px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+        </div>
+        <div style="font-size:26px;color:var(--gold);font-weight:300;flex-shrink:0">›</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center">
+          <div id="ov-v-billed" style="font-size:14px;font-weight:700;color:var(--gold);font-family:'IBM Plex Mono',monospace;line-height:1.1">—</div>
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Billed</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center">
+          <div id="ov-v-paid" style="font-size:14px;font-weight:700;color:var(--green);font-family:'IBM Plex Mono',monospace;line-height:1.1">—</div>
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Collected</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center">
+          <div id="ov-v-out" style="font-size:14px;font-weight:700;color:var(--red);font-family:'IBM Plex Mono',monospace;line-height:1.1">—</div>
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Outstanding</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inactive alert -->
+    <div id="ov-alert" style="display:none;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.3);border-radius:12px;padding:12px 14px">
+      <div style="font-size:13px;font-weight:600;color:var(--red);margin-bottom:6px">⚠ Inactive Staff</div>
+      <div id="ov-alert-list" style="font-size:12px;color:var(--txt);line-height:1.7"></div>
+    </div>
+
+    <!-- Quick-links row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      <div onclick="switchTab('attendance')" style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 6px;text-align:center;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:22px">📋</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:5px;text-transform:uppercase;letter-spacing:.5px">Attend</div>
+      </div>
+      <div onclick="switchTab('coverage')" style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 6px;text-align:center;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:22px">🗺️</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:5px;text-transform:uppercase;letter-spacing:.5px">Coverage</div>
+      </div>
+      <div onclick="switchTab('trends')" style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 6px;text-align:center;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:22px">📈</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:5px;text-transform:uppercase;letter-spacing:.5px">Trends</div>
+      </div>
+      <div onclick="switchTab('remarks')" style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 6px;text-align:center;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:22px">💬</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:5px;text-transform:uppercase;letter-spacing:.5px">Remarks</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -706,29 +792,69 @@ function makeDonut(id,labels,data,bg,bd){
 
 // ─── OVERVIEW ─────────────────────────────────────────────────────────────────
 function renderOverview(){
-  var staffE=sortedEntries(countBy(FILTERED_DATA,COL.STAFF_NAME));
-  makeBar('c-staff',staffE,'rgba(18,196,208,.7)','#12c4d0');
-  var areaE=sortedEntries(countBy(FILTERED_DATA,COL.AREA));
-  makeBar('c-area',areaE,areaE.map(function(_,i){return PALETTE[i%PALETTE.length]+'b3'}),areaE.map(function(_,i){return PALETTE[i%PALETTE.length]}));
-  var typeE=sortedEntries(countBy(FILTERED_DATA,COL.VISIT_TYPE));
-  makeDonut('c-type',typeE.map(function(e){return e[0]}),typeE.map(function(e){return e[1]}),typeE.map(function(_,i){return PALETTE[i%PALETTE.length]+'cc'}),typeE.map(function(_,i){return PALETTE[i%PALETTE.length]}));
-  destroyChart('c-trend');
-  var dc={};FILTERED_DATA.forEach(function(r){var k=dateKey(r._visitDate);if(k)dc[k]=(dc[k]||0)+1});
-  var days=Object.keys(dc).sort();
-  charts['c-trend']=new Chart(document.getElementById('c-trend'),{type:'line',data:{labels:days.map(fmtDate),datasets:[{label:'Visits',data:days.map(function(d){return dc[d]}),borderColor:'#12c4d0',backgroundColor:'rgba(18,196,208,.12)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#12c4d0',fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxRotation:35,font:{size:10}},grid:{color:'#1a3060'}},y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#1a3060'}}}}});
-  var tbody=document.getElementById('tbl-recent');tbody.innerHTML='';
-  var rows=FILTERED_DATA.slice().sort(function(a,b){return(b._visitDate||0)-(a._visitDate||0)}).slice(0,100);
-  document.getElementById('tbl-count').textContent='('+rows.length+' of '+FILTERED_DATA.length+')';
-  rows.forEach(function(r){
-    var tr=document.createElement('tr');tr.className='cl';
-    tr.innerHTML='<td class="c-date">'+fmtDate(r._visitDate)+'</td><td class="c-name">'+esc(r[COL.STAFF_NAME])+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r[COL.REMARKS])+'</td>';
-    var det=document.createElement('tr');det.className='row-detail';
-    var ph=r[COL.PHOTO]?'<a href="'+esc(r[COL.PHOTO])+'" target="_blank" rel="noopener">View Photo</a> &nbsp;':'';
-    det.innerHTML='<td colspan="8">'+(r[COL.LOCATION]?'<b>Location:</b> '+esc(r[COL.LOCATION])+' &nbsp;':'')+( r[COL.MOBILE]?'<b>Mobile:</b> '+esc(r[COL.MOBILE])+' &nbsp;':'')+ph+(r[COL.REMARKS]?'<b>Remarks:</b> '+esc(r[COL.REMARKS]):'')+'</td>';
-    tr.addEventListener('click',function(){det.classList.toggle('open')});
-    tbody.appendChild(tr);tbody.appendChild(det);
-  });
-  makeSortable('tbl-recent');
+  var today=new Date(),tdk=dateKey(today);
+  var now=today.getTime();
+
+  // Date header
+  var el=document.getElementById('ov-date');
+  if(el)el.textContent=today.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  // Today's field visits
+  var todayRows=RAW_DATA.filter(function(r){return r._visitDate&&dateKey(r._visitDate)===tdk});
+  var todayVisits=todayRows.length;
+  var todayStaffSet=new Set(todayRows.map(function(r){return r[COL.STAFF_NAME]}).filter(Boolean));
+  var allStaffNames=unique((STAFF_DATA.length?STAFF_DATA.map(function(s){return s[STCOL.STAFF_NAME]}):RAW_DATA.map(function(r){return r[COL.STAFF_NAME]})).filter(Boolean));
+  var totalStaff=allStaffNames.length||1;
+
+  el=document.getElementById('ov-today-line');
+  if(el)el.textContent=todayVisits+' visits today';
+  el=document.getElementById('ov-att-pct');
+  if(el)el.textContent=Math.round(todayStaffSet.size/totalStaff*100)+'%';
+
+  // This-month visits
+  var monthVisits=RAW_DATA.filter(function(r){
+    return r._visitDate&&r._visitDate.getMonth()===today.getMonth()&&r._visitDate.getFullYear()===today.getFullYear();
+  }).length;
+
+  // Top staff today
+  var todayCount={};
+  todayRows.forEach(function(r){var n=r[COL.STAFF_NAME];if(n)todayCount[n]=(todayCount[n]||0)+1});
+  var topToday=sortedEntries(todayCount)[0];
+
+  el=document.getElementById('ov-staff-sub');
+  if(el)el.textContent=todayStaffSet.size+' of '+totalStaff+' staff out today';
+  el=document.getElementById('ov-s-month');if(el)el.textContent=monthVisits;
+  el=document.getElementById('ov-s-today');if(el)el.textContent=todayVisits;
+  el=document.getElementById('ov-s-top');if(el)el.textContent=topToday?topToday[0].split(' ')[0]:'—';
+
+  // Sales summary
+  var totalBilled=STATEMENTS_DATA.reduce(function(s,r){return s+r._sales},0);
+  var totalPaid=STATEMENTS_DATA.reduce(function(s,r){return s+r._payment},0);
+  var outstanding=totalBilled-totalPaid;
+  var custCount=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.CUST_NAME]}).filter(Boolean)).length;
+  var coCount=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean)).length;
+
+  el=document.getElementById('ov-sales-sub');
+  if(el)el.textContent=custCount+' customers · '+coCount+' companies';
+  el=document.getElementById('ov-v-billed');if(el)el.textContent=fmtCurrency(totalBilled);
+  el=document.getElementById('ov-v-paid');if(el)el.textContent=fmtCurrency(totalPaid);
+  el=document.getElementById('ov-v-out');if(el)el.textContent=fmtCurrency(outstanding);
+
+  // Inactive staff alert
+  var last={};
+  RAW_DATA.forEach(function(r){var n=r[COL.STAFF_NAME];if(!n||!r._visitDate)return;if(!last[n]||r._visitDate>last[n])last[n]=r._visitDate});
+  var inactive=allStaffNames.filter(function(n){return !last[n]||(now-last[n].getTime())/86400000>7});
+  var alertEl=document.getElementById('ov-alert');
+  var alertList=document.getElementById('ov-alert-list');
+  if(alertEl){
+    if(inactive.length){
+      alertEl.style.display='block';
+      if(alertList)alertList.innerHTML=inactive.map(function(n){
+        var days=last[n]?Math.floor((now-last[n].getTime())/86400000):null;
+        return esc(n)+(days?' <span style="color:var(--dim);font-size:11px">('+days+'d ago)</span>':'');
+      }).join('<br>');
+    }else{alertEl.style.display='none';}
+  }
 }
 
 // ─── STAFF TAB ────────────────────────────────────────────────────────────────
