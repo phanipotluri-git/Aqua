@@ -746,7 +746,7 @@ async function loadData(silent){
         ?' · Staff:'+STAFF_DATA.length+' Cust:'+CUSTOMER_DATA.length+' Stmts:'+STATEMENTS_DATA.length
         :' · ⚠ OLD API FORMAT — redeploy Code.gs'));
     populateFilters();applyFilters();
-    try{localStorage.setItem('aqua_cache',JSON.stringify({ts:Date.now(),data:json}));}catch(e){}
+    try{localStorage.setItem('aqua_cache_v3',JSON.stringify({ts:Date.now(),data:json}));}catch(e){}
   }catch(e){
     setStatus('Error: '+e.message,'var(--red)');
     if(!silent)document.getElementById('loading-txt').textContent='Error: '+e.message;
@@ -2494,8 +2494,8 @@ window.addEventListener('DOMContentLoaded',function(){
   document.getElementById('f-from').valueAsDate=from;
   (function(){
     try{
-      var cached=JSON.parse(localStorage.getItem('aqua_cache')||'null');
-      if(cached&&cached.data&&!Array.isArray(cached.data)&&cached.data.statements){
+      var cached=JSON.parse(localStorage.getItem('aqua_cache_v3')||'null');
+      if(cached&&cached.data&&!Array.isArray(cached.data)&&Array.isArray(cached.data.statements)){
         parseAndRender(cached.data);
         var age=Math.round((Date.now()-cached.ts)/60000);
         setStatus('Cached · '+(age<60?age+'m ago':Math.round(age/60)+'h ago')+' — refreshing…');
