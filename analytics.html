@@ -1856,6 +1856,17 @@ async function exportCustDirectPDF(custName,btn){
       +'<td style="'+TD+';text-align:right">'+fmtCurrency(totalSales)+'</td>'
       +'<td style="'+TD+';text-align:right">'+fmtCurrency(totalPmt)+'</td>'
       +'</tr></tbody></table>';
+    // Payment details block
+    var pdfCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
+    var pdfPayCo=SALES_COMPANY||(pdfCompanies.length===1?pdfCompanies[0]:'');
+    var pdfPayInfo=pdfPayCo?PAYMENT_INFO[pdfPayCo]:'';
+    if(!pdfPayInfo)pdfPayInfo=pdfCompanies.filter(function(c){return PAYMENT_INFO[c]}).map(function(c){return c+'\n'+PAYMENT_INFO[c]}).join('\n\n');
+    if(pdfPayInfo){
+      html+='<div style="margin-top:14px;padding:10px 12px;background:#f0f2f5;border:1px solid #ccc;border-radius:5px">'
+        +'<div style="font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:6px">💳 Payment Details'+(pdfPayCo?' — '+pdfPayCo:'')+'</div>'
+        +'<div style="font-size:11px;color:#111;white-space:pre-line;line-height:1.7;font-family:IBM Plex Mono,monospace">'+esc(pdfPayInfo)+'</div>'
+        +'</div>';
+    }
     wrap.innerHTML=html;
     document.body.appendChild(wrap);
     var canvas=await html2canvas(wrap,{backgroundColor:'#ffffff',scale:2,useCORS:true});
