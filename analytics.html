@@ -1152,8 +1152,9 @@ function renderRemarksTab(){
   makeSortable('tbl-remarks');
 }
 
-// ─── PDF EXPORT ───────────────────────────────────────────────────────────────
-document.getElementById('btn-export').addEventListener('click',async function(){
+// ─── PDF EXPORT (legacy btn-export — kept for back-compat, guarded against null) ──
+(function(){var _be=document.getElementById('btn-export');if(!_be)return;
+_be.addEventListener('click',async function(){
   var btn=this;btn.textContent='⏳ Generating…';btn.disabled=true;
   try{
     var{jsPDF}=window.jspdf,pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,M=10;
@@ -1166,7 +1167,7 @@ document.getElementById('btn-export').addEventListener('click',async function(){
     pdf.save('aqua-analytics-'+new Date().toISOString().slice(0,10)+'.pdf');
   }catch(e){alert('PDF export failed: '+e.message)}
   finally{btn.textContent='⬇ Export PDF';btn.disabled=false}
-});
+});})();
 
 // ─── PERFORMANCE TAB ─────────────────────────────────────────────────────────
 function getPerfDateRange(key){
@@ -2135,6 +2136,24 @@ function startCountdown(){
 // Wrap loadData to restart countdown after each load
 var _origLoad=loadData;
 loadData=async function(silent){await _origLoad(silent);startCountdown()};
+
+function sendPerfWhatsApp(){
+  var period=(document.getElementById('perf-period-lbl')||{}).textContent||'';
+  period=period.replace('Performance — ','');
+  var range=getPerfDateRange(PERF_PERIOD);
+  var stats=computePerfStats(range.from,range.to);
+  if(!stats.length){alert('No data for this period.');return}
+  var msg='🌊 *AQUA — Team Performance*\n📅 '+period+'\n👥 '+stats.length+' staff\n\n';
+  stats.forEach(function(s){
+    var attE=s.att>=90?'🟢':s.att>=70?'🟡':'🔴';
+    msg+='👤 *'+s.name+'*'+(s.area?' | '+s.area:'')+'\n'
+      +'  📊 Visits: '+s.visits+' ('+s.vpd+'/day) · '+attE+' '+s.att+'%\n'
+      +(s.billed>0?'  💰 ₹'+s.billed.toLocaleString('en-IN')+' billed'+(s.outstanding>0?' · 🔴 ₹'+s.outstanding.toLocaleString('en-IN')+' due':'')+'\n':'')
+      +'\n';
+  });
+  msg+='_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
 
 // ─── EVENTS & INIT ────────────────────────────────────────────────────────────
 document.getElementById('btn-refresh').addEventListener('click',function(){loadData()});
