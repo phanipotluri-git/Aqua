@@ -411,9 +411,12 @@ var EMAIL_NAMES = {
   'alokmicrol@gmail.com':   'Aloke Maity',
   'monirulmicrol@gmail.com':'Monirull Islam'
 };
-// Payment details shown on customer statements, keyed by company name
+// Payment details shown on customer statements, keyed by company name (must match values in "Billed/Paid" sheet column)
 var PAYMENT_INFO = {
-  // 'Microl Remedies Pvt Ltd': 'A/c No: 1234567890\nIFSC: HDFC0001234\nBank: HDFC Bank, Branch Name\nUPI: company@upi'
+  'Microl Remedies': 'Microl Remedies Pvt Ltd\nBank: Axis Bank\nA/c No: 917020011823802\nIFSC: UTIB0001922\nBranch: Moti Nagar, Hyderabad',
+  'Microl Aqua': 'MICROL AQUA\nBank: HDFC Bank\nA/c No: 50200050955329\nIFSC: HDFC0000848\nBranch: Contai',
+  'Alliance': 'ALLIANCE\nBank: Axis Bank\nA/c No: 922020055505667\nIFSC: UTIB0003062\nBranch: Balaji Nagar',
+  'Alliance Aqua': 'ALLIANCE\nBank: Axis Bank\nA/c No: 922020055505667\nIFSC: UTIB0003062\nBranch: Balaji Nagar'
 };
 
 var COL = {
@@ -433,7 +436,7 @@ var SCOL = {
   STMT_ID:'Statement ID', CUST_ID:'Customer ID', CUST_NAME:'Customer Name',
   DATE:'Date', BILLED_PAID:'Billed/Paid', TRANS_TYPE:'Transaction Type',
   INVOICE_NO:'Invoice No', SALES:'Sales',
-  PAYMENT:'Payment', BALANCE:'Balance', COMPANY:'Company'
+  PAYMENT:'Payment', BALANCE:'Balance', COMPANY:'Billed/Paid'
 };
 
 var PALETTE = ['#12c4d0','#e6b020','#9b6cff','#48ccff','#44d488','#f08840','#f06060','#c4e012','#ff6eb4','#7ecfff'];
