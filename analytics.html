@@ -418,6 +418,13 @@ var PAYMENT_INFO = {
   'Alliance': 'ALLIANCE\nBank: Axis Bank\nA/c No: 922020055505667\nIFSC: UTIB0003062\nBranch: Balaji Nagar',
   'Alliance Aqua': 'ALLIANCE\nBank: Axis Bank\nA/c No: 922020055505667\nIFSC: UTIB0003062\nBranch: Balaji Nagar'
 };
+function getPayInfo(company){
+  if(!company)return'';
+  if(PAYMENT_INFO[company])return PAYMENT_INFO[company];
+  var lc=company.toLowerCase();
+  var key=Object.keys(PAYMENT_INFO).find(function(k){return k.toLowerCase()===lc||lc.indexOf(k.toLowerCase())>=0||k.toLowerCase().indexOf(lc)>=0});
+  return key?PAYMENT_INFO[key]:'';
+}
 
 var COL = {
   UNIQUE_ID:'UNIQUE ID', TIMESTAMP:'Timestamp', TIME:'Time',
@@ -1773,10 +1780,9 @@ function openCustModal(custName){
   // Payment details block
   var custCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
   var payCompany=SALES_COMPANY||(custCompanies.length===1?custCompanies[0]:'');
-  var payInfo=payCompany?PAYMENT_INFO[payCompany]:'';
+  var payInfo=payCompany?getPayInfo(payCompany):'';
   if(!payInfo&&custCompanies.length>1){
-    // show all companies that have payment info
-    payInfo=custCompanies.filter(function(c){return PAYMENT_INFO[c]}).map(function(c){return'🏢 '+c+'\n'+PAYMENT_INFO[c]}).join('\n\n');
+    payInfo=custCompanies.map(function(c){return getPayInfo(c)?'🏢 '+c+'\n'+getPayInfo(c):''}).filter(Boolean).join('\n\n');
   }
   if(payInfo){
     tbl+='<div style="margin-top:16px;padding:12px 16px;background:var(--panel2);border:1px solid var(--border);border-radius:8px">'
@@ -1813,7 +1819,7 @@ async function exportCustDirectPDF(custName,btn){
 
     // 720px wide → A4 190mm content → each 10px CSS ≈ 2.64mm ≈ standard table text
     var wrap=document.createElement('div');
-    wrap.style.cssText='position:fixed;left:-9999px;top:0;width:720px;background:#fff;color:#111;padding:14px 16px;font-family:IBM Plex Sans,sans-serif;font-size:10px;line-height:1.4';
+    wrap.style.cssText='position:absolute;left:-9999px;top:0;width:720px;background:#fff;color:#111;padding:14px 16px;font-family:IBM Plex Sans,sans-serif;font-size:10px;line-height:1.4';
     // Override CSS vars so global rules (thead th bg, tbody td color) use light values
     Object.keys(LT_VARS).forEach(function(k){wrap.style.setProperty(k,LT_VARS[k])});
     var S='font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:2px';
@@ -1859,8 +1865,8 @@ async function exportCustDirectPDF(custName,btn){
     // Payment details block
     var pdfCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
     var pdfPayCo=SALES_COMPANY||(pdfCompanies.length===1?pdfCompanies[0]:'');
-    var pdfPayInfo=pdfPayCo?PAYMENT_INFO[pdfPayCo]:'';
-    if(!pdfPayInfo)pdfPayInfo=pdfCompanies.filter(function(c){return PAYMENT_INFO[c]}).map(function(c){return c+'\n'+PAYMENT_INFO[c]}).join('\n\n');
+    var pdfPayInfo=pdfPayCo?getPayInfo(pdfPayCo):'';
+    if(!pdfPayInfo)pdfPayInfo=pdfCompanies.map(function(c){return getPayInfo(c)?c+'\n'+getPayInfo(c):''}).filter(Boolean).join('\n\n');
     if(pdfPayInfo){
       html+='<div style="margin-top:14px;padding:10px 12px;background:#f0f2f5;border:1px solid #ccc;border-radius:5px">'
         +'<div style="font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:6px">💳 Payment Details'+(pdfPayCo?' — '+pdfPayCo:'')+'</div>'
@@ -1894,8 +1900,8 @@ function shareCustStmtWA(custName){
   // Payment details
   var waCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
   var waPayCo=SALES_COMPANY||(waCompanies.length===1?waCompanies[0]:'');
-  var waPayInfo=waPayCo?PAYMENT_INFO[waPayCo]:'';
-  if(!waPayInfo)waPayInfo=waCompanies.filter(function(c){return PAYMENT_INFO[c]}).map(function(c){return'🏢 '+c+'\n'+PAYMENT_INFO[c]}).join('\n\n');
+  var waPayInfo=waPayCo?getPayInfo(waPayCo):'';
+  if(!waPayInfo)waPayInfo=waCompanies.map(function(c){return getPayInfo(c)?'🏢 '+c+'\n'+getPayInfo(c):''}).filter(Boolean).join('\n\n');
   if(waPayInfo)msg+='\n💳 *Payment Details:*\n'+waPayInfo+'\n';
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
