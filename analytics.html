@@ -2307,9 +2307,10 @@ window.addEventListener('DOMContentLoaded',function(){
   (function(){
     try{
       var cached=JSON.parse(localStorage.getItem('aqua_cache')||'null');
-      if(cached&&cached.data&&(Date.now()-cached.ts)<3600000){
+      if(cached&&cached.data){
         parseAndRender(cached.data);
-        setStatus('Cached · '+new Date(cached.ts).toLocaleTimeString('en-IN')+' — refreshing…');
+        var age=Math.round((Date.now()-cached.ts)/60000);
+        setStatus('Cached · '+(age<60?age+'m ago':Math.round(age/60)+'h ago')+' — refreshing…');
         populateFilters();applyFilters();
         loadData(true);
         return;
