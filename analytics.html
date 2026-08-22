@@ -751,13 +751,13 @@ async function loadData(silent){
     if(!res.ok){var e=await res.json().catch(function(){return{error:'HTTP '+res.status}});throw new Error(e.error||'HTTP '+res.status)}
     var json=await res.json();
     if(json&&json.error)throw new Error(json.error);
+    try{localStorage.setItem('aqua_cache_v3',JSON.stringify({ts:Date.now(),data:json}));}catch(e){}
     var isMultiSheet=parseAndRender(json);
     setStatus('Updated '+new Date().toLocaleTimeString('en-IN')+' · '+RAW_DATA.length+' visits'
       +(isMultiSheet
         ?' · Staff:'+STAFF_DATA.length+' Cust:'+CUSTOMER_DATA.length+' Stmts:'+STATEMENTS_DATA.length
         :' · ⚠ OLD API FORMAT — redeploy Code.gs'));
     populateFilters();applyFilters();
-    if(!json.error){try{localStorage.setItem('aqua_cache_v3',JSON.stringify({ts:Date.now(),data:json}));}catch(e){}}
   }catch(e){
     setStatus('Error: '+e.message,'var(--red)');
     if(!silent)document.getElementById('loading-txt').textContent='Error: '+e.message;
@@ -2668,7 +2668,7 @@ window.addEventListener('DOMContentLoaded',function(){
         parseAndRender(cached.data);
         populateFilters();applyFilters();
         var age=Math.round((Date.now()-cached.ts)/60000);
-        if(age<10){
+        if(age<30){
           setStatus('● '+age+'m ago · auto-refreshes at 15m');
           startCountdown();
         }else{
