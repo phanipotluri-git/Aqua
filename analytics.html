@@ -1604,8 +1604,7 @@ function shareStaffWA(name){
   var attE=s.att>=90?'🟢':s.att>=70?'🟡':'🔴';
   var period=document.getElementById('perf-period-lbl').textContent.replace('Performance — ','');
   var vtTop=Object.entries(s.visitTypes).sort(function(a,b){return b[1]-a[1]}).slice(0,2).map(function(e){return e[0]+': '+e[1]}).join(', ');
-  var msg='🌊 *AQUA Staff Performance Report*\n'
-    +'👤 *'+name+'*'+(s.area?' | 📍 '+s.area:'')+'\n'
+  var msg='👤 *'+name+'*'+(s.area?' | 📍 '+s.area:'')+'\n'
     +'📅 Period: '+period+'\n\n'
     +'*Field Activity*\n'
     +'📊 Total Visits: *'+s.visits+'*\n'
@@ -1621,8 +1620,7 @@ function shareStaffWA(name){
         +'💰 '+(s.opening>0?'Period ':'')+'Billed: ₹'+s.billed.toLocaleString('en-IN')+'\n'
         +'✅ Collected: ₹'+s.paid.toLocaleString('en-IN')+'\n'
         +(s.outstanding>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(s.outstanding).toLocaleString('en-IN')+'\n\n'
-      :'')
-    +'_Aqua Analytics_';
+      :'');
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
