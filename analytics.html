@@ -1712,19 +1712,26 @@ function sendPerfWhatsApp(){
 }
 
 // ─── SALES TAB ───────────────────────────────────────────────────────────────
-function toggleSalesCompany(c){
-  if(c===''){SALES_COMPANIES.clear();}
-  else{if(SALES_COMPANIES.has(c))SALES_COMPANIES.delete(c);else SALES_COMPANIES.add(c);}
-  renderSalesTab();
-}
+// Set up delegated click handler once for company pills — avoids inline onclick escaping issues
+(function(){
+  var el=document.getElementById('sales-company-pills');
+  if(el){el.addEventListener('click',function(e){
+    var pill=e.target.closest('.staff-pill');if(!pill)return;
+    var co=pill.getAttribute('data-co');
+    if(co===null)return;
+    if(co===''){SALES_COMPANIES.clear();}
+    else{if(SALES_COMPANIES.has(co))SALES_COMPANIES.delete(co);else SALES_COMPANIES.add(co);}
+    renderSalesTab();
+  });}
+})();
 
 function renderSalesTab(){
   // Company pills
   var companies=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.COMPANY]}));
   var pillsEl=document.getElementById('sales-company-pills');
   if(pillsEl){
-    pillsEl.innerHTML='<span class="staff-pill'+(SALES_COMPANIES.size===0?' active':'')+'" onclick="toggleSalesCompany(\'\')">All Companies</span>'
-      +companies.map(function(c){return'<span class="staff-pill'+(SALES_COMPANIES.has(c)?' active':'')+'" onclick="toggleSalesCompany(\''+c.replace(/'/g,'\\\'')+'\')" title="'+esc(c)+'">'+esc(c)+'</span>'}).join('');
+    pillsEl.innerHTML='<span class="staff-pill'+(SALES_COMPANIES.size===0?' active':'')+'" data-co="">All Companies</span>'
+      +companies.map(function(c){return'<span class="staff-pill'+(SALES_COMPANIES.has(c)?' active':'')+'" data-co="'+esc(c)+'" title="'+esc(c)+'">'+esc(c)+'</span>'}).join('');
   }
   var lbl=document.getElementById('sales-company-lbl');
   if(lbl)lbl.textContent='Sales Ledger'+(SALES_COMPANIES.size===1?' — '+[...SALES_COMPANIES][0]:SALES_COMPANIES.size>1?' ('+SALES_COMPANIES.size+' companies)':'');
