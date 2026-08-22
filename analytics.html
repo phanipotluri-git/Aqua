@@ -1627,7 +1627,7 @@ function autoOrientPDF(canvas){
 function canvasToPDF(pdf,canvas,W,H,M,footer,mode){
   var pw=W-2*M,ph=H-2*M-10,ratio=pw/canvas.width,totalH=canvas.height*ratio;
   var naturalPages=Math.ceil(totalH/ph)||1;
-  if(mode==='compact'||naturalPages>3){
+  if(mode==='compact'){
     var scale=Math.min(pw/canvas.width,ph/canvas.height);
     var fw=canvas.width*scale,fh=canvas.height*scale;
     pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',M+(pw-fw)/2,M,fw,fh);
@@ -2053,7 +2053,8 @@ async function exportCustLedgerPDF(){
     // Disable sticky thead so html2canvas captures header at top of table, not mid-viewport
     content.querySelectorAll('thead th').forEach(function(el){_hidden.push({el:el,prop:'position',val:el.style.position});el.style.position='static';});
     var ltSv=applyLightTheme(content),saved=unclipAll(content);
-    var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true});
+    var contentH=content.scrollHeight||content.offsetHeight||2000;
+    var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true,height:contentH,windowHeight:contentH});
     reclipAll(saved);restoreLightTheme(content,ltSv);
     var M=10,auto=autoOrientPDF(canvas);
     var coLabel=SALES_COMPANIES.size===1?' ('+[...SALES_COMPANIES][0]+')':SALES_COMPANIES.size>1?' ('+SALES_COMPANIES.size+' companies)':'';
@@ -2213,7 +2214,8 @@ async function exportCustDirectPDF(custName,btn){
     // of at the top of the table in the off-screen div.
     wrap.innerHTML='<style>thead,thead tr,thead th{position:static!important;z-index:auto!important}</style>'+html;
     document.body.appendChild(wrap);
-    var canvas=await html2canvas(wrap,{backgroundColor:'#ffffff',scale:2,useCORS:true});
+    var wrapH=wrap.scrollHeight||wrap.offsetHeight||2000;
+    var canvas=await html2canvas(wrap,{backgroundColor:'#ffffff',scale:2,useCORS:true,height:wrapH,windowHeight:wrapH});
     document.body.removeChild(wrap);
     var M=10,auto=autoOrientPDF(canvas);
     canvasToPDF(auto.pdf,canvas,auto.W,auto.H,M,'Aqua — '+custName+' — '+new Date().toLocaleString('en-IN'),'auto');
