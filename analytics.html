@@ -498,10 +498,6 @@ tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
         <input type="text" id="sales-search" placeholder="Search customer…"
           oninput="if(CURRENT_TAB==='sales')renderSalesTab()"
           style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:5px 8px;border-radius:4px;font-size:12px;min-width:140px">
-        <select id="ledger-company-filter" onchange="setSalesCompany(this.value)"
-          style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:5px 8px;border-radius:4px;font-size:12px">
-          <option value="">All Companies</option>
-        </select>
         <select id="sales-staff-filter" onchange="if(CURRENT_TAB==='sales')renderSalesTab()"
           style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:5px 8px;border-radius:4px;font-size:12px">
           <option value="">All Staff</option>
@@ -595,7 +591,7 @@ var RAW_DATA=[], FILTERED_DATA=[], charts={}, CURRENT_TAB='overview';
 var REVISIT_FILTER='', REVISIT_SORT={col:'gap',dir:1};
 var PERF_PERIOD='month';
 var STAFF_DATA=[], CUSTOMER_DATA=[], STATEMENTS_DATA=[];
-var SALES_COMPANY='';
+var SALES_COMPANIES=new Set();
 Chart.defaults.color='#8ab2cc'; Chart.defaults.borderColor='#1a3060';
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -1716,10 +1712,9 @@ function sendPerfWhatsApp(){
 }
 
 // ─── SALES TAB ───────────────────────────────────────────────────────────────
-function setSalesCompany(c){
-  SALES_COMPANY=c;
-  var sel=document.getElementById('ledger-company-filter');
-  if(sel)sel.value=c;
+function toggleSalesCompany(c){
+  if(c===''){SALES_COMPANIES.clear();}
+  else{if(SALES_COMPANIES.has(c))SALES_COMPANIES.delete(c);else SALES_COMPANIES.add(c);}
   renderSalesTab();
 }
 
@@ -1728,14 +1723,14 @@ function renderSalesTab(){
   var companies=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.COMPANY]}));
   var pillsEl=document.getElementById('sales-company-pills');
   if(pillsEl){
-    pillsEl.innerHTML='<span class="staff-pill'+(SALES_COMPANY===''?' active':'')+'" onclick="setSalesCompany(\'\')">All Companies</span>'
-      +companies.map(function(c){return'<span class="staff-pill'+(SALES_COMPANY===c?' active':'')+'" onclick="setSalesCompany(\''+c.replace(/'/g,'\\\'')+'\')" title="'+esc(c)+'">'+esc(c)+'</span>'}).join('');
+    pillsEl.innerHTML='<span class="staff-pill'+(SALES_COMPANIES.size===0?' active':'')+'" onclick="toggleSalesCompany(\'\')">All Companies</span>'
+      +companies.map(function(c){return'<span class="staff-pill'+(SALES_COMPANIES.has(c)?' active':'')+'" onclick="toggleSalesCompany(\''+c.replace(/'/g,'\\\'')+'\')" title="'+esc(c)+'">'+esc(c)+'</span>'}).join('');
   }
   var lbl=document.getElementById('sales-company-lbl');
-  if(lbl)lbl.textContent='Sales Ledger'+(SALES_COMPANY?' — '+SALES_COMPANY:'');
+  if(lbl)lbl.textContent='Sales Ledger'+(SALES_COMPANIES.size===1?' — '+[...SALES_COMPANIES][0]:SALES_COMPANIES.size>1?' ('+SALES_COMPANIES.size+' companies)':'');
 
   // Filtered statements
-  var stmts=SALES_COMPANY?STATEMENTS_DATA.filter(function(r){return r[SCOL.COMPANY]===SALES_COMPANY}):STATEMENTS_DATA;
+  var stmts=SALES_COMPANIES.size>0?STATEMENTS_DATA.filter(function(r){return SALES_COMPANIES.has(r[SCOL.COMPANY])}):STATEMENTS_DATA;
 
   // KPI Cards
   var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
@@ -1776,14 +1771,6 @@ function renderSalesTab(){
     var areas=emails.map(function(e){return(staffLookup[e]&&staffLookup[e].area)||''}).filter(Boolean);
     custStaffMap[cn]={staffName:names.join(', ')||'—',staffArea:[...new Set(areas)].filter(Boolean).join(', ')||'—',emails:emails};
   });
-
-  // Populate company filter dropdown in Customer Ledger header
-  var companySel=document.getElementById('ledger-company-filter');
-  if(companySel){
-    while(companySel.options.length>1)companySel.remove(1);
-    companies.forEach(function(c){var o=document.createElement('option');o.value=o.textContent=c;companySel.appendChild(o)});
-    companySel.value=SALES_COMPANY||'';
-  }
 
   // Populate staff filter dropdown
   var staffSel=document.getElementById('sales-staff-filter');
@@ -1907,7 +1894,7 @@ function renderStaffCustMapping(custStaffMap,staffLookup){
 
     var det=document.createElement('tr');det.className='row-detail';det.id='scm-det-'+uid;
     var custList=s.custs.map(function(cn){
-      var cStmts=STATEMENTS_DATA.filter(function(r){return r[SCOL.CUST_NAME]===cn&&(!SALES_COMPANY||r[SCOL.COMPANY]===SALES_COMPANY)});
+      var cStmts=STATEMENTS_DATA.filter(function(r){return r[SCOL.CUST_NAME]===cn&&(SALES_COMPANIES.size===0||SALES_COMPANIES.has(r[SCOL.COMPANY]))});
       var sorted=cStmts.filter(function(r){return r._date}).sort(function(a,b){return a._date-b._date});
       var bal=sorted.length?sorted[sorted.length-1]._balance:0;
       var balHtml=bal>0?' <span style="color:var(--red);font-family:IBM Plex Mono,monospace;font-size:10px">('+fmtCurrency(bal)+' due)</span>':'';
@@ -1943,7 +1930,8 @@ async function exportCustLedgerPDF(){
     var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true});
     reclipAll(saved);restoreLightTheme(content,ltSv);
     var M=10,auto=autoOrientPDF(canvas);
-    canvasToPDF(auto.pdf,canvas,auto.W,auto.H,M,'Aqua — Customer Ledger'+(SALES_COMPANY?' ('+SALES_COMPANY+')':'')+' — '+new Date().toLocaleString('en-IN'),'auto');
+    var coLabel=SALES_COMPANIES.size===1?' ('+[...SALES_COMPANIES][0]+')':SALES_COMPANIES.size>1?' ('+SALES_COMPANIES.size+' companies)':'';
+    canvasToPDF(auto.pdf,canvas,auto.W,auto.H,M,'Aqua — Customer Ledger'+coLabel+' — '+new Date().toLocaleString('en-IN'),'auto');
     pdfSave(auto.pdf,'aqua-customer-ledger-'+new Date().toISOString().slice(0,10)+'.pdf');
   }catch(e){alert('PDF failed: '+e.message)}
   finally{
@@ -1956,7 +1944,7 @@ var CUST_MODAL_NAME='';
 function openCustModal(custName){
   CUST_MODAL_NAME=custName;
   var stmts=STATEMENTS_DATA.filter(function(r){
-    return r[SCOL.CUST_NAME]===custName&&(!SALES_COMPANY||r[SCOL.COMPANY]===SALES_COMPANY);
+    return r[SCOL.CUST_NAME]===custName&&(SALES_COMPANIES.size===0||SALES_COMPANIES.has(r[SCOL.COMPANY]));
   });
   var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
   var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
@@ -1997,7 +1985,7 @@ function openCustModal(custName){
   if(!stmts.length)tbl='<div style="color:var(--dim);padding:20px">No transactions found for this customer.</div>';
   // Payment details block
   var custCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
-  var payCompany=SALES_COMPANY||(custCompanies.length===1?custCompanies[0]:'');
+  var payCompany=SALES_COMPANIES.size===1?[...SALES_COMPANIES][0]:(custCompanies.length===1?custCompanies[0]:'');
   var payInfo=payCompany?getPayInfo(payCompany):'';
   if(!payInfo&&custCompanies.length>1){
     payInfo=custCompanies.map(function(c){return getPayInfo(c)?'🏢 '+c+'\n'+getPayInfo(c):''}).filter(Boolean).join('\n\n');
@@ -2027,7 +2015,7 @@ async function exportCustDirectPDF(custName,btn){
   try{
     var{jsPDF}=window.jspdf;
     var stmts=STATEMENTS_DATA.filter(function(r){
-      return r[SCOL.CUST_NAME]===custName&&(!SALES_COMPANY||r[SCOL.COMPANY]===SALES_COMPANY);
+      return r[SCOL.CUST_NAME]===custName&&(SALES_COMPANIES.size===0||SALES_COMPANIES.has(r[SCOL.COMPANY]));
     }).sort(function(a,b){return(a._date||0)-(b._date||0)});
     var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
     var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
@@ -2085,7 +2073,7 @@ async function exportCustDirectPDF(custName,btn){
       +'</tr></tbody></table>';
     // Payment details block
     var pdfCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
-    var pdfPayCo=SALES_COMPANY||(pdfCompanies.length===1?pdfCompanies[0]:'');
+    var pdfPayCo=SALES_COMPANIES.size===1?[...SALES_COMPANIES][0]:(pdfCompanies.length===1?pdfCompanies[0]:'');
     var pdfPayInfo=pdfPayCo?getPayInfo(pdfPayCo):'';
     if(!pdfPayInfo)pdfPayInfo=pdfCompanies.map(function(c){return getPayInfo(c)?c+'\n'+getPayInfo(c):''}).filter(Boolean).join('\n\n');
     if(pdfPayInfo){
@@ -2110,22 +2098,23 @@ async function exportCustDirectPDF(custName,btn){
 
 function shareCustStmtWA(custName){
   var stmts=STATEMENTS_DATA.filter(function(r){
-    return r[SCOL.CUST_NAME]===custName&&(!SALES_COMPANY||r[SCOL.COMPANY]===SALES_COMPANY);
+    return r[SCOL.CUST_NAME]===custName&&(SALES_COMPANIES.size===0||SALES_COMPANIES.has(r[SCOL.COMPANY]));
   }).sort(function(a,b){return(a._date||0)-(b._date||0)});
   var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
   var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
   var openingBal=stmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');}).reduce(function(s,r){return s+r._sales;},0);
   var periodSales=totalSales-openingBal;
   var lastBalance=stmts.length?stmts[stmts.length-1]._balance:(totalSales-totalPmt);
+  var waCos=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
   var msg='👤 *'+custName+'*\n'
-    +(SALES_COMPANY?'🏢 '+SALES_COMPANY+'\n':'')
+    +(waCos.length===1?'🏢 '+waCos[0]+'\n':'')
     +'📅 '+new Date().toLocaleDateString('en-IN')+'\n\n'
     +(openingBal>0?'📂 Opening Balance: ₹'+openingBal.toLocaleString('en-IN')+'\n💰 Period Sales: ₹'+periodSales.toLocaleString('en-IN')+'\n':'💰 Total Billed: ₹'+totalSales.toLocaleString('en-IN')+'\n')
     +'✅ Total Paid: ₹'+totalPmt.toLocaleString('en-IN')+'\n'
     +(lastBalance>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(lastBalance).toLocaleString('en-IN')+'\n';
   // Payment details
   var waCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
-  var waPayCo=SALES_COMPANY||(waCompanies.length===1?waCompanies[0]:'');
+  var waPayCo=SALES_COMPANIES.size===1?[...SALES_COMPANIES][0]:(waCompanies.length===1?waCompanies[0]:'');
   var waPayInfo=waPayCo?getPayInfo(waPayCo):'';
   if(!waPayInfo)waPayInfo=waCompanies.map(function(c){return getPayInfo(c)?'🏢 '+c+'\n'+getPayInfo(c):''}).filter(Boolean).join('\n\n');
   if(waPayInfo)msg+='\n💳 *Payment Details:*\n'+waPayInfo+'\n';
@@ -2133,14 +2122,15 @@ function shareCustStmtWA(custName){
 }
 
 function shareSalesSummaryWA(){
-  var stmts=SALES_COMPANY?STATEMENTS_DATA.filter(function(r){return r[SCOL.COMPANY]===SALES_COMPANY}):STATEMENTS_DATA;
+  var stmts=SALES_COMPANIES.size>0?STATEMENTS_DATA.filter(function(r){return SALES_COMPANIES.has(r[SCOL.COMPANY])}):STATEMENTS_DATA;
   var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
   var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
   var lastBal={};
   stmts.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn||!r._date)return;if(!lastBal[cn]||r._date>lastBal[cn].date)lastBal[cn]={date:r._date,bal:r._balance}});
   var outstanding=Object.values(lastBal).reduce(function(s,x){return s+x.bal},0);
+  var sumCoLabel=SALES_COMPANIES.size===1?'🏢 '+[...SALES_COMPANIES][0]+'\n':SALES_COMPANIES.size>1?'🏢 '+[...SALES_COMPANIES].join(', ')+'\n':'';
   var msg='🌊 *AQUA — Sales Summary*\n'
-    +(SALES_COMPANY?'🏢 '+SALES_COMPANY+'\n':'')
+    +sumCoLabel
     +'📅 '+new Date().toLocaleDateString('en-IN')+'\n\n'
     +'👥 Customers: '+Object.keys(lastBal).length+'\n'
     +'💰 Total Billed: ₹'+totalSales.toLocaleString('en-IN')+'\n'
