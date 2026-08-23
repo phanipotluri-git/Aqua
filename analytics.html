@@ -2149,6 +2149,8 @@ async function exportCustDirectPDF(custName,btn){
     var outstanding=totalSales-totalPmt;
     var openingBal=stmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening')}).reduce(function(s,r){return s+r._sales},0);
     var periodSales=totalSales-openingBal;
+    var pdfCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
+    var multiCo=pdfCompanies.length>1;
 
     // 720px wide → A4 190mm content → each 10px CSS ≈ 2.64mm ≈ standard table text
     var wrap=document.createElement('div');
@@ -2160,6 +2162,8 @@ async function exportCustDirectPDF(custName,btn){
     var CARD='flex:1;background:#f0f2f5;border:1px solid #ccc;border-radius:5px;padding:7px 9px';
     var TH='padding:4px 6px;border-bottom:1px solid #bbb;color:#222;font-size:9px;font-weight:700';
     var TD='padding:3px 6px';
+
+    // ── Header + overall KPI row ──────────────────────────────────────
     var html='<div style="font-size:11px;font-weight:700;margin-bottom:8px;font-family:IBM Plex Mono,monospace">'+esc(custName)+'</div>'
       +'<div style="display:flex;gap:8px;margin-bottom:10px">';
     if(openingBal>0){
@@ -2169,8 +2173,41 @@ async function exportCustDirectPDF(custName,btn){
       html+='<div style="'+CARD+'"><div style="'+S+'">Total Billed</div><div style="'+V+'">'+fmtCurrency(totalSales)+'</div></div>';
     }
     html+='<div style="'+CARD+'"><div style="'+S+'">Total Paid</div><div style="'+V+'">'+fmtCurrency(totalPmt)+'</div></div>';
-    html+='<div style="'+CARD+'"><div style="'+S+'">Outstanding</div><div style="'+V+'">'+fmtCurrency(Math.abs(outstanding))+'</div></div>';
+    html+='<div style="'+CARD+'"><div style="'+S+'">Outstanding</div><div style="'+V+';color:'+(outstanding>0?'#dc2626':'#16a34a')+'">'+fmtCurrency(Math.abs(outstanding))+'</div></div>';
     html+='</div>';
+
+    // ── Per-company breakdown (only when multiple companies) ──────────
+    if(multiCo){
+      html+='<div style="margin-bottom:12px">'
+        +'<div style="font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:5px">Company Breakdown</div>';
+      pdfCompanies.forEach(function(co){
+        var coStmts=stmts.filter(function(r){return r[SCOL.COMPANY]===co;});
+        var coOpen=coStmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');}).reduce(function(s,r){return s+r._sales;},0);
+        var coBilled=coStmts.reduce(function(s,r){return s+r._sales;},0)-coOpen;
+        var coPaid=coStmts.reduce(function(s,r){return s+r._payment;},0);
+        var coOut=coOpen+coBilled-coPaid;
+        var coPayInfo=getPayInfo(co);
+        html+='<div style="margin-bottom:6px;border:1px solid #ccc;border-radius:5px;overflow:hidden">';
+        html+='<div style="background:#e8eaed;padding:5px 9px;font-size:10px;font-weight:700;color:#222">🏢 '+esc(co)+'</div>';
+        html+='<div style="display:flex">';
+        if(coOpen>0){
+          html+='<div style="flex:1;padding:5px 9px;border-right:1px solid #ddd"><div style="'+S+'">Opening</div><div style="font-size:11px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#7c3aed">'+fmtCurrency(coOpen)+'</div></div>';
+          html+='<div style="flex:1;padding:5px 9px;border-right:1px solid #ddd"><div style="'+S+'">Billed</div><div style="font-size:11px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#b45309">'+fmtCurrency(coBilled)+'</div></div>';
+        }else{
+          html+='<div style="flex:1;padding:5px 9px;border-right:1px solid #ddd"><div style="'+S+'">Billed</div><div style="font-size:11px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#b45309">'+fmtCurrency(coBilled)+'</div></div>';
+        }
+        html+='<div style="flex:1;padding:5px 9px;border-right:1px solid #ddd"><div style="'+S+'">Paid</div><div style="font-size:11px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#16a34a">'+fmtCurrency(coPaid)+'</div></div>';
+        html+='<div style="flex:1;padding:5px 9px"><div style="'+S+'">Outstanding</div><div style="font-size:11px;font-weight:700;font-family:IBM Plex Mono,monospace;color:'+(coOut>0?'#dc2626':'#16a34a')+'">'+fmtCurrency(Math.abs(coOut))+'</div></div>';
+        html+='</div>';
+        if(coPayInfo){
+          html+='<div style="border-top:1px solid #ddd;padding:6px 9px;font-size:10px;color:#333;font-family:IBM Plex Mono,monospace;white-space:pre-line;line-height:1.6">💳 '+esc(coPayInfo)+'</div>';
+        }
+        html+='</div>';
+      });
+      html+='</div>';
+    }
+
+    // ── Transaction table ─────────────────────────────────────────────
     html+='<table style="width:100%;border-collapse:collapse;font-size:10px">'
       +'<thead><tr style="background:#e8eaed">'
       +'<th style="text-align:left;'+TH+';white-space:nowrap">Date</th>'
@@ -2198,16 +2235,17 @@ async function exportCustDirectPDF(custName,btn){
       +'<td style="'+TD+';text-align:right">'+fmtCurrency(totalSales)+'</td>'
       +'<td style="'+TD+';text-align:right">'+fmtCurrency(totalPmt)+'</td>'
       +'</tr></tbody></table>';
-    // Payment details block
-    var pdfCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
-    var pdfPayCo=SALES_COMPANIES.size===1?[...SALES_COMPANIES][0]:(pdfCompanies.length===1?pdfCompanies[0]:'');
-    var pdfPayInfo=pdfPayCo?getPayInfo(pdfPayCo):'';
-    if(!pdfPayInfo)pdfPayInfo=pdfCompanies.map(function(c){return getPayInfo(c)?c+'\n'+getPayInfo(c):''}).filter(Boolean).join('\n\n');
-    if(pdfPayInfo){
-      html+='<div style="margin-top:14px;padding:10px 12px;background:#f0f2f5;border:1px solid #ccc;border-radius:5px">'
-        +'<div style="font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:6px">💳 Payment Details'+(pdfPayCo?' — '+pdfPayCo:'')+'</div>'
-        +'<div style="font-size:11px;color:#111;white-space:pre-line;line-height:1.7;font-family:IBM Plex Mono,monospace">'+esc(pdfPayInfo)+'</div>'
-        +'</div>';
+
+    // ── Payment details (single company only — multi-co shown above) ──
+    if(!multiCo){
+      var pdfPayCo=pdfCompanies.length===1?pdfCompanies[0]:'';
+      var pdfPayInfo=pdfPayCo?getPayInfo(pdfPayCo):'';
+      if(pdfPayInfo){
+        html+='<div style="margin-top:14px;padding:10px 12px;background:#f0f2f5;border:1px solid #ccc;border-radius:5px">'
+          +'<div style="font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:6px">💳 Payment Details — '+esc(pdfPayCo)+'</div>'
+          +'<div style="font-size:11px;color:#111;white-space:pre-line;line-height:1.7;font-family:IBM Plex Mono,monospace">'+esc(pdfPayInfo)+'</div>'
+          +'</div>';
+      }
     }
     // Neutralise sticky thead — global CSS has position:sticky on thead th which
     // causes html2canvas to render the header at the viewport top (mid-table) instead
