@@ -2272,18 +2272,42 @@ function shareCustStmtWA(custName){
   var periodSales=totalSales-openingBal;
   var lastBalance=stmts.length?stmts[stmts.length-1]._balance:(totalSales-totalPmt);
   var waCos=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
+  var multiCo=waCos.length>1;
+
   var msg='👤 *'+custName+'*\n'
     +(waCos.length===1?'🏢 '+waCos[0]+'\n':'')
-    +'📅 '+new Date().toLocaleDateString('en-IN')+'\n\n'
-    +(openingBal>0?'📂 Opening Balance: ₹'+openingBal.toLocaleString('en-IN')+'\n💰 Period Sales: ₹'+periodSales.toLocaleString('en-IN')+'\n':'💰 Total Billed: ₹'+totalSales.toLocaleString('en-IN')+'\n')
-    +'✅ Total Paid: ₹'+totalPmt.toLocaleString('en-IN')+'\n'
-    +(lastBalance>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(lastBalance).toLocaleString('en-IN')+'\n';
-  // Payment details
-  var waCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
-  var waPayCo=SALES_COMPANIES.size===1?[...SALES_COMPANIES][0]:(waCompanies.length===1?waCompanies[0]:'');
-  var waPayInfo=waPayCo?getPayInfo(waPayCo):'';
-  if(!waPayInfo)waPayInfo=waCompanies.map(function(c){return getPayInfo(c)?'🏢 '+c+'\n'+getPayInfo(c):''}).filter(Boolean).join('\n\n');
-  if(waPayInfo)msg+='\n💳 *Payment Details:*\n'+waPayInfo+'\n';
+    +'📅 '+new Date().toLocaleDateString('en-IN')+'\n\n';
+
+  if(multiCo){
+    // Overall totals
+    msg+=(openingBal>0?'📂 Opening Balance: ₹'+openingBal.toLocaleString('en-IN')+'\n💰 Period Sales: ₹'+periodSales.toLocaleString('en-IN')+'\n':'💰 Total Billed: ₹'+totalSales.toLocaleString('en-IN')+'\n')
+      +'✅ Total Paid: ₹'+totalPmt.toLocaleString('en-IN')+'\n'
+      +(lastBalance>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(lastBalance).toLocaleString('en-IN')+'\n';
+    // Per-company breakdown
+    msg+='\n*Company Breakdown*\n';
+    waCos.forEach(function(co){
+      var coStmts=stmts.filter(function(r){return r[SCOL.COMPANY]===co;});
+      var coOpen=coStmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');}).reduce(function(s,r){return s+r._sales;},0);
+      var coBilled=coStmts.reduce(function(s,r){return s+r._sales;},0)-coOpen;
+      var coPaid=coStmts.reduce(function(s,r){return s+r._payment;},0);
+      var coOut=coOpen+coBilled-coPaid;
+      msg+='🏢 *'+co+'*\n';
+      if(coOpen>0)msg+='  📂 Opening: ₹'+coOpen.toLocaleString('en-IN')+'\n'
+        +'  💰 Billed: ₹'+coBilled.toLocaleString('en-IN')+'\n';
+      else msg+='  💰 Billed: ₹'+coBilled.toLocaleString('en-IN')+'\n';
+      msg+='  ✅ Paid: ₹'+coPaid.toLocaleString('en-IN')+'\n'
+        +'  '+(coOut>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(coOut).toLocaleString('en-IN')+'\n';
+      var coPayInfo=getPayInfo(co);
+      if(coPayInfo)msg+='  💳 '+coPayInfo.replace(/\n/g,'\n  ')+'\n';
+      msg+='\n';
+    });
+  }else{
+    msg+=(openingBal>0?'📂 Opening Balance: ₹'+openingBal.toLocaleString('en-IN')+'\n💰 Period Sales: ₹'+periodSales.toLocaleString('en-IN')+'\n':'💰 Total Billed: ₹'+totalSales.toLocaleString('en-IN')+'\n')
+      +'✅ Total Paid: ₹'+totalPmt.toLocaleString('en-IN')+'\n'
+      +(lastBalance>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(lastBalance).toLocaleString('en-IN')+'\n';
+    var waPayInfo=waCos.length===1?getPayInfo(waCos[0]):'';
+    if(waPayInfo)msg+='\n💳 *Payment Details:*\n'+waPayInfo+'\n';
+  }
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
