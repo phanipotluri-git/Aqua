@@ -2200,7 +2200,7 @@ async function exportCustDirectPDF(custName,btn){
         html+='<div style="flex:1;padding:5px 9px"><div style="'+S+'">Outstanding</div><div style="font-size:11px;font-weight:700;font-family:IBM Plex Mono,monospace;color:'+(coOut>0?'#dc2626':'#16a34a')+'">'+fmtCurrency(Math.abs(coOut))+'</div></div>';
         html+='</div>';
         if(coPayInfo){
-          html+='<div style="border-top:1px solid #ddd;padding:6px 9px;font-size:10px;color:#333;font-family:IBM Plex Mono,monospace;white-space:pre-line;line-height:1.6">💳 '+esc(coPayInfo)+'</div>';
+          html+='<div style="border-top:1px solid #ddd;padding:5px 9px;font-size:8px;color:#333;font-family:IBM Plex Mono,monospace;white-space:pre-line;line-height:1.5">💳 '+esc(coPayInfo)+'</div>';
         }
         html+='</div>';
       });
@@ -2243,7 +2243,7 @@ async function exportCustDirectPDF(custName,btn){
       if(pdfPayInfo){
         html+='<div style="margin-top:14px;padding:10px 12px;background:#f0f2f5;border:1px solid #ccc;border-radius:5px">'
           +'<div style="font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:6px">💳 Payment Details — '+esc(pdfPayCo)+'</div>'
-          +'<div style="font-size:11px;color:#111;white-space:pre-line;line-height:1.7;font-family:IBM Plex Mono,monospace">'+esc(pdfPayInfo)+'</div>'
+          +'<div style="font-size:9px;color:#111;white-space:pre-line;line-height:1.6;font-family:IBM Plex Mono,monospace">'+esc(pdfPayInfo)+'</div>'
           +'</div>';
       }
     }
