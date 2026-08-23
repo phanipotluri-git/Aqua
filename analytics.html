@@ -2053,8 +2053,8 @@ async function exportCustLedgerPDF(){
     // Disable sticky thead so html2canvas captures header at top of table, not mid-viewport
     content.querySelectorAll('thead th').forEach(function(el){_hidden.push({el:el,prop:'position',val:el.style.position});el.style.position='static';});
     var ltSv=applyLightTheme(content),saved=unclipAll(content);
-    var contentH=content.scrollHeight||content.offsetHeight||2000;
-    var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true,height:contentH,windowHeight:contentH});
+    var contentH=Math.max(content.scrollHeight,content.offsetHeight,100);
+    var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false,windowWidth:content.offsetWidth||720,windowHeight:contentH,scrollX:0,scrollY:-content.getBoundingClientRect().top});
     reclipAll(saved);restoreLightTheme(content,ltSv);
     var M=10,auto=autoOrientPDF(canvas);
     var coLabel=SALES_COMPANIES.size===1?' ('+[...SALES_COMPANIES][0]+')':SALES_COMPANIES.size>1?' ('+SALES_COMPANIES.size+' companies)':'';
@@ -2252,8 +2252,9 @@ async function exportCustDirectPDF(custName,btn){
     // of at the top of the table in the off-screen div.
     wrap.innerHTML='<style>thead,thead tr,thead th{position:static!important;z-index:auto!important}</style>'+html;
     document.body.appendChild(wrap);
-    var wrapH=wrap.scrollHeight||wrap.offsetHeight||2000;
-    var canvas=await html2canvas(wrap,{backgroundColor:'#ffffff',scale:2,useCORS:true,height:wrapH,windowHeight:wrapH});
+    await new Promise(function(r){requestAnimationFrame(r)});
+    var wrapH=Math.max(wrap.scrollHeight,wrap.offsetHeight,100);
+    var canvas=await html2canvas(wrap,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false,windowWidth:720,windowHeight:wrapH,scrollX:0,scrollY:0});
     document.body.removeChild(wrap);
     var M=10,auto=autoOrientPDF(canvas);
     canvasToPDF(auto.pdf,canvas,auto.W,auto.H,M,'Aqua — '+custName+' — '+new Date().toLocaleString('en-IN'),'auto');
