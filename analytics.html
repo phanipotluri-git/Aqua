@@ -2256,9 +2256,13 @@ async function exportCustDirectPDF(custName,btn){
     var wrapH=Math.max(wrap.scrollHeight,wrap.offsetHeight,100);
     var canvas=await html2canvas(wrap,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false,windowWidth:720,windowHeight:wrapH,scrollX:0,scrollY:0});
     document.body.removeChild(wrap);
-    var M=10,auto=autoOrientPDF(canvas);
-    canvasToPDF(auto.pdf,canvas,auto.W,auto.H,M,'Aqua — '+custName+' — '+new Date().toLocaleString('en-IN'),'auto');
-    pdfSave(auto.pdf,'aqua-'+custName.replace(/[^a-z0-9]/gi,'-')+'-ledger.pdf');
+    var M=10,pw=190,ratio=pw/canvas.width,totalH=canvas.height*ratio;
+    var {jsPDF}=window.jspdf;
+    var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:[210,totalH+2*M+6]});
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',M,M,pw,totalH);
+    pdf.setFontSize(7);pdf.setTextColor(140);
+    pdf.text('Aqua — '+custName+' — '+new Date().toLocaleString('en-IN'),M,totalH+M+4);
+    pdfSave(pdf,'aqua-'+custName.replace(/[^a-z0-9]/gi,'-')+'-ledger.pdf');
   }catch(e){alert('PDF failed: '+e.message)}
   finally{btn.textContent=orig;btn.disabled=false}
 }
