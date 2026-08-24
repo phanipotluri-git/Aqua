@@ -1,0 +1,3021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aqua Analytics — Field Visit Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{--bg:#060d18;--panel:#0c1628;--panel2:#091430;--border:#1a3060;--teal:#12c4d0;--gold:#e6b020;--red:#f06060;--orange:#f08840;--green:#44d488;--purple:#9b6cff;--sky:#48ccff;--txt:#ddeeff;--mid:#8ab2cc;--dim:#4a7090}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'IBM Plex Sans',sans-serif;font-size:14px}
+a{color:var(--teal)}
+/* ── APP CHROME ── */
+#app-header{position:fixed;top:0;left:0;right:0;z-index:80;background:var(--bg);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;gap:10px;padding:0 14px}
+.app-logo{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:16px;color:var(--teal);letter-spacing:3px}
+#data-status{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.app-icon-btn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--mid);font-size:15px;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s,color .15s;flex-shrink:0}
+.app-icon-btn:hover,.app-icon-btn:active{border-color:var(--teal);color:var(--teal)}
+#topbar{display:none}
+#tab-nav{display:none}
+.tab-btn{display:none}
+/* Tab content area */
+.tab-content{display:none;flex-direction:column;gap:16px;padding-top:64px;padding-bottom:72px;padding-left:0;padding-right:0}
+.tab-content.active{display:flex}
+/* Buttons */
+.btn{cursor:pointer;border:1px solid var(--border);background:var(--panel);color:var(--txt);padding:6px 14px;border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;transition:border-color .15s,color .15s}
+.btn:hover{border-color:var(--teal);color:var(--teal)}
+.btn-primary{border-color:var(--teal);color:var(--teal)}
+.wa-sm{font-size:11px;padding:3px 8px;border-color:#25d366;color:#25d366}
+/* Filter sheet */
+#filter-backdrop,#reports-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:90;opacity:0;pointer-events:none;transition:opacity .25s}
+#filter-backdrop.open,#reports-backdrop.open{opacity:1;pointer-events:auto}
+#filter-bar{position:fixed;bottom:0;left:0;right:0;z-index:91;background:var(--panel);border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:8px 0 0;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);flex-direction:column;gap:0;max-height:88vh;overflow-y:auto}
+#filter-bar.open{display:flex;transform:translateY(0)}
+.sheet-handle{width:38px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 14px;flex-shrink:0}
+.sheet-title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mid);text-transform:uppercase;letter-spacing:1px;padding:0 18px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.filter-section{padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+.filter-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.filter-field{display:flex;flex-direction:column;gap:5px}
+.filter-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.8px}
+#filter-bar select,#filter-bar input[type="date"]{background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:9px 10px;border-radius:10px;font-size:13px;width:100%;-webkit-appearance:none}
+#filter-bar select:focus,#filter-bar input:focus{outline:none;border-color:var(--teal)}
+.filter-actions{display:flex;gap:10px;padding:12px 18px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);flex-shrink:0}
+.filter-actions .btn{flex:1;padding:11px;border-radius:10px;font-size:13px;font-weight:600}
+/* Reports sheet */
+#reports-sheet{position:fixed;bottom:0;left:0;right:0;z-index:91;background:var(--panel);border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:8px 0 calc(env(safe-area-inset-bottom)+16px);transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+#reports-sheet.open{transform:translateY(0)}
+/* PDF picker sheet */
+#pdf-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:199;opacity:0;pointer-events:none;transition:opacity .25s}
+#pdf-backdrop.open{opacity:1;pointer-events:auto}
+#pdf-sheet{position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--panel);border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:8px 0 calc(env(safe-area-inset-bottom)+16px);transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+#pdf-sheet.open{transform:translateY(0)}
+.pdf-opt{display:flex;align-items:center;gap:14px;padding:14px 20px;border:none;background:none;width:100%;text-align:left;color:var(--txt);cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s}
+.pdf-opt:last-child{border-bottom:none}
+.pdf-opt:active{background:var(--panel2)}
+.pdf-opt-icon{font-size:26px;flex-shrink:0}
+.pdf-opt-label{font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:600;display:block}
+.pdf-opt-desc{font-size:11px;color:var(--dim);margin-top:2px;display:block}
+.reports-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 16px}
+.report-chip{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:16px 8px;text-align:center;cursor:pointer;transition:border-color .15s}
+.report-chip:active{border-color:var(--teal)}
+.rc-icon{font-size:24px;margin-bottom:5px}
+.rc-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+/* Bottom nav */
+#bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:80;background:var(--bg);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 0 7px;cursor:pointer;background:none;border:none;color:var(--dim);gap:3px;-webkit-tap-highlight-color:transparent}
+.bnav-icon{font-size:21px;line-height:1}
+.bnav-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.3px}
+.bnav-btn.active{color:var(--teal)}
+#kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.kpi-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.kpi-value{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;color:var(--teal);line-height:1}
+.kpi-sub{font-size:11px;color:var(--mid)}
+#alert-banner{background:rgba(240,96,96,.08);border:1px solid var(--red);border-radius:8px;padding:12px 16px}
+#alert-banner .alert-title{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.alert-item{display:inline-flex;align-items:center;gap:6px;background:rgba(240,96,96,.12);border:1px solid rgba(240,96,96,.3);border-radius:4px;padding:4px 10px;margin:3px;font-size:12px}
+.alert-days{font-family:'IBM Plex Mono',monospace;color:var(--red);font-weight:600}
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+.chart-panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.chart-label{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mid);text-transform:uppercase;letter-spacing:1px}
+.chart-wrap{position:relative;height:220px}
+.sec-panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.sec-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.sec-label{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mid);text-transform:uppercase;letter-spacing:1px}
+.tbl-wrap{overflow-x:auto;max-height:380px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{position:sticky;top:0;background:var(--panel2);padding:8px 12px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);white-space:nowrap}
+thead th.r{text-align:right}
+tbody tr{border-bottom:1px solid rgba(26,48,96,.5)}
+tbody tr.cl{cursor:pointer;transition:background .1s}
+tbody tr.cl:hover{background:rgba(18,196,208,.05)}
+tbody td{padding:7px 12px;color:var(--mid);vertical-align:top}
+.c-name{color:var(--txt)!important;font-weight:600}
+.c-date{font-family:'IBM Plex Mono',monospace;font-size:11px;white-space:nowrap}
+.c-area{color:var(--gold)!important}
+.c-type{color:var(--purple)!important}
+.c-teal{color:var(--teal)!important;font-family:'IBM Plex Mono',monospace;text-align:right}
+.c-gold{color:var(--gold)!important;font-family:'IBM Plex Mono',monospace;text-align:right}
+.c-green{color:var(--green)!important;font-family:'IBM Plex Mono',monospace;text-align:right}
+.c-red{color:var(--red)!important;font-family:'IBM Plex Mono',monospace;text-align:right}
+.row-detail{display:none;background:var(--panel2)}
+.row-detail td{padding:8px 16px 12px 30px;color:var(--dim);font-size:11px;line-height:1.6}
+.row-detail.open{display:table-row}
+.rank{display:inline-block;font-family:'IBM Plex Mono',monospace;font-weight:700;width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;background:var(--panel2);color:var(--dim)}
+.r1{background:var(--gold);color:#000}.r2{background:var(--mid);color:#000}.r3{background:var(--orange);color:#000}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.att-grid{display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px}
+.att-label{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--teal);text-transform:uppercase;letter-spacing:1px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.att-card{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid}
+.att-card.yes{background:rgba(68,212,136,.1);border-color:rgba(68,212,136,.4);color:var(--green)}
+.att-card.no{background:rgba(240,96,96,.08);border-color:rgba(240,96,96,.3);color:var(--red)}
+.att-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:currentColor}
+.matrix-wrap{overflow-x:auto;max-height:400px;overflow-y:auto}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-family:'IBM Plex Mono',monospace}
+.badge-pos{background:rgba(68,212,136,.15);color:var(--green)}
+.badge-neg{background:rgba(240,96,96,.15);color:var(--red)}
+.badge-neu{background:rgba(74,112,144,.2);color:var(--mid)}
+#loading-overlay{position:fixed;inset:0;background:rgba(6,13,24,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:99}
+#loading-overlay.hidden{display:none}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-txt{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--mid)}
+@media(max-width:900px){.two-col{grid-template-columns:1fr}}
+@media(max-width:700px){
+  #topbar{padding:8px 12px;gap:8px}
+  .logo{font-size:13px;letter-spacing:1px}
+  #data-status{font-size:10px;order:3;width:100%;margin-top:2px}
+  .btn{padding:5px 10px;font-size:11px}
+  #filter-bar{padding:8px 12px;gap:6px}
+  #filter-bar label{display:none}
+  #filter-bar select,#filter-bar input[type="date"]{min-width:0;flex:1 1 calc(50% - 8px);font-size:12px;padding:6px 8px}
+  #filter-bar .btn{flex:1 1 calc(50% - 8px)}
+  .tab-btn{padding:9px 10px;font-size:9px;letter-spacing:.5px}
+  .tab-content{padding-top:64px;padding-bottom:72px;padding-left:10px;padding-right:10px;gap:12px}
+  #kpi-row{grid-template-columns:1fr 1fr;gap:8px}
+  .kpi-card{padding:10px 12px}
+  .kpi-value{font-size:22px}
+  .kpi-sub{font-size:10px}
+  .charts-grid{grid-template-columns:1fr}
+  .chart-wrap{height:200px}
+  .two-col{grid-template-columns:1fr}
+  table{font-size:11px}
+  thead th{padding:7px 8px;font-size:9px}
+  tbody td{padding:6px 8px}
+  .tbl-wrap{max-height:320px}
+  .att-grid{gap:6px;padding:10px 12px}
+  .att-card{flex:1 1 calc(50% - 6px);min-width:0;padding:7px 10px;font-size:11px;justify-content:center}
+  .att-label{padding:10px 12px;font-size:11px}
+  .sec-head{padding:10px 12px}
+  .chart-panel{padding:10px 12px}
+  .matrix-wrap{font-size:10px}
+}
+/* ── Chat Assistant ── */
+#chat-fab{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 62px);right:18px;z-index:400;width:54px;height:54px;border-radius:50%;background:var(--teal);border:2px solid var(--teal);color:#fff;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;transition:transform .15s}
+#chat-fab:hover{transform:scale(1.1)}
+#chat-panel{position:fixed;bottom:90px;right:18px;z-index:399;width:min(390px,calc(100vw - 24px));height:560px;background:var(--panel);border:1px solid var(--border);border-radius:16px;display:none;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.6);overflow:hidden}
+#chat-hdr{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--panel2)}
+#chat-hdr-title{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--teal);font-weight:700}
+#chat-hdr button{background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:0 4px}
+#chat-msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.cmsg-user{align-self:flex-end;background:var(--teal);color:#fff;border-radius:14px 14px 3px 14px;padding:8px 13px;max-width:82%;font-size:13px;word-break:break-word}
+.cmsg-bot{align-self:flex-start;background:var(--panel2);border:1px solid var(--border);border-radius:3px 14px 14px 14px;padding:10px 13px;max-width:95%;font-size:12px;color:var(--txt);word-break:break-word;line-height:1.5}
+.cmsg-bot table{font-size:11px;margin-top:7px;width:100%}
+.cmsg-bot thead th{background:var(--panel);color:var(--dim);padding:4px 8px;font-size:10px;text-align:left;border-bottom:1px solid var(--border)}
+.cmsg-bot tbody td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--txt)}
+.cmsg-bot b{color:var(--txt)}
+#chat-chips{display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px;border-top:1px solid var(--border)}
+.chat-chip{background:var(--panel2);border:1px solid var(--border);color:var(--mid);border-radius:20px;padding:4px 11px;font-size:11px;cursor:pointer;font-family:inherit}
+.chat-chip:hover{border-color:var(--teal);color:var(--teal)}
+#chat-irow{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--border)}
+#chat-inp{flex:1;background:var(--panel2);border:1px solid var(--border);color:var(--txt);border-radius:8px;padding:8px 12px;font-size:13px;font-family:inherit;outline:none}
+#chat-inp:focus{border-color:var(--teal)}
+#chat-send{background:var(--teal);border:none;color:#fff;border-radius:8px;width:38px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+/* ── Expandable attendance ── */
+.exp-row{background:var(--panel2)}.exp-row.closed{display:none}
+.month-row{display:flex;align-items:center;gap:10px;padding:7px 16px 7px 32px;border-bottom:1px solid rgba(26,48,96,.3);cursor:pointer;transition:background .1s}
+.month-row:hover{background:rgba(18,196,208,.06)}
+.day-cal{display:flex;flex-wrap:wrap;gap:4px;padding:8px 16px 12px 40px;background:var(--bg)}
+.day-dot{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;cursor:default}
+.day-dot.p{background:rgba(68,212,136,.18);color:var(--green);border:1px solid rgba(68,212,136,.35)}
+.day-dot.a{background:rgba(240,96,96,.1);color:var(--red);border:1px solid rgba(240,96,96,.25)}
+.day-dot.out{opacity:.2;background:var(--panel);color:var(--dim);border:1px solid transparent}
+/* ── Revisit sortable + pill filter ── */
+.staff-pills{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.staff-pill{cursor:pointer;padding:4px 12px;border-radius:20px;font-size:11px;font-family:'IBM Plex Mono',monospace;border:1px solid var(--border);background:var(--panel2);color:var(--mid);transition:all .15s;white-space:nowrap}
+.staff-pill:hover{border-color:var(--teal);color:var(--teal)}
+.staff-pill.active{background:rgba(18,196,208,.15);border-color:var(--teal);color:var(--teal)}
+.sth{cursor:pointer;user-select:none;white-space:nowrap}
+.sth:hover{color:var(--txt)}
+.sarr{margin-left:3px;font-size:9px;opacity:.3}
+.sarr.on{opacity:1;color:var(--teal)}
+/* ── Performance Cards ── */
+.pc-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:10px}
+.pc-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;gap:12px;flex-wrap:wrap;user-select:none}
+.pc-head:hover{background:rgba(18,196,208,0.05)}
+.pc-name{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;color:var(--txt);letter-spacing:.5px}
+.pc-area{font-size:11px;color:var(--dim);margin-top:3px}
+.pc-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.pc-chevron{font-size:10px;color:var(--dim);transition:transform .2s;width:12px;text-align:center;display:inline-block}
+.pc-card.open .pc-chevron{transform:rotate(180deg)}
+.pc-kpis{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border)}
+.pc-kpi{padding:12px 14px;border-right:1px solid var(--border)}
+.pc-kpi:last-child{border-right:none}
+.pc-kpi-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.pc-kpi-val{font-size:14px;font-weight:600;margin-bottom:2px}
+.pc-kpi-sub{font-size:11px;color:var(--dim)}
+.pc-detail{display:none;border-top:1px solid var(--border)}
+.pc-card.open .pc-detail{display:block}
+.pc-sections{display:grid;grid-template-columns:1fr 1fr}
+.pc-section{padding:16px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.pc-section:nth-child(2n){border-right:none}
+.pc-section:nth-child(n+3){border-bottom:none}
+.pc-sec-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--teal);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+.pc-type-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px}
+.pc-bar-wrap{flex:1;height:5px;background:var(--panel2);border-radius:3px;overflow:hidden}
+.pc-bar{height:100%;border-radius:3px}
+.pc-sal-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.pc-sal-kpi{background:var(--panel2);border-radius:6px;padding:8px 10px;text-align:center}
+.pc-sal-kpi-lbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;font-family:'IBM Plex Mono',monospace}
+.pc-sal-kpi-val{font-size:13px;font-weight:600}
+.pc-goto{cursor:pointer;transition:background .15s}
+.pc-goto:hover{background:rgba(18,196,208,0.07)}
+.pc-pdf-mode .pc-sections{grid-template-columns:1fr!important}
+.pc-pdf-mode .pc-section{border-right:none!important;border-bottom:1px solid #ccc!important}
+@media(max-width:700px){.pc-kpis{grid-template-columns:repeat(2,1fr)}.pc-sections{grid-template-columns:1fr}.pc-section{border-right:none!important}.day-dot{width:26px;height:26px;font-size:10px}}
+</style>
+</head>
+<body>
+
+<div id="loading-overlay" class="hidden">
+  <div class="spinner"></div>
+  <div class="loading-txt" id="loading-txt">Connecting to Google Sheets…</div>
+</div>
+
+<div id="app-header">
+  <div class="app-logo">AQUA</div>
+  <div id="data-status">—</div>
+  <button class="app-icon-btn" onclick="openFilter()" title="Filters">⊜</button>
+  <button class="app-icon-btn" id="btn-refresh" title="Refresh">↺</button>
+</div>
+
+<!-- hidden filter sheet -->
+<div id="filter-bar">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Filters</div>
+  <div class="filter-section">
+    <div class="filter-row">
+      <div class="filter-field"><span class="filter-lbl">Staff</span><select id="f-staff"><option value="">All Staff</option></select></div>
+      <div class="filter-field"><span class="filter-lbl">Area</span><select id="f-area"><option value="">All Areas</option></select></div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-field"><span class="filter-lbl">Visit Type</span><select id="f-type"><option value="">All Types</option></select></div>
+      <div class="filter-field"><span class="filter-lbl">Dealer</span><select id="f-dealer"><option value="">All Dealers</option></select></div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-field"><span class="filter-lbl">From</span><input type="date" id="f-from"></div>
+      <div class="filter-field"><span class="filter-lbl">To</span><input type="date" id="f-to"></div>
+    </div>
+  </div>
+  <div class="filter-actions">
+    <button class="btn" id="btn-clear">Clear</button>
+    <button class="btn btn-primary" id="btn-apply">Apply</button>
+  </div>
+</div>
+
+<!-- hidden tab nav kept for JS compatibility -->
+<div id="tab-nav" style="display:none">
+  <button class="tab-btn active" data-tab="overview">Overview</button>
+  <button class="tab-btn" data-tab="staff">Staff</button>
+  <button class="tab-btn" data-tab="attendance">Attendance</button>
+  <button class="tab-btn" data-tab="coverage">Coverage</button>
+  <button class="tab-btn" data-tab="trends">Trends</button>
+  <button class="tab-btn" data-tab="dealers">Dealers</button>
+  <button class="tab-btn" data-tab="remarks">Remarks</button>
+  <button class="tab-btn" data-tab="performance">Performance</button>
+  <button class="tab-btn" data-tab="sales">Sales</button>
+</div>
+
+<!-- OVERVIEW -->
+<div id="tab-overview" class="tab-content active">
+  <!-- hidden stubs so renderKPI/renderAlerts don't throw -->
+  <div style="display:none">
+    <span id="kpi-total"></span><span id="kpi-farmers"></span><span id="kpi-areas"></span>
+    <span id="kpi-staff"></span><span id="kpi-top-staff"></span><span id="kpi-top-staff-sub"></span>
+    <span id="kpi-top-area"></span><span id="kpi-top-area-sub"></span>
+    <div id="alert-banner"><div id="alert-items"></div></div>
+    <tbody id="tbl-recent"></tbody><span id="tbl-count"></span>
+    <canvas id="c-staff"></canvas><canvas id="c-area"></canvas>
+    <canvas id="c-type"></canvas><canvas id="c-trend"></canvas>
+  </div>
+
+  <!-- Date / attendance bar -->
+  <div style="padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--border);gap:8px">
+    <div style="min-width:0;flex:1">
+      <div id="ov-date" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+      <div id="ov-today-line" style="font-size:14px;font-weight:700;color:var(--txt);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+    </div>
+    <div style="text-align:right">
+      <div id="ov-att-pct" style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;color:var(--teal);line-height:1"></div>
+      <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Attendance</div>
+    </div>
+  </div>
+
+  <div style="padding:14px;display:flex;flex-direction:column;gap:12px">
+
+    <!-- STAFF card -->
+    <div onclick="switchTab('performance')" style="background:var(--panel);border:1.5px solid var(--border);border-radius:14px;padding:16px;cursor:pointer;transition:border-color .18s,box-shadow .18s" onmouseover="this.style.borderColor='var(--teal)';this.style.boxShadow='0 0 0 3px rgba(18,196,208,.1)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="width:46px;height:46px;border-radius:12px;background:rgba(18,196,208,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">👥</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:17px;font-weight:700;color:var(--teal)">Staff</div>
+          <div id="ov-staff-sub" style="font-size:12px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+        </div>
+        <div style="font-size:26px;color:var(--teal);font-weight:300;flex-shrink:0">›</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center">
+          <div id="ov-s-month" style="font-size:22px;font-weight:700;color:var(--teal);font-family:'IBM Plex Mono',monospace;line-height:1.1">—</div>
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">This Month</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center">
+          <div id="ov-s-today" style="font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1.1">—</div>
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Today</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:10px;padding:10px 8px;text-align:center">
+          <div id="ov-s-top" style="font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div>
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Top Today</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SALES card -->
+    <div onclick="switchTab('sales')" style="background:var(--panel);border:1.5px solid var(--border);border-radius:14px;padding:16px;cursor:pointer;transition:border-color .18s,box-shadow .18s" onmouseover="this.style.borderColor='var(--gold)';this.style.boxShadow='0 0 0 3px rgba(230,176,32,.1)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="width:46px;height:46px;border-radius:12px;background:rgba(230,176,32,.12);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">💰</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:17px;font-weight:700;color:var(--gold)">Sales</div>
+          <div id="ov-sales-sub" style="font-size:12px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+        </div>
+        <div style="font-size:26px;color:var(--gold);font-weight:300;flex-shrink:0">›</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="background:var(--panel2);border-radius:10px;padding:10px 6px;text-align:center;min-width:0">
+          <div id="ov-v-billed" style="font-size:11px;font-weight:700;color:var(--gold);font-family:'IBM Plex Mono',monospace;line-height:1.2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">—</div>
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Billed</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:10px;padding:10px 6px;text-align:center;min-width:0">
+          <div id="ov-v-paid" style="font-size:11px;font-weight:700;color:var(--green);font-family:'IBM Plex Mono',monospace;line-height:1.2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">—</div>
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Collected</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:10px;padding:10px 6px;text-align:center;min-width:0">
+          <div id="ov-v-out" style="font-size:11px;font-weight:700;color:var(--red);font-family:'IBM Plex Mono',monospace;line-height:1.2;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">—</div>
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:4px">Outstanding</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inactive alert -->
+    <div id="ov-alert" style="display:none;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.3);border-radius:12px;padding:12px 14px">
+      <div style="font-size:13px;font-weight:600;color:var(--red);margin-bottom:6px">⚠ Inactive Staff</div>
+      <div id="ov-alert-list" style="font-size:12px;color:var(--txt);line-height:1.7"></div>
+    </div>
+
+    <!-- Quick-links row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+      <div onclick="switchTab('attendance')" style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 6px;text-align:center;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:22px">📋</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:5px;text-transform:uppercase;letter-spacing:.5px">Attend</div>
+      </div>
+      <div onclick="switchTab('coverage')" style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 6px;text-align:center;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:22px">🗺️</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:5px;text-transform:uppercase;letter-spacing:.5px">Coverage</div>
+      </div>
+      <div onclick="switchTab('trends')" style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 6px;text-align:center;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:22px">📈</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:5px;text-transform:uppercase;letter-spacing:.5px">Trends</div>
+      </div>
+      <div onclick="switchTab('remarks')" style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 6px;text-align:center;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:22px">💬</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:5px;text-transform:uppercase;letter-spacing:.5px">Remarks</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- STAFF -->
+<div id="tab-staff" class="tab-content">
+  <div class="two-col">
+    <div class="sec-panel"><div class="sec-head"><div class="sec-label">Leaderboard</div><button class="btn wa-sm" onclick="shareLeaderboardWA()" title="Share on WhatsApp">📱</button></div>
+      <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Staff</th><th class="r">Visits</th><th class="r">Farmers</th><th class="r">Areas</th><th class="r">Billed</th><th class="r">Paid</th></tr></thead><tbody id="tbl-leader"></tbody></table></div>
+    </div>
+    <div class="chart-panel"><div class="chart-label">Visits by Day of Week</div><div class="chart-wrap"><canvas id="c-dow"></canvas></div></div>
+  </div>
+  <div class="sec-panel"><div class="sec-head"><div class="sec-label">Farmer Revisit Interval — avg days between visits to the same farmer</div><button class="btn wa-sm" onclick="shareRevisitWA()" title="Share on WhatsApp">📱</button></div>
+    <div id="revisit-pills" class="staff-pills"></div>
+    <div class="tbl-wrap"><table><thead><tr>
+      <th class="sth" onclick="setRevisitSort('n')">Staff <span id="rsort-n" class="sarr">▼</span></th>
+      <th class="sth" onclick="setRevisitSort('f')">Farmer <span id="rsort-f" class="sarr">▼</span></th>
+      <th class="r sth" onclick="setRevisitSort('v')">Visits <span id="rsort-v" class="sarr">▼</span></th>
+      <th class="r sth" onclick="setRevisitSort('gap')">Avg Days Between <span id="rsort-gap" class="sarr on">▼</span></th>
+    </tr></thead><tbody id="tbl-revisit"></tbody></table></div>
+  </div>
+  <div class="sec-panel"><div class="sec-head"><div class="sec-label">Days Without Report (Mon–Sat, same baseline for all staff)</div><button class="btn wa-sm" onclick="shareAbsentWA()" title="Share on WhatsApp">📱</button></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Staff</th><th class="r">Working Days</th><th class="r">Days Present</th><th class="r">Days Absent</th><th class="r">Attendance %</th></tr></thead><tbody id="tbl-absent"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ATTENDANCE -->
+<div id="tab-attendance" class="tab-content">
+  <div class="sec-panel">
+    <div class="att-label" id="att-today-lbl">Today</div>
+    <div class="att-grid" id="att-today"></div>
+  </div>
+  <div class="sec-panel">
+    <div class="att-label" id="att-yest-lbl">Yesterday</div>
+    <div class="att-grid" id="att-yest"></div>
+  </div>
+  <!-- Calendar table -->
+  <div class="sec-panel">
+    <div class="sec-head" style="flex-wrap:wrap;gap:8px">
+      <div class="sec-label">Calendar View</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <button class="btn" onclick="attNav(-7)" style="padding:4px 10px;font-size:14px">◀</button>
+        <span id="att-cal-lbl" style="font-size:10px;color:var(--dim);font-family:'IBM Plex Mono',monospace;white-space:nowrap"></span>
+        <button class="btn" onclick="attNav(7)" style="padding:4px 10px;font-size:14px">▶</button>
+        <input type="date" id="att-from" onchange="attCustomRange()"
+          style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:4px 6px;border-radius:6px;font-size:11px">
+        <span style="color:var(--dim);font-size:11px">→</span>
+        <input type="date" id="att-to" onchange="attCustomRange()"
+          style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:4px 6px;border-radius:6px;font-size:11px">
+      </div>
+    </div>
+    <div class="tbl-wrap" style="overflow-x:auto">
+      <div id="att-cal-tbl"></div>
+    </div>
+  </div>
+</div>
+
+<!-- COVERAGE -->
+<div id="tab-coverage" class="tab-content">
+  <div class="two-col">
+    <div class="chart-panel"><div class="chart-label">New vs Repeat Farmers</div><div class="chart-wrap"><canvas id="c-newrepeat"></canvas></div></div>
+    <div class="chart-panel"><div class="chart-label">Top Dealers by Visits</div><div class="chart-wrap"><canvas id="c-dealer-cov"></canvas></div></div>
+  </div>
+  <div class="sec-panel"><div class="sec-head"><div class="sec-label">Areas Not Visited in Last 7 Days</div><button class="btn wa-sm" onclick="shareStaleWA()" title="Share on WhatsApp">📱</button></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Area</th><th class="r">Last Visit</th><th class="r">Days Ago</th></tr></thead><tbody id="tbl-stale"></tbody></table></div>
+  </div>
+  <div class="sec-panel"><div class="sec-head"><div class="sec-label">Staff × Area Visit Matrix</div></div>
+    <div class="matrix-wrap" id="matrix-wrap"></div>
+  </div>
+</div>
+
+<!-- TRENDS -->
+<div id="tab-trends" class="tab-content">
+  <div class="chart-panel"><div class="chart-label">Month-over-Month Visits</div><div class="chart-wrap" style="height:240px"><canvas id="c-monthly"></canvas></div></div>
+  <div class="chart-panel"><div class="chart-label">Weekly Trend</div><div class="chart-wrap" style="height:200px"><canvas id="c-weekly"></canvas></div></div>
+</div>
+
+<!-- DEALERS -->
+<div id="tab-dealers" class="tab-content">
+  <div class="two-col">
+    <div class="chart-panel"><div class="chart-label">Visits by Dealer Category</div><div class="chart-wrap"><canvas id="c-dealercat"></canvas></div></div>
+    <div class="chart-panel"><div class="chart-label">Top Dealers by Visits</div><div class="chart-wrap"><canvas id="c-topdealer"></canvas></div></div>
+  </div>
+  <div class="sec-panel"><div class="sec-head"><div class="sec-label">Dealer Summary</div><button class="btn wa-sm" onclick="shareDealersWA()" title="Share on WhatsApp">📱</button></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Dealer</th><th>Category</th><th class="r">Visits</th><th class="r">Unique Farmers</th><th class="r">Staff</th></tr></thead><tbody id="tbl-dealers"></tbody></table></div>
+  </div>
+</div>
+
+<!-- REMARKS -->
+<div id="tab-remarks" class="tab-content">
+  <div class="two-col">
+    <div class="chart-panel"><div class="chart-label">Top Keywords in Remarks</div><div class="chart-wrap" style="height:260px"><canvas id="c-keywords"></canvas></div></div>
+    <div class="chart-panel"><div class="chart-label">Sentiment Distribution</div><div class="chart-wrap"><canvas id="c-sentiment"></canvas></div></div>
+  </div>
+  <div class="sec-panel"><div class="sec-head"><div class="sec-label">Recent Remarks</div><button class="btn wa-sm" onclick="shareRemarksWA()" title="Share on WhatsApp">📱</button></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Staff</th><th>Farmer</th><th>Area</th><th>Remarks</th><th>Sentiment</th></tr></thead><tbody id="tbl-remarks"></tbody></table></div>
+  </div>
+</div>
+
+<!-- PERFORMANCE -->
+<div id="tab-performance" class="tab-content">
+  <div class="sec-panel">
+    <div class="sec-head" style="flex-wrap:wrap;gap:8px">
+      <div class="sec-label" id="perf-period-lbl">Performance</div>
+      <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap">
+        <button class="btn btn-primary" id="btn-perf-pdf">⬇ PDF</button>
+        <button class="btn" id="btn-perf-img">🖼 Image</button>
+        <button class="btn" id="btn-perf-wa" style="border-color:#25d366;color:#25d366">📱 WhatsApp</button>
+      </div>
+    </div>
+    <div id="perf-pills" class="staff-pills"></div>
+  </div>
+  <div id="perf-content"></div>
+</div>
+
+<!-- SALES -->
+<div id="tab-sales" class="tab-content">
+  <div class="sec-panel">
+    <div class="sec-head" style="flex-wrap:wrap;gap:8px">
+      <div class="sec-label" id="sales-company-lbl">Sales Ledger</div>
+      <button class="btn wa-sm" onclick="shareSalesSummaryWA()" title="Share on WhatsApp">📱 Share Summary</button>
+    </div>
+    <div id="sales-company-pills" class="staff-pills"></div>
+  </div>
+  <div id="sales-kpi-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px"></div>
+  <div class="sec-panel">
+    <div class="sec-head" style="flex-wrap:wrap;gap:8px">
+      <div class="sec-label">Customer Ledger</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" id="btn-cust-pdf" onclick="exportCustLedgerPDF()" style="font-size:11px;padding:5px 10px">⬇ PDF</button>
+        <input type="text" id="sales-search" placeholder="Search customer…"
+          oninput="if(CURRENT_TAB==='sales')renderSalesTab()"
+          style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:5px 8px;border-radius:4px;font-size:12px;min-width:140px">
+        <select id="sales-staff-filter" onchange="if(CURRENT_TAB==='sales')renderSalesTab()"
+          style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:5px 8px;border-radius:4px;font-size:12px">
+          <option value="">All Staff</option>
+        </select>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table><thead><tr>
+        <th>Customer</th><th>Staff</th><th>Company</th>
+        <th class="r">Total Billed</th><th class="r">Total Paid</th>
+        <th class="r">Outstanding</th><th style="width:36px"></th>
+      </tr></thead><tbody id="tbl-cust-ledger"></tbody></table>
+    </div>
+  </div>
+  <div class="sec-panel">
+    <div class="sec-head"><div class="sec-label">Staff → Customer Mapping</div></div>
+    <div class="tbl-wrap">
+      <table><thead><tr>
+        <th>Staff</th><th>Area</th><th class="r">Customers</th>
+      </tr></thead><tbody id="tbl-staff-cust"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOMER DETAIL MODAL -->
+<div id="cust-modal" style="display:none;position:fixed;inset:0;background:rgba(6,13,24,.92);z-index:200;overflow-y:auto;padding:16px">
+  <div style="max-width:960px;margin:0 auto;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+      <div id="cust-modal-name" style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--teal)"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" id="cust-modal-pdf" onclick="exportCustModalPDF()">⬇ PDF</button>
+        <button class="btn wa-sm" onclick="shareCustModalWA()">📱 WhatsApp</button>
+        <button class="btn" onclick="closeCustModal()" style="border-color:var(--red);color:var(--red)">✕ Close</button>
+      </div>
+    </div>
+    <div id="cust-modal-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px"></div>
+    <div id="cust-modal-tbl" style="overflow-x:auto"></div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyL8_EUdlwQKUfCvEyevDqnr7EgMb_DuDGwCkgHAhecmIYM2zYhEU3CJjuh2zfdpI0B/exec';
+// Manual email → display name overrides (add more as needed)
+var EMAIL_NAMES = {
+  'alokmicrol@gmail.com':   'Aloke Maity',
+  'monirulmicrol@gmail.com':'Monirull Islam'
+};
+// Payment details shown on customer statements, keyed by company name (must match values in "Billed/Paid" sheet column)
+var PAYMENT_INFO = {
+  'Microl Remedies': 'Microl Remedies Pvt Ltd\nBank: Axis Bank\nA/c No: 917020011823802\nIFSC: UTIB0001922\nBranch: Moti Nagar, Hyderabad',
+  'Microl Aqua': 'MICROL AQUA\nBank: HDFC Bank\nA/c No: 50200050955329\nIFSC: HDFC0000848\nBranch: Contai',
+  'Alliance': 'ALLIANCE\nBank: Axis Bank\nA/c No: 922020055505667\nIFSC: UTIB0003062\nBranch: Balaji Nagar',
+  'Alliance Aqua': 'ALLIANCE\nBank: Axis Bank\nA/c No: 922020055505667\nIFSC: UTIB0003062\nBranch: Balaji Nagar'
+};
+function getPayInfo(company){
+  if(!company)return'';
+  if(PAYMENT_INFO[company])return PAYMENT_INFO[company];
+  var lc=company.toLowerCase();
+  var key=Object.keys(PAYMENT_INFO).find(function(k){return k.toLowerCase()===lc||lc.indexOf(k.toLowerCase())>=0||k.toLowerCase().indexOf(lc)>=0});
+  return key?PAYMENT_INFO[key]:'';
+}
+
+var COL = {
+  UNIQUE_ID:'UNIQUE ID', TIMESTAMP:'Timestamp', TIME:'Time',
+  STAFF_EMAIL:'Staff ID (Email)', STAFF_NAME:'Staff Name',
+  AREA:'AREA', VISIT_TYPE:'VISIT TYPE', FARMER_NAME:'FARMER NAME',
+  DEALER_CAT:'UNDER WHICH DEALER', DEALER_NAME:'Dealer Name',
+  MOBILE:'Shop / Farmer Mobile Number', PHOTO:'Photo (Farm/Shop)',
+  REMARKS:'Remarks', LOCATION:'Location', VISIT_DATE:'Visit Date'
+};
+// Staff sheet columns
+var STCOL = {STAFF_EMAIL:'Staff ID (Email)', STAFF_NAME:'Staff Name', AREA:'Area'};
+// Customer sheet columns
+var CCOL = {CUST_ID:'Customer ID', CUST_NAME:'Customer Name', STAFF_EMAIL:'Staff ID (Email)'};
+// Statements sheet columns
+var SCOL = {
+  STMT_ID:'Statement ID', CUST_ID:'Customer ID', CUST_NAME:'Customer Name',
+  DATE:'Date', BILLED_PAID:'Billed/Paid', TRANS_TYPE:'Transaction Type',
+  INVOICE_NO:'Invoice No', SALES:'Sales',
+  PAYMENT:'Payment', BALANCE:'Balance', COMPANY:'Billed/Paid'
+};
+
+var PALETTE = ['#12c4d0','#e6b020','#9b6cff','#48ccff','#44d488','#f08840','#f06060','#c4e012','#ff6eb4','#7ecfff'];
+var STOP_WORDS = new Set(['a','an','the','and','or','but','in','on','at','to','for','of','with','by','from','is','are','was','were','be','been','have','has','had','do','does','did','not','no','yes','i','me','my','we','our','you','your','he','she','it','they','their','this','that','which','who','what','when','where','how','why','will','would','could','should','may','might','can','so','if','as','than','then','also','more','very','just','up','out','about','into','after','before','over','under','again','all','any','both','each','few','other','same','too','its','him','her','them','there','here','am','sir','ok','okay','na','ne','ke','hai','ka','ki','ko','se','please','per','mr','mrs','dr','ji','bhi','koi','ek','was','got','did']);
+var POS_KW = ['interested','good','excellent','positive','agreed','accepted','order','happy','satisfied','great','success','confirmed','done','well','nice','willing','potential','promising','purchased','agree','follow'];
+var NEG_KW = ['not interested','rejected','refused','bad','problem','issue','complaint','fail','poor','disease','loss','dead','mortality','unhappy','dissatisfied','negative','worried','concern','trouble','expensive','costly','busy'];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+var RAW_DATA=[], FILTERED_DATA=[], charts={}, CURRENT_TAB='overview';
+var REVISIT_FILTER='', REVISIT_SORT={col:'gap',dir:1};
+var PERF_PERIOD='month';
+var STAFF_DATA=[], CUSTOMER_DATA=[], STATEMENTS_DATA=[];
+var SALES_COMPANIES=new Set();
+Chart.defaults.color='#8ab2cc'; Chart.defaults.borderColor='#1a3060';
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function unique(arr){return[...new Set(arr.filter(Boolean))].sort()}
+function fmtDate(d){if(!d)return'';var x=new Date(d);if(isNaN(x))return String(d);return x.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
+function dateKey(d){if(!d)return'';var x=new Date(d);if(isNaN(x))return'';return x.getFullYear()+'-'+(x.getMonth()<9?'0':'')+(x.getMonth()+1)+'-'+(x.getDate()<10?'0':'')+x.getDate()}
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
+function countBy(arr,key){var m={};arr.forEach(function(r){var v=r[key]||'(blank)';m[v]=(m[v]||0)+1});return m}
+function sortedEntries(m){return Object.entries(m).sort(function(a,b){return b[1]-a[1]})}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function setStatus(msg,col){var el=document.getElementById('data-status');el.textContent=msg;el.style.color=col||'var(--dim)'}
+function parseMoney(v){if(!v||v==='')return 0;return parseFloat(String(v).replace(/[₹,\s]/g,''))||0}
+function fmtCurrency(v){var n=parseMoney(v);var s=Math.abs(n).toLocaleString('en-IN',{maximumFractionDigits:0});return(n<0?'-':'')+'₹'+s}
+
+function timeToMins(ts){
+  if(!ts)return null;
+  var s=String(ts).trim();if(!s||s==='0')return null;
+  // Pure decimal fraction — Google Sheets time serial e.g. "0.375" = 9:00 AM
+  if(/^\d*\.\d+$/.test(s)){var f=parseFloat(s);if(f>=0&&f<1)return Math.round(f*1440)}
+  var d=new Date(s);
+  if(!isNaN(d.getTime())&&s.length>4){
+    var mins;
+    if(d.getFullYear()<1902){
+      // 1899-epoch time cell (or old toString "Sat Dec 30 1899..."):
+      // Apps Script stores time values as UTC, so getUTCHours() = actual local time
+      mins=d.getUTCHours()*60+d.getUTCMinutes();
+    } else {
+      // Real UTC timestamp (AppSheet Timestamp column) — shift to IST (+330 min)
+      var ist=new Date(d.getTime()+330*60000);
+      mins=ist.getUTCHours()*60+ist.getUTCMinutes();
+    }
+    return(mins>=300&&mins<=1320)?mins:null; // keep 5 AM–10 PM
+  }
+  // Plain text "HH:MM", "HH:MM:SS", "H:MM AM/PM" — already in IST
+  var m=s.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?/i);
+  if(!m)return null;
+  var h=parseInt(m[1]),mn=parseInt(m[2]);
+  if(m[3]&&m[3].toUpperCase()==='PM'&&h<12)h+=12;
+  if(m[3]&&m[3].toUpperCase()==='AM'&&h===12)h=0;
+  return h*60+mn;
+}
+function fmtTime(v){
+  if(!v)return'';
+  var s=String(v).trim();if(!s||s==='0')return'';
+  var clean=s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if(clean){var h=parseInt(clean[1]),mn=parseInt(clean[2]),ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+(mn<10?'0':'')+mn+' '+ap}
+  var mins=timeToMins(s);return mins!==null?minsToTime(mins):'';
+}
+function displayTime(v){
+  if(!v)return'';
+  var s=String(v).trim();if(!s||s==='0')return'';
+  if(s.indexOf('1899')!==-1){
+    // ISO "1899-12-30T15:02:57.000Z": Apps Script stores time as UTC,
+    // add IST offset (+330 min) to recover the actual sheet value
+    var iso=s.match(/1899-\d{2}-\d{2}T(\d{2}):(\d{2})/);
+    if(iso){
+      var mins=(parseInt(iso[1])*60+parseInt(iso[2])+330)%1440;
+      var h=Math.floor(mins/60),m=mins%60;
+      return(h<10?'0':'')+h+':'+(m<10?'0':'')+m;
+    }
+    // toString() "Sat Dec 30 1899 20:32:57 GMT+0521..." — local time shown is already IST
+    var ts=s.match(/(\d{2}):(\d{2}):\d{2}/);
+    if(ts)return ts[1]+':'+ts[2];
+  }
+  return s;
+}
+var TABLE_SORTS={};
+function sortTableBy(tbodyId,colIdx){
+  var tbody=document.getElementById(tbodyId);if(!tbody)return;
+  var table=tbody.closest('table');if(!table)return;
+  var st=TABLE_SORTS[tbodyId]||{col:-1,dir:1};
+  if(st.col===colIdx)st.dir*=-1;else{st.col=colIdx;st.dir=1;}
+  TABLE_SORTS[tbodyId]=st;
+  table.querySelectorAll('thead th').forEach(function(th,i){
+    var arr=th.querySelector('.sarr');if(!arr)return;
+    arr.className='sarr'+(i===colIdx?' on':'');
+    if(i===colIdx)arr.textContent=st.dir===1?'▼':'▲';
+  });
+  var groups=[];
+  Array.from(tbody.children).forEach(function(tr){
+    if(tr.classList.contains('row-detail')||tr.classList.contains('exp-row'))
+      {if(groups.length)groups[groups.length-1].push(tr);}
+    else groups.push([tr]);
+  });
+  groups.sort(function(a,b){
+    var ac=a[0].cells[colIdx],bc=b[0].cells[colIdx];
+    var av=ac?ac.textContent.trim():'',bv=bc?bc.textContent.trim():'';
+    var an=parseFloat(av.replace(/[^\d.\-]/g,'')),bn=parseFloat(bv.replace(/[^\d.\-]/g,''));
+    if(!isNaN(an)&&!isNaN(bn))return(an-bn)*st.dir;
+    return av.localeCompare(bv)*st.dir;
+  });
+  groups.forEach(function(g){g.forEach(function(tr){tbody.appendChild(tr)});});
+}
+function makeSortable(tbodyId){
+  var tbody=document.getElementById(tbodyId);if(!tbody)return;
+  var table=tbody.closest('table');if(!table)return;
+  table.querySelectorAll('thead th:not(.sth)').forEach(function(th,i){
+    th.className=(th.className?th.className+' sth':'sth');
+    if(!th.querySelector('.sarr'))th.insertAdjacentHTML('beforeend',' <span class="sarr">▼</span>');
+    th.onclick=function(){sortTableBy(tbodyId,i);};
+  });
+}
+function minsToTime(mins){
+  if(mins===null||isNaN(mins))return'—';
+  var h=Math.floor(mins/60),m=Math.round(mins%60),ap=h>=12?'PM':'AM';
+  h=h%12||12;return h+':'+(m<10?'0':'')+m+' '+ap;
+}
+function countWorkingDays(start,end){
+  var count=0,d=new Date(start);d.setHours(0,0,0,0);
+  var e=new Date(end);e.setHours(23,59,59,0);
+  while(d<=e){if(d.getDay()!==0)count++;d.setDate(d.getDate()+1)}
+  return count;
+}
+function monthKey(d){var x=new Date(d);return x.getFullYear()+'-'+(x.getMonth()<9?'0':'')+(x.getMonth()+1)}
+function fmtMonth(mk){var p=mk.split('-');var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mo[parseInt(p[1])-1]+' '+p[0]}
+function weekKey(d){var dt=new Date(d);dt.setHours(0,0,0,0);dt.setDate(dt.getDate()-dt.getDay()+1);return dateKey(dt)}
+function avg(arr){return arr.length?arr.reduce(function(a,b){return a+b},0)/arr.length:null}
+function countWorkingDaysInMonth(mk,globalFirst,today){var p=mk.split('-'),y=parseInt(p[0]),m=parseInt(p[1])-1;var s=new Date(Math.max(new Date(y,m,1,0,0,0),globalFirst));var e=new Date(Math.min(new Date(y,m+1,0,23,59,59),today));return s<=e?countWorkingDays(s,e):0}
+function buildMonthCal(mk,presentSet,globalFirst,today){var p=mk.split('-'),y=parseInt(p[0]),m=parseInt(p[1])-1;var d=new Date(y,m,1);var last=new Date(y,m+1,0);var gf=new Date(globalFirst);gf.setHours(0,0,0,0);var td=new Date(today);td.setHours(23,59,59);var html='';while(d<=last){var isSun=d.getDay()===0;var dk=dateKey(d);var inRange=d>=gf&&d<=td;if(isSun||!inRange){html+='<div class="day-dot out" title="'+(isSun?'Sun ':'')+dk+'">'+d.getDate()+'</div>';}else{var present=presentSet.has(dk);html+='<div class="day-dot '+(present?'p':'a')+'" title="'+(present?'Present':'Absent')+' — '+dk+'">'+d.getDate()+'</div>';}d.setDate(d.getDate()+1);}return html;}
+function toggleAbsExpand(uid){var exp=document.getElementById('exp-'+uid);var arr=document.getElementById('arr-'+uid);if(!exp)return;var closing=!exp.classList.contains('closed');exp.classList.toggle('closed',closing);if(arr)arr.textContent=closing?'▶':'▼';}
+function toggleMonthCal(mUid){var cal=document.getElementById('cal-'+mUid);var arr=document.getElementById('marr-'+mUid);if(!cal)return;var open=cal.style.display==='none'||cal.style.display==='';cal.style.display=open?'block':'none';if(arr)arr.textContent=open?'▼':'▶';}
+
+// ─── DATA LOAD ────────────────────────────────────────────────────────────────
+function parseAndRender(json){
+  if(Array.isArray(json)){
+    RAW_DATA=json;STAFF_DATA=[];CUSTOMER_DATA=[];STATEMENTS_DATA=[];
+  }else{
+    RAW_DATA=Array.isArray(json.fieldReports)?json.fieldReports:[];
+    STAFF_DATA=Array.isArray(json.staff)?json.staff:[];
+    CUSTOMER_DATA=Array.isArray(json.customers)?json.customers:[];
+    STATEMENTS_DATA=Array.isArray(json.statements)?json.statements:[];
+    STATEMENTS_DATA.forEach(function(r){
+      r._date=r[SCOL.DATE]?new Date(r[SCOL.DATE]):null;
+      if(r._date&&isNaN(r._date))r._date=null;
+      r._sales=parseMoney(r[SCOL.SALES]);
+      r._payment=parseMoney(r[SCOL.PAYMENT]);
+      r._balance=parseMoney(r[SCOL.BALANCE]);
+    });
+  }
+  RAW_DATA.forEach(function(r){r._visitDate=new Date(r[COL.VISIT_DATE]||r[COL.TIMESTAMP]);if(isNaN(r._visitDate))r._visitDate=null});
+  return !Array.isArray(json);
+}
+async function loadData(silent){
+  if(!silent){
+    document.getElementById('loading-overlay').classList.remove('hidden');
+    document.getElementById('loading-txt').textContent='Fetching data from Google Sheets…';
+  }else{
+    setStatus('Refreshing…');
+  }
+  try{
+    if(!APPS_SCRIPT_URL||APPS_SCRIPT_URL==='PASTE_YOUR_WEB_APP_URL_HERE')throw new Error('Set APPS_SCRIPT_URL in analytics.html');
+    var res=await fetch(APPS_SCRIPT_URL);
+    if(!res.ok){var e=await res.json().catch(function(){return{error:'HTTP '+res.status}});throw new Error(e.error||'HTTP '+res.status)}
+    var json=await res.json();
+    if(json&&json.error)throw new Error(json.error);
+    try{localStorage.setItem('aqua_cache_v3',JSON.stringify({ts:Date.now(),data:json}));}catch(e){}
+    var isMultiSheet=parseAndRender(json);
+    setStatus('Updated '+new Date().toLocaleTimeString('en-IN')+' · '+RAW_DATA.length+' visits'
+      +(isMultiSheet
+        ?' · Staff:'+STAFF_DATA.length+' Cust:'+CUSTOMER_DATA.length+' Stmts:'+STATEMENTS_DATA.length
+        :' · ⚠ OLD API FORMAT — redeploy Code.gs'));
+    populateFilters();applyFilters();
+  }catch(e){
+    setStatus('Error: '+e.message,'var(--red)');
+    if(!silent)document.getElementById('loading-txt').textContent='Error: '+e.message;
+  }
+  finally{if(!silent)document.getElementById('loading-overlay').classList.add('hidden')}
+}
+
+function populateFilters(){
+  function fill(id,vals){var s=document.getElementById(id),p=s.value;while(s.options.length>1)s.remove(1);vals.forEach(function(v){var o=document.createElement('option');o.value=o.textContent=v;s.appendChild(o)});if(p)s.value=p}
+  fill('f-staff',unique(RAW_DATA.map(function(r){return r[COL.STAFF_NAME]})));
+  fill('f-area', unique(RAW_DATA.map(function(r){return r[COL.AREA]})));
+  fill('f-type', unique(RAW_DATA.map(function(r){return r[COL.VISIT_TYPE]})));
+  fill('f-dealer',unique(RAW_DATA.map(function(r){return r[COL.DEALER_NAME]})));
+}
+
+function applyFilters(){
+  var staff=document.getElementById('f-staff').value,area=document.getElementById('f-area').value,
+      type=document.getElementById('f-type').value,dealer=document.getElementById('f-dealer').value,
+      fv=document.getElementById('f-from').value,tv=document.getElementById('f-to').value,
+      from=fv?new Date(fv):null,to=tv?new Date(tv+'T23:59:59'):null;
+  FILTERED_DATA=RAW_DATA.filter(function(r){
+    if(staff&&r[COL.STAFF_NAME]!==staff)return false;
+    if(area&&r[COL.AREA]!==area)return false;
+    if(type&&r[COL.VISIT_TYPE]!==type)return false;
+    if(dealer&&r[COL.DEALER_NAME]!==dealer)return false;
+    if(from&&r._visitDate&&r._visitDate<from)return false;
+    if(to&&r._visitDate&&r._visitDate>to)return false;
+    return true;
+  });
+  renderKPI();renderAlerts();renderTab(CURRENT_TAB);
+}
+
+// ─── KPI & ALERTS ─────────────────────────────────────────────────────────────
+function renderKPI(){
+  var d=FILTERED_DATA;
+  document.getElementById('kpi-total').textContent=d.length;
+  document.getElementById('kpi-farmers').textContent=unique(d.map(function(r){return r[COL.FARMER_NAME]})).length;
+  document.getElementById('kpi-areas').textContent=unique(d.map(function(r){return r[COL.AREA]})).length;
+  document.getElementById('kpi-staff').textContent=unique(d.map(function(r){return r[COL.STAFF_NAME]})).length;
+  var ts=sortedEntries(countBy(d,COL.STAFF_NAME))[0];
+  if(ts){document.getElementById('kpi-top-staff').textContent=ts[0];document.getElementById('kpi-top-staff-sub').textContent=ts[1]+' visits'}
+  var ta=sortedEntries(countBy(d,COL.AREA))[0];
+  if(ta){document.getElementById('kpi-top-area').textContent=ta[0];document.getElementById('kpi-top-area-sub').textContent=ta[1]+' visits'}
+}
+function renderAlerts(){
+  var now=Date.now(),last={};
+  RAW_DATA.forEach(function(r){var n=r[COL.STAFF_NAME];if(!n||!r._visitDate)return;if(!last[n]||r._visitDate>last[n])last[n]=r._visitDate});
+  var inactive=Object.entries(last).filter(function(e){return(now-e[1].getTime())/86400000>7}).map(function(e){return{name:e[0],days:Math.floor((now-e[1].getTime())/86400000)}});
+  var b=document.getElementById('alert-banner');
+  if(!inactive.length){b.style.display='none';return}
+  b.style.display='block';
+  document.getElementById('alert-items').innerHTML=inactive.map(function(s){return'<span class="alert-item">'+esc(s.name)+' <span class="alert-days">('+s.days+'d ago)</span></span>'}).join('');
+}
+
+// ─── TAB ROUTER ───────────────────────────────────────────────────────────────
+function renderTab(name){
+  if(name==='overview')renderOverview();
+  else if(name==='staff')renderStaffTab();
+  else if(name==='attendance')renderAttendanceTab();
+  else if(name==='coverage')renderCoverageTab();
+  else if(name==='trends')renderTrendsTab();
+  else if(name==='dealers')renderDealersTab();
+  else if(name==='remarks')renderRemarksTab();
+  else if(name==='performance')renderPerformanceTab();
+  else if(name==='sales')renderSalesTab();
+}
+function switchTab(name){
+  CURRENT_TAB=name;
+  document.querySelectorAll('.tab-content').forEach(function(el){el.classList.remove('active')});
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(function(el){el.classList.remove('active')});
+  document.querySelector('[data-tab="'+name+'"]').classList.add('active');
+  // sync bottom nav
+  document.querySelectorAll('.bnav-btn').forEach(function(el){el.classList.remove('active')});
+  var bnav=document.querySelector('[data-bnav="'+name+'"]');
+  if(bnav)bnav.classList.add('active');
+  renderTab(name);
+}
+function openFilter(){
+  document.getElementById('filter-bar').classList.add('open');
+  document.getElementById('filter-backdrop').classList.add('open');
+}
+function closeFilter(){
+  document.getElementById('filter-bar').classList.remove('open');
+  document.getElementById('filter-backdrop').classList.remove('open');
+}
+function openReports(){
+  document.getElementById('reports-sheet').classList.add('open');
+  document.getElementById('reports-backdrop').classList.add('open');
+}
+function closeReports(){
+  document.getElementById('reports-sheet').classList.remove('open');
+  document.getElementById('reports-backdrop').classList.remove('open');
+}
+
+// ─── CHART FACTORIES ──────────────────────────────────────────────────────────
+function makeBar(id,entries,bg,bd){
+  destroyChart(id);
+  charts[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:entries.map(function(e){return e[0]}),datasets:[{label:'Visits',data:entries.map(function(e){return e[1]}),backgroundColor:bg,borderColor:bd,borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxRotation:35,font:{size:10}},grid:{color:'#1a3060'}},y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#1a3060'}}}}});
+}
+function makeDonut(id,labels,data,bg,bd){
+  destroyChart(id);
+  charts[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:labels,datasets:[{data:data,backgroundColor:bg,borderColor:bd,borderWidth:2,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},padding:10,boxWidth:12}}}}});
+}
+
+// ─── OVERVIEW ─────────────────────────────────────────────────────────────────
+function renderOverview(){
+  var today=new Date(),tdk=dateKey(today);
+  var now=today.getTime();
+
+  // Date header
+  var el=document.getElementById('ov-date');
+  if(el)el.textContent=today.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  // Today's field visits
+  var todayRows=RAW_DATA.filter(function(r){return r._visitDate&&dateKey(r._visitDate)===tdk});
+  var todayVisits=todayRows.length;
+  var todayStaffSet=new Set(todayRows.map(function(r){return r[COL.STAFF_NAME]}).filter(Boolean));
+  var allStaffNames=unique((STAFF_DATA.length?STAFF_DATA.map(function(s){return s[STCOL.STAFF_NAME]}):RAW_DATA.map(function(r){return r[COL.STAFF_NAME]})).filter(Boolean));
+  var totalStaff=allStaffNames.length||1;
+
+  el=document.getElementById('ov-today-line');
+  if(el)el.textContent=todayVisits+' visits today';
+  el=document.getElementById('ov-att-pct');
+  if(el)el.textContent=Math.round(todayStaffSet.size/totalStaff*100)+'%';
+
+  // This-month visits
+  var monthVisits=RAW_DATA.filter(function(r){
+    return r._visitDate&&r._visitDate.getMonth()===today.getMonth()&&r._visitDate.getFullYear()===today.getFullYear();
+  }).length;
+
+  // Top staff today
+  var todayCount={};
+  todayRows.forEach(function(r){var n=r[COL.STAFF_NAME];if(n)todayCount[n]=(todayCount[n]||0)+1});
+  var topToday=sortedEntries(todayCount)[0];
+
+  el=document.getElementById('ov-staff-sub');
+  if(el)el.textContent=todayStaffSet.size+' of '+totalStaff+' staff out today';
+  el=document.getElementById('ov-s-month');if(el)el.textContent=monthVisits;
+  el=document.getElementById('ov-s-today');if(el)el.textContent=todayVisits;
+  el=document.getElementById('ov-s-top');if(el)el.textContent=topToday?topToday[0].split(' ')[0]:'—';
+
+  // Sales summary — exclude opening balance rows from "Billed" figure
+  var totalBilled=STATEMENTS_DATA.reduce(function(s,r){return s+r._sales},0);
+  var totalPaid=STATEMENTS_DATA.reduce(function(s,r){return s+r._payment},0);
+  var openingBalAll=STATEMENTS_DATA.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');}).reduce(function(s,r){return s+r._sales;},0);
+  var netSales=totalBilled-openingBalAll;
+  var outstanding=totalBilled-totalPaid;
+  var custCount=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.CUST_NAME]}).filter(Boolean)).length;
+  var coCount=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean)).length;
+
+  el=document.getElementById('ov-sales-sub');
+  if(el)el.textContent=custCount+' customers · '+coCount+' companies';
+  el=document.getElementById('ov-v-billed');if(el)el.textContent=fmtCurrency(openingBalAll>0?netSales:totalBilled);
+  el=document.getElementById('ov-v-paid');if(el)el.textContent=fmtCurrency(totalPaid);
+  el=document.getElementById('ov-v-out');if(el)el.textContent=fmtCurrency(outstanding);
+
+  // Inactive staff alert
+  var last={};
+  RAW_DATA.forEach(function(r){var n=r[COL.STAFF_NAME];if(!n||!r._visitDate)return;if(!last[n]||r._visitDate>last[n])last[n]=r._visitDate});
+  var inactive=allStaffNames.filter(function(n){return !last[n]||(now-last[n].getTime())/86400000>7});
+  var alertEl=document.getElementById('ov-alert');
+  var alertList=document.getElementById('ov-alert-list');
+  if(alertEl){
+    if(inactive.length){
+      alertEl.style.display='block';
+      if(alertList)alertList.innerHTML=inactive.map(function(n){
+        var days=last[n]?Math.floor((now-last[n].getTime())/86400000):null;
+        return esc(n)+(days?' <span style="color:var(--dim);font-size:11px">('+days+'d ago)</span>':'');
+      }).join('<br>');
+    }else{alertEl.style.display='none';}
+  }
+}
+
+// ─── STAFF TAB ────────────────────────────────────────────────────────────────
+function renderStaffTab(){renderLeaderboard();renderRevisit();renderAbsent();renderDow()}
+
+function renderLeaderboard(){
+  var tbody=document.getElementById('tbl-leader');tbody.innerHTML='';
+  var map={};
+  FILTERED_DATA.forEach(function(r){var n=r[COL.STAFF_NAME];if(!n)return;if(!map[n])map[n]={v:0,f:new Set(),a:new Set()};map[n].v++;if(r[COL.FARMER_NAME])map[n].f.add(r[COL.FARMER_NAME]);if(r[COL.AREA])map[n].a.add(r[COL.AREA])});
+  // Build email→name lookup
+  var emailToName={};
+  STAFF_DATA.forEach(function(s){var e=s[STCOL.STAFF_EMAIL];if(e)emailToName[e]=s[STCOL.STAFF_NAME]||e});
+  Object.keys(EMAIL_NAMES).forEach(function(e){emailToName[e]=EMAIL_NAMES[e]});
+  // Build custName→staffName from CUSTOMER_DATA
+  var custToStaff={};
+  CUSTOMER_DATA.forEach(function(c){var cn=c[CCOL.CUST_NAME];if(!cn)return;var email=(c[CCOL.STAFF_EMAIL]||'').split(/[,;]+/)[0].trim();if(email)custToStaff[cn]=emailToName[email]||email});
+  // Aggregate all-time billed/paid per staff from statements
+  var billing={};
+  STATEMENTS_DATA.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;var sn=custToStaff[cn];if(!sn)return;if(!billing[sn])billing[sn]={billed:0,paid:0};if(r._sales>0)billing[sn].billed+=r._sales;if(r._payment>0)billing[sn].paid+=r._payment});
+  Object.entries(map).sort(function(a,b){return b[1].v-a[1].v}).forEach(function(e,i){
+    var cls=i===0?'r1':i===1?'r2':i===2?'r3':'';
+    var b=billing[e[0]]||{billed:0,paid:0};
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td><span class="rank '+cls+'">'+(i+1)+'</span></td><td class="c-name">'+esc(e[0])+'</td><td class="c-teal">'+e[1].v+'</td><td class="c-gold">'+e[1].f.size+'</td><td class="c-green">'+e[1].a.size+'</td>'
+      +'<td class="r" style="color:var(--teal)">'+(b.billed>0?fmtCurrency(b.billed):'—')+'</td>'
+      +'<td class="r" style="color:var(--green)">'+(b.paid>0?fmtCurrency(b.paid):'—')+'</td>';
+    tbody.appendChild(tr);
+  });
+  makeSortable('tbl-leader');
+}
+
+function renderRevisit(){
+  var tbody=document.getElementById('tbl-revisit');tbody.innerHTML='';
+  var groups={};
+  FILTERED_DATA.forEach(function(r){var n=r[COL.STAFF_NAME],f=r[COL.FARMER_NAME];if(!n||!f||!r._visitDate)return;var k=n+'|||'+f;if(!groups[k])groups[k]={n:n,f:f,dates:[]};groups[k].dates.push(r._visitDate)});
+  var results=[];
+  Object.values(groups).forEach(function(g){
+    if(g.dates.length<2)return;
+    g.dates.sort(function(a,b){return a-b});
+    var gaps=[];for(var i=1;i<g.dates.length;i++)gaps.push((g.dates[i]-g.dates[i-1])/86400000);
+    results.push({n:g.n,f:g.f,v:g.dates.length,gap:Math.round(avg(gaps))});
+  });
+  // Populate staff pills
+  var allStaff=unique(results.map(function(r){return r.n}));
+  var pillsEl=document.getElementById('revisit-pills');
+  if(pillsEl){
+    pillsEl.innerHTML='<span class="staff-pill'+(REVISIT_FILTER===''?' active':'')+'" onclick="setRevisitFilter(\'\')">All</span>'
+      +allStaff.map(function(s){return'<span class="staff-pill'+(REVISIT_FILTER===s?' active':'')+'" onclick="setRevisitFilter(\''+s.replace(/'/g,"\\'")+'\')" title="'+esc(s)+'">'+esc(s)+'</span>'}).join('');
+  }
+  // Filter
+  var filtered=REVISIT_FILTER?results.filter(function(r){return r.n===REVISIT_FILTER}):results;
+  // Sort
+  filtered.sort(function(a,b){var va=a[REVISIT_SORT.col],vb=b[REVISIT_SORT.col];return REVISIT_SORT.dir*(typeof va==='string'?va.localeCompare(vb):va-vb)});
+  // Update sort arrows
+  ['n','f','v','gap'].forEach(function(c){var el=document.getElementById('rsort-'+c);if(!el)return;el.className='sarr'+(REVISIT_SORT.col===c?' on':'');el.textContent=REVISIT_SORT.col===c?(REVISIT_SORT.dir===1?'▼':'▲'):'▼'});
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="4" style="color:var(--dim);padding:14px">'+(REVISIT_FILTER?'No repeat visits for this staff':'Need 2+ visits to same farmer')+'</td></tr>';return}
+  filtered.forEach(function(r){
+    var col=r.gap<=7?'c-green':r.gap<=14?'c-gold':'c-red';
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td class="c-name">'+esc(r.n)+'</td><td class="c-area">'+esc(r.f)+'</td><td class="c-teal">'+r.v+'</td><td class="'+col+'">'+r.gap+' days</td>';
+    tbody.appendChild(tr);
+  });
+}
+function setRevisitFilter(name){REVISIT_FILTER=name;renderRevisit()}
+function setRevisitSort(col){if(REVISIT_SORT.col===col)REVISIT_SORT.dir*=-1;else{REVISIT_SORT.col=col;REVISIT_SORT.dir=1}renderRevisit()}
+
+function renderAbsent(){
+  var tbody=document.getElementById('tbl-absent');tbody.innerHTML='';
+  var today=new Date();today.setHours(23,59,59,999);
+  var globalFirst=null;
+  RAW_DATA.forEach(function(r){if(r._visitDate&&(!globalFirst||r._visitDate<globalFirst))globalFirst=r._visitDate});
+  if(!globalFirst){tbody.innerHTML='<tr><td colspan="5" style="color:var(--dim);padding:14px">No date data</td></tr>';return}
+  var totalWorkingDays=countWorkingDays(globalFirst,today);
+  // Per-staff: all present Mon-Sat dateKeys + grouped by month
+  var info={};
+  RAW_DATA.forEach(function(r){
+    var n=r[COL.STAFF_NAME];if(!n||!r._visitDate||r._visitDate.getDay()===0)return;
+    if(!info[n])info[n]={dates:new Set(),byMonth:{}};
+    var dk=dateKey(r._visitDate),mk=monthKey(r._visitDate);
+    info[n].dates.add(dk);
+    if(!info[n].byMonth[mk])info[n].byMonth[mk]=new Set();
+    info[n].byMonth[mk].add(dk);
+  });
+  Object.entries(info).sort(function(a,b){return a[0].localeCompare(b[0])}).forEach(function(e,i){
+    var name=e[0],data=e[1];
+    var present=data.dates.size,absent=Math.max(0,totalWorkingDays-present),pct=totalWorkingDays?Math.round(present/totalWorkingDays*100):0;
+    var col=pct>=90?'c-green':pct>=70?'c-gold':'c-red';
+    var uid='abs'+i;
+    // Staff summary row
+    var tr=document.createElement('tr');tr.className='cl';
+    tr.innerHTML='<td class="c-name"><span id="arr-'+uid+'" style="font-size:9px;margin-right:6px;color:var(--dim);display:inline-block;width:10px">▶</span>'+esc(name)+'</td>'
+      +'<td class="c-teal">'+totalWorkingDays+'</td><td class="c-green">'+present+'</td><td class="c-red">'+absent+'</td><td class="'+col+'">'+pct+'%</td>';
+    tr.addEventListener('click',function(){toggleAbsExpand(uid)});
+    // Month expansion row
+    var expTr=document.createElement('tr');expTr.className='exp-row closed';expTr.id='exp-'+uid;
+    var expTd=document.createElement('td');expTd.colSpan=5;
+    var months=Object.keys(data.byMonth).sort();
+    var mhtml='<div>';
+    months.forEach(function(mk){
+      var mUid=uid+'_'+mk.replace('-','');
+      var mDays=data.byMonth[mk];
+      var mTotal=countWorkingDaysInMonth(mk,globalFirst,today);
+      var mPct=mTotal?Math.round(mDays.size/mTotal*100):0;
+      var mCol=mPct>=90?'var(--green)':mPct>=70?'var(--gold)':'var(--red)';
+      mhtml+='<div class="month-row" onclick="toggleMonthCal(\''+mUid+'\')">'
+        +'<span id="marr-'+mUid+'" style="font-size:9px;color:var(--dim);width:10px">▶</span>'
+        +'<span style="font-family:IBM Plex Mono,monospace;font-size:12px;color:var(--txt);min-width:90px">'+fmtMonth(mk)+'</span>'
+        +'<span style="font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--teal);min-width:70px">'+mDays.size+' / '+mTotal+' days</span>'
+        +'<span style="font-family:IBM Plex Mono,monospace;font-size:12px;color:'+mCol+'">'+mPct+'%</span>'
+        +'</div>'
+        +'<div id="cal-'+mUid+'" style="display:none"><div class="day-cal">'+buildMonthCal(mk,mDays,globalFirst,today)+'</div></div>';
+    });
+    mhtml+='</div>';
+    expTd.innerHTML=mhtml;expTr.appendChild(expTd);
+    tbody.appendChild(tr);tbody.appendChild(expTr);
+  });
+  makeSortable('tbl-absent');
+}
+
+function renderDow(){
+  destroyChart('c-dow');
+  var counts=[0,0,0,0,0,0,0];
+  FILTERED_DATA.forEach(function(r){if(r._visitDate)counts[(r._visitDate.getDay()+6)%7]++});
+  charts['c-dow']=new Chart(document.getElementById('c-dow'),{type:'bar',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Visits',data:counts,backgroundColor:counts.map(function(_,i){return i===6?'rgba(240,96,96,.5)':'rgba(18,196,208,.7)'}),borderColor:counts.map(function(_,i){return i===6?'#f06060':'#12c4d0'}),borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1a3060'}},y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#1a3060'}}}}});
+}
+
+// ─── ATTENDANCE TAB ───────────────────────────────────────────────────────────
+var _attCalEnd=null,_attCalStart=null;
+
+function renderAttendanceTab(){
+  var allStaff=unique(RAW_DATA.map(function(r){return r[COL.STAFF_NAME]}));
+  var today=new Date(),yest=new Date(today);yest.setDate(yest.getDate()-1);
+  var tdk=dateKey(today),ydk=dateKey(yest);
+  var tSet=new Set(),ySet=new Set();
+  RAW_DATA.forEach(function(r){
+    if(!r._visitDate||!r[COL.STAFF_NAME])return;
+    var dk=dateKey(r._visitDate);
+    if(dk===tdk)tSet.add(r[COL.STAFF_NAME]);
+    if(dk===ydk)ySet.add(r[COL.STAFF_NAME]);
+  });
+  document.getElementById('att-today-lbl').textContent='Today — '+fmtDate(today.toISOString())+' ('+tSet.size+'/'+allStaff.length+' reported)';
+  document.getElementById('att-yest-lbl').textContent='Yesterday — '+fmtDate(yest.toISOString())+' ('+ySet.size+'/'+allStaff.length+' reported)';
+  function build(elId,set){
+    var el=document.getElementById(elId);el.innerHTML='';
+    allStaff.forEach(function(s){
+      var card=document.createElement('div');card.className='att-card '+(set.has(s)?'yes':'no');
+      card.innerHTML='<div class="att-dot"></div>'+esc(s);el.appendChild(card);
+    });
+    if(!allStaff.length)el.innerHTML='<span style="color:var(--dim);font-size:12px">No staff data</span>';
+  }
+  build('att-today',tSet);build('att-yest',ySet);
+  // Init calendar to last 14 days on first open
+  if(!_attCalEnd){
+    _attCalEnd=new Date(today);_attCalEnd.setHours(0,0,0,0);
+    _attCalStart=new Date(_attCalEnd);_attCalStart.setDate(_attCalEnd.getDate()-13);
+  }
+  renderAttCalendar();
+}
+
+function attNav(days){
+  if(!_attCalEnd){renderAttendanceTab();return;}
+  _attCalStart.setDate(_attCalStart.getDate()+days);
+  _attCalEnd.setDate(_attCalEnd.getDate()+days);
+  renderAttCalendar();
+}
+
+function attCustomRange(){
+  var f=document.getElementById('att-from').value;
+  var t=document.getElementById('att-to').value;
+  if(!f||!t)return;
+  _attCalStart=new Date(f+'T00:00:00');_attCalEnd=new Date(t+'T00:00:00');
+  if(_attCalStart>_attCalEnd){var tmp=_attCalStart;_attCalStart=_attCalEnd;_attCalEnd=tmp;}
+  renderAttCalendar();
+}
+
+function renderAttCalendar(){
+  var wrap=document.getElementById('att-cal-tbl');if(!wrap)return;
+  var today=new Date();today.setHours(0,0,0,0);
+  var s=_attCalStart,e=_attCalEnd;
+
+  // Update date inputs + label
+  document.getElementById('att-from').value=dateKey(s);
+  document.getElementById('att-to').value=dateKey(e);
+  document.getElementById('att-cal-lbl').textContent=fmtDate(s)+' → '+fmtDate(e);
+
+  // Build list of dates
+  var dates=[],d=new Date(s);
+  while(d<=e){dates.push(new Date(d));d.setDate(d.getDate()+1);}
+
+  // Build attendance map: staff → Set<dateKey>
+  var allStaff=unique(RAW_DATA.map(function(r){return r[COL.STAFF_NAME]})).filter(Boolean);
+  var attMap={};
+  allStaff.forEach(function(s){attMap[s]=new Set();});
+  RAW_DATA.forEach(function(r){
+    var name=r[COL.STAFF_NAME];if(!name||!r._visitDate)return;
+    if(attMap[name])attMap[name].add(dateKey(r._visitDate));
+  });
+
+  // Count workdays (non-future) in range for % calculation
+  var workDays=dates.filter(function(d){return d<=today;}).length||1;
+  var DAY_ABBR=['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+  // Sort staff: highest % first
+  allStaff=allStaff.slice().sort(function(a,b){
+    var pa=0,pb=0;
+    dates.forEach(function(d){if(d<=today&&attMap[a]&&attMap[a].has(dateKey(d)))pa++;});
+    dates.forEach(function(d){if(d<=today&&attMap[b]&&attMap[b].has(dateKey(d)))pb++;});
+    return pb-pa;
+  });
+
+  var todayKey=dateKey(today);
+  var TH='padding:5px 4px;text-align:center;background:var(--panel2);font-family:IBM Plex Mono,monospace;font-size:9px;border:1px solid var(--border);white-space:nowrap;';
+  var html='<table style="border-collapse:collapse;font-size:11px;">';
+
+  // Header row
+  html+='<thead><tr>';
+  html+='<th style="'+TH+'text-align:left;padding:5px 10px;min-width:90px;position:sticky;left:0;z-index:2;background:var(--panel2);">Staff</th>';
+  dates.forEach(function(d){
+    var dk=dateKey(d);var isToday=dk===todayKey;var isFut=d>today;
+    html+='<th style="'+TH+(isToday?'color:var(--teal);border-bottom:2px solid var(--teal);background:rgba(18,196,208,.1);':isFut?'color:var(--dim);':'color:var(--txt);')+'min-width:30px">'
+      +d.getDate()+'<br>'+DAY_ABBR[d.getDay()]+'</th>';
+  });
+  html+='<th style="'+TH+'border-left:2px solid var(--border);padding:5px 8px">%</th>';
+  html+='</tr></thead><tbody>';
+
+  // Data rows
+  allStaff.forEach(function(name,i){
+    var present=0;
+    dates.forEach(function(d){if(d<=today&&attMap[name]&&attMap[name].has(dateKey(d)))present++;});
+    var pct=Math.round(present/workDays*100);
+    var pctCol=pct>=90?'var(--green)':pct>=70?'var(--gold)':'var(--red)';
+    var rowBg=i%2===0?'var(--panel)':'var(--panel2)';
+    html+='<tr>';
+    html+='<td style="padding:5px 10px;font-weight:600;font-size:11px;border:1px solid var(--border);background:var(--panel);position:sticky;left:0;z-index:1;white-space:nowrap">'+esc(name)+'</td>';
+    dates.forEach(function(d){
+      var dk=dateKey(d);var isToday=dk===todayKey;var isFut=d>today;
+      var has=attMap[name]&&attMap[name].has(dk);
+      var bg=isFut?'var(--panel)':has?'rgba(68,212,136,.15)':'rgba(240,96,96,.07)';
+      var txt=isFut?'':has?'✓':'·';
+      var col=isFut?'var(--border)':has?'var(--green)':'rgba(240,96,96,.4)';
+      html+='<td style="padding:5px 4px;text-align:center;background:'+bg+';color:'+col+';border:1px solid var(--border)'+(isToday?';border-left:1px solid var(--teal);border-right:1px solid var(--teal)':'')+';font-weight:700;font-size:13px">'+txt+'</td>';
+    });
+    html+='<td style="padding:5px 8px;text-align:center;font-weight:700;font-size:11px;color:'+pctCol+';border:1px solid var(--border);border-left:2px solid var(--border)">'+pct+'%</td>';
+    html+='</tr>';
+  });
+
+  if(!allStaff.length)html+='<tr><td colspan="'+(dates.length+2)+'" style="padding:20px;color:var(--dim);text-align:center">No staff data</td></tr>';
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+
+// ─── COVERAGE TAB ─────────────────────────────────────────────────────────────
+function renderCoverageTab(){
+  var farmerFirst={};var newC=0,repC=0;
+  FILTERED_DATA.slice().sort(function(a,b){return(a._visitDate||0)-(b._visitDate||0)}).forEach(function(r){var f=r[COL.FARMER_NAME];if(!f)return;if(!farmerFirst[f]){farmerFirst[f]=true;newC++}else repC++});
+  makeDonut('c-newrepeat',['New Farmers','Repeat Visits'],[newC,repC],['rgba(68,212,136,.7)','rgba(18,196,208,.7)'],['#44d488','#12c4d0']);
+  var de=sortedEntries(countBy(FILTERED_DATA,COL.DEALER_NAME)).slice(0,10);
+  makeBar('c-dealer-cov',de,de.map(function(_,i){return PALETTE[i%PALETTE.length]+'b3'}),de.map(function(_,i){return PALETTE[i%PALETTE.length]}));
+
+  var areaLast={};FILTERED_DATA.forEach(function(r){var a=r[COL.AREA];if(!a||!r._visitDate)return;if(!areaLast[a]||r._visitDate>areaLast[a])areaLast[a]=r._visitDate});
+  var tbody=document.getElementById('tbl-stale');tbody.innerHTML='';
+  var now=Date.now(),stale=[];
+  Object.entries(areaLast).forEach(function(e){var d=Math.floor((now-e[1].getTime())/86400000);if(d>=7)stale.push({a:e[0],d:d,last:e[1]})});
+  stale.sort(function(a,b){return b.d-a.d});
+  if(!stale.length){tbody.innerHTML='<tr><td colspan="3" style="color:var(--green);padding:14px">All areas visited within 7 days ✓</td></tr>'}
+  else stale.forEach(function(s){var c=s.d>=14?'c-red':'c-gold';var tr=document.createElement('tr');tr.innerHTML='<td class="c-area c-name">'+esc(s.a)+'</td><td class="c-date">'+fmtDate(s.last)+'</td><td class="'+c+'">'+s.d+' days</td>';tbody.appendChild(tr)});
+  makeSortable('tbl-stale');
+
+  var wrap=document.getElementById('matrix-wrap'),staffL=unique(FILTERED_DATA.map(function(r){return r[COL.STAFF_NAME]})),areaL=unique(FILTERED_DATA.map(function(r){return r[COL.AREA]}));
+  if(!staffL.length||!areaL.length){wrap.innerHTML='<div style="padding:14px;color:var(--dim)">No data</div>';return}
+  var mat={};FILTERED_DATA.forEach(function(r){var n=r[COL.STAFF_NAME],a=r[COL.AREA];if(!n||!a)return;if(!mat[n])mat[n]={};mat[n][a]=(mat[n][a]||0)+1});
+  var maxV=1;staffL.forEach(function(n){areaL.forEach(function(a){if(mat[n]&&mat[n][a]&&mat[n][a]>maxV)maxV=mat[n][a]})});
+  var html='<table><thead><tr><th>Staff \\ Area</th>';areaL.forEach(function(a){html+='<th style="text-align:center">'+esc(a)+'</th>'});html+='</tr></thead><tbody>';
+  staffL.forEach(function(n){
+    html+='<tr><td class="c-name">'+esc(n)+'</td>';
+    areaL.forEach(function(a){var v=(mat[n]&&mat[n][a])||0;var r=v/maxV;var col=v===0?'var(--dim)':r>0.6?'var(--green)':r>0.3?'var(--teal)':'var(--sky)';html+='<td style="text-align:center;font-family:IBM Plex Mono,monospace;font-size:11px;color:'+col+'">'+(v||'—')+'</td>'});
+    html+='</tr>';
+  });
+  html+='</tbody></table>';wrap.innerHTML=html;
+}
+
+// ─── TRENDS TAB ───────────────────────────────────────────────────────────────
+function renderTrendsTab(){
+  destroyChart('c-monthly');
+  var mc={};FILTERED_DATA.forEach(function(r){if(!r._visitDate)return;var k=monthKey(r._visitDate);mc[k]=(mc[k]||0)+1});
+  var months=Object.keys(mc).sort();
+  charts['c-monthly']=new Chart(document.getElementById('c-monthly'),{type:'bar',data:{labels:months.map(fmtMonth),datasets:[{label:'Visits',data:months.map(function(m){return mc[m]}),backgroundColor:'rgba(230,176,32,.7)',borderColor:'#e6b020',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1a3060'}},y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#1a3060'}}}}});
+
+  destroyChart('c-weekly');
+  var wc={};FILTERED_DATA.forEach(function(r){if(!r._visitDate)return;var k=weekKey(r._visitDate);wc[k]=(wc[k]||0)+1});
+  var weeks=Object.keys(wc).sort();
+  charts['c-weekly']=new Chart(document.getElementById('c-weekly'),{type:'line',data:{labels:weeks.map(function(w){return'Wk '+fmtDate(w)}),datasets:[{label:'Visits',data:weeks.map(function(w){return wc[w]}),borderColor:'#9b6cff',backgroundColor:'rgba(155,108,255,.12)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#9b6cff',fill:true,tension:0.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxRotation:35,font:{size:10}},grid:{color:'#1a3060'}},y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#1a3060'}}}}});
+
+}
+
+// ─── DEALERS TAB ──────────────────────────────────────────────────────────────
+function renderDealersTab(){
+  var catE=sortedEntries(countBy(FILTERED_DATA,COL.DEALER_CAT));
+  makeBar('c-dealercat',catE,catE.map(function(_,i){return PALETTE[i%PALETTE.length]+'b3'}),catE.map(function(_,i){return PALETTE[i%PALETTE.length]}));
+  var topE=sortedEntries(countBy(FILTERED_DATA,COL.DEALER_NAME)).slice(0,10);
+  makeBar('c-topdealer',topE,'rgba(68,212,136,.7)','#44d488');
+  var tbody=document.getElementById('tbl-dealers');tbody.innerHTML='';
+  var dm={};
+  FILTERED_DATA.forEach(function(r){var d=r[COL.DEALER_NAME];if(!d)return;if(!dm[d])dm[d]={cat:r[COL.DEALER_CAT]||'',v:0,f:new Set(),s:new Set()};dm[d].v++;if(r[COL.FARMER_NAME])dm[d].f.add(r[COL.FARMER_NAME]);if(r[COL.STAFF_NAME])dm[d].s.add(r[COL.STAFF_NAME])});
+  Object.entries(dm).sort(function(a,b){return b[1].v-a[1].v}).forEach(function(e){var tr=document.createElement('tr');tr.innerHTML='<td class="c-name">'+esc(e[0])+'</td><td class="c-type">'+esc(e[1].cat)+'</td><td class="c-teal">'+e[1].v+'</td><td class="c-gold">'+e[1].f.size+'</td><td class="c-green">'+e[1].s.size+'</td>';tbody.appendChild(tr)});
+  makeSortable('tbl-dealers');
+}
+
+// ─── REMARKS TAB ──────────────────────────────────────────────────────────────
+function renderRemarksTab(){
+  var wordCount={},sentiments={positive:0,negative:0,neutral:0},remarksData=[];
+  FILTERED_DATA.forEach(function(r){
+    var text=r[COL.REMARKS]||'';if(!text.trim())return;
+    var lower=text.toLowerCase();
+    var neg=NEG_KW.filter(function(w){return lower.includes(w)}).length;
+    var pos=POS_KW.filter(function(w){return lower.includes(w)}).length;
+    var sent=neg>pos?'negative':pos>0?'positive':'neutral';
+    sentiments[sent]++;remarksData.push({r:r,sent:sent,text:text});
+    lower.split(/[^a-z]+/).forEach(function(w){if(w.length<3||STOP_WORDS.has(w))return;wordCount[w]=(wordCount[w]||0)+1});
+  });
+  var topWords=Object.entries(wordCount).sort(function(a,b){return b[1]-a[1]}).slice(0,15);
+  destroyChart('c-keywords');
+  charts['c-keywords']=new Chart(document.getElementById('c-keywords'),{type:'bar',data:{labels:topWords.map(function(e){return e[0]}),datasets:[{label:'Count',data:topWords.map(function(e){return e[1]}),backgroundColor:'rgba(18,196,208,.7)',borderColor:'#12c4d0',borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'#1a3060'},ticks:{font:{size:10}}},y:{grid:{color:'#1a3060'},ticks:{font:{size:11}}}}}});
+  makeDonut('c-sentiment',['Positive','Neutral','Negative'],[sentiments.positive,sentiments.neutral,sentiments.negative],['rgba(68,212,136,.7)','rgba(74,112,144,.5)','rgba(240,96,96,.7)'],['#44d488','#4a7090','#f06060']);
+  var tbody=document.getElementById('tbl-remarks');tbody.innerHTML='';
+  remarksData.sort(function(a,b){return(b.r._visitDate||0)-(a.r._visitDate||0)}).slice(0,80).forEach(function(item){
+    var r=item.r,bc=item.sent==='positive'?'badge-pos':item.sent==='negative'?'badge-neg':'badge-neu';
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td class="c-date">'+fmtDate(r._visitDate)+'</td><td class="c-name">'+esc(r[COL.STAFF_NAME])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td><td style="max-width:280px">'+esc(item.text)+'</td><td><span class="badge '+bc+'">'+item.sent+'</span></td>';
+    tbody.appendChild(tr);
+  });
+  if(!remarksData.length){var tr=document.createElement('tr');tr.innerHTML='<td colspan="6" style="color:var(--dim);padding:14px">No remarks in this range</td>';tbody.appendChild(tr)}
+  makeSortable('tbl-remarks');
+}
+
+// ─── PDF EXPORT (legacy btn-export — kept for back-compat, guarded against null) ──
+(function(){var _be=document.getElementById('btn-export');if(!_be)return;
+_be.addEventListener('click',async function(){
+  var btn=this;btn.textContent='⏳ Generating…';btn.disabled=true;
+  try{
+    var{jsPDF}=window.jspdf,pdf=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,M=10;
+    var kpiEl=document.getElementById('kpi-row'),ltSv=applyLightTheme(kpiEl);
+    var kc=await html2canvas(kpiEl,{backgroundColor:'#ffffff',scale:2});
+    restoreLightTheme(kpiEl,ltSv);
+    pdf.addImage(kc.toDataURL('image/png'),'PNG',M,M,W-2*M,42);
+    pdf.setFontSize(8);pdf.setTextColor(120);pdf.text('Aqua Analytics — '+new Date().toLocaleString('en-IN'),M,H-6);
+    ['c-staff','c-area','c-type','c-trend'].forEach(function(id){if(!charts[id])return;pdf.addPage();pdf.addImage(charts[id].toBase64Image('image/png',1),'PNG',M,M,W-2*M,H-2*M-10);pdf.setFontSize(8);pdf.setTextColor(120);pdf.text('Aqua Analytics — '+new Date().toLocaleString('en-IN'),M,H-6)});
+    pdfSave(pdf,'aqua-analytics-'+new Date().toISOString().slice(0,10)+'.pdf');
+  }catch(e){alert('PDF export failed: '+e.message)}
+  finally{btn.textContent='⬇ Export PDF';btn.disabled=false}
+});})();
+
+// ─── PERFORMANCE TAB ─────────────────────────────────────────────────────────
+function getPerfDateRange(key){
+  var now=new Date();now.setHours(23,59,59,999);
+  if(key==='week'){
+    // Mon–today; if today is Sunday show Mon–Sat of previous week
+    var d=new Date(now),day=d.getDay();
+    if(day===0){d.setDate(d.getDate()-1);day=6} // back to Saturday
+    var start=new Date(d);start.setDate(d.getDate()-(day===0?6:day-1));start.setHours(0,0,0,0);
+    return{from:start,to:d};
+  }
+  if(key==='month') return{from:new Date(now.getFullYear(),now.getMonth(),1),to:now};
+  if(key==='all'){var f=null;RAW_DATA.forEach(function(r){if(r._visitDate&&(!f||r._visitDate<f))f=r._visitDate});return{from:f||new Date(0),to:now}}
+  // YYYY-MM
+  var p=key.split('-'),y=parseInt(p[0]),m=parseInt(p[1])-1;
+  return{from:new Date(y,m,1),to:new Date(y,m+1,0,23,59,59)};
+}
+
+function computePerfStats(from,to){
+  // Build staff email→info lookup
+  var staffLookup={};
+  STAFF_DATA.forEach(function(s){var e=s[STCOL.STAFF_EMAIL];if(e)staffLookup[e]={name:s[STCOL.STAFF_NAME]||e,area:s[STCOL.AREA]||''}});
+  RAW_DATA.forEach(function(r){var e=r[COL.STAFF_EMAIL],n=r[COL.STAFF_NAME];if(e&&n&&!staffLookup[e])staffLookup[e]={name:n,area:r[COL.AREA]||''}});
+  Object.keys(EMAIL_NAMES).forEach(function(e){if(!staffLookup[e])staffLookup[e]={name:EMAIL_NAMES[e],area:''};else staffLookup[e].name=EMAIL_NAMES[e]});
+  // Build name→email reverse map
+  var nameToEmail={};
+  Object.keys(staffLookup).forEach(function(e){nameToEmail[staffLookup[e].name]=e});
+  // Build email→customers map from CUSTOMER_DATA
+  var emailToCusts={};
+  CUSTOMER_DATA.forEach(function(c){
+    var cn=c[CCOL.CUST_NAME];if(!cn)return;
+    (c[CCOL.STAFF_EMAIL]||'').split(/[,;]+/).map(function(e){return e.trim()}).filter(Boolean).forEach(function(e){
+      if(!emailToCusts[e])emailToCusts[e]=[];emailToCusts[e].push(cn);
+    });
+  });
+  // Aggregate all-time sales per customer
+  var custSales={};
+  STATEMENTS_DATA.forEach(function(r){
+    var cn=r[SCOL.CUST_NAME];if(!cn)return;
+    var isOpening=(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');
+    if(!custSales[cn])custSales[cn]={billed:0,paid:0,opening:0};
+    if(r._sales>0){if(isOpening)custSales[cn].opening+=r._sales;else custSales[cn].billed+=r._sales;}
+    if(r._payment>0)custSales[cn].paid+=r._payment;
+  });
+  // Find global first date
+  var globalFirst=null;
+  RAW_DATA.forEach(function(r){if(r._visitDate&&(!globalFirst||r._visitDate<globalFirst))globalFirst=r._visitDate});
+  // Aggregate visits for the period
+  var sm={};
+  RAW_DATA.forEach(function(r){
+    if(!r._visitDate||r._visitDate<from||r._visitDate>to)return;
+    var n=r[COL.STAFF_NAME];if(!n)return;
+    var email=r[COL.STAFF_EMAIL]||nameToEmail[n]||'';
+    if(!sm[n])sm[n]={email:email,visits:[],farmers:new Set(),areas:new Set(),dates:new Set(),byMonth:{},visitTypes:{},areaBreakdown:{}};
+    sm[n].visits.push(r);
+    if(r[COL.FARMER_NAME])sm[n].farmers.add(r[COL.FARMER_NAME]);
+    if(r[COL.AREA]){sm[n].areas.add(r[COL.AREA]);sm[n].areaBreakdown[r[COL.AREA]]=(sm[n].areaBreakdown[r[COL.AREA]]||0)+1}
+    if(r._visitDate.getDay()!==0){
+      var dk=dateKey(r._visitDate);sm[n].dates.add(dk);
+      var mk=monthKey(r._visitDate);if(!sm[n].byMonth[mk])sm[n].byMonth[mk]=new Set();sm[n].byMonth[mk].add(dk);
+    }
+    var vt=r[COL.VISIT_TYPE]||'Other';sm[n].visitTypes[vt]=(sm[n].visitTypes[vt]||0)+1;
+  });
+  var totalWD=countWorkingDays(from,to);
+  return Object.entries(sm).map(function(e){
+    var n=e[0],d=e[1];
+    var email=d.email;
+    var si=staffLookup[email]||{area:''};
+    var custs=emailToCusts[email]||[];
+    var billed=0,paid=0,opening=0;
+    custs.forEach(function(cn){if(custSales[cn]){billed+=custSales[cn].billed;paid+=custSales[cn].paid;opening+=custSales[cn].opening}});
+    return{name:n,email:email,area:si.area||'',
+      visits:d.visits.length,visitList:d.visits,
+      farmers:d.farmers.size,areas:d.areas.size,
+      present:d.dates.size,totalWD:totalWD,byMonth:d.byMonth,
+      att:totalWD?Math.round(d.dates.size/totalWD*100):0,
+      vpd:d.dates.size?(d.visits.length/d.dates.size).toFixed(1):'0',
+      visitTypes:d.visitTypes,areaBreakdown:d.areaBreakdown,
+      customers:custs,custSales:custSales,
+      billed:billed,paid:paid,opening:opening,outstanding:billed+opening-paid,
+      globalFirst:globalFirst};
+  }).sort(function(a,b){return b.visits-a.visits});
+}
+
+function renderPerformanceTab(){
+  var months=unique(RAW_DATA.filter(function(r){return r._visitDate}).map(function(r){return monthKey(r._visitDate)})).reverse();
+  var periods=[{key:'week',label:'This Week'},{key:'month',label:'This Month'}]
+    .concat(months.map(function(m){return{key:m,label:fmtMonth(m)}}))
+    .concat([{key:'all',label:'All Time'}]);
+  if(!periods.find(function(p){return p.key===PERF_PERIOD}))PERF_PERIOD='month';
+
+  var pillsEl=document.getElementById('perf-pills');
+  pillsEl.innerHTML=periods.map(function(p){
+    return'<span class="staff-pill'+(PERF_PERIOD===p.key?' active':'')+'" onclick="setPerfPeriod(\''+p.key+'\')">'+p.label+'</span>';
+  }).join('');
+
+  var cur=periods.find(function(p){return p.key===PERF_PERIOD})||periods[0];
+  document.getElementById('perf-period-lbl').textContent='Performance — '+cur.label;
+
+  var range=getPerfDateRange(PERF_PERIOD);
+  var stats=computePerfStats(range.from,range.to);
+  var content=document.getElementById('perf-content');content.innerHTML='';
+  if(!stats.length){content.innerHTML='<div style="padding:20px;color:var(--dim)">No visits in this period.</div>';return}
+
+  var wrap=document.createElement('div');wrap.style.cssText='padding:16px;display:flex;flex-direction:column;gap:10px';
+  var today=new Date();today.setHours(23,59,59,999);
+
+  stats.forEach(function(s,i){
+    var attCol=s.att>=90?'var(--green)':s.att>=70?'var(--gold)':'var(--red)';
+    var vtEntries=Object.entries(s.visitTypes).sort(function(a,b){return b[1]-a[1]});
+    var areaEntries=Object.entries(s.areaBreakdown).sort(function(a,b){return b[1]-a[1]});
+
+    // Visit type bars
+    var vtBars=vtEntries.slice(0,4).map(function(e){
+      var pct=Math.round(e[1]/s.visits*100);
+      return'<div class="pc-type-row">'
+        +'<span style="min-width:80px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)">'+esc(e[0])+'</span>'
+        +'<div class="pc-bar-wrap"><div class="pc-bar" style="width:'+pct+'%;background:var(--teal)"></div></div>'
+        +'<span style="color:var(--dim);min-width:52px;text-align:right">'+e[1]+' ('+pct+'%)</span>'
+        +'</div>';
+    }).join('');
+
+    // Area bars
+    var areaBars=areaEntries.slice(0,4).map(function(e){
+      var pct=Math.round(e[1]/s.visits*100);
+      return'<div class="pc-type-row">'
+        +'<span style="min-width:80px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)">'+esc(e[0])+'</span>'
+        +'<div class="pc-bar-wrap"><div class="pc-bar" style="width:'+pct+'%;background:var(--gold)"></div></div>'
+        +'<span style="color:var(--dim);min-width:28px;text-align:right">'+e[1]+'</span>'
+        +'</div>';
+    }).join('');
+
+    // Monthly grouped field visits (click month → expand visit table)
+    var vstByMon={};
+    s.visitList.forEach(function(r){if(!r._visitDate)return;var mk=monthKey(r._visitDate);if(!vstByMon[mk])vstByMon[mk]=[];vstByMon[mk].push(r)});
+    var visitMonthHtml='';
+    Object.keys(vstByMon).sort().reverse().forEach(function(mk){
+      var mv=vstByMon[mk];
+      var mVt={};mv.forEach(function(r){var vt=r[COL.VISIT_TYPE]||'Other';mVt[vt]=(mVt[vt]||0)+1});
+      var typeSumm=Object.entries(mVt).sort(function(a,b){return b[1]-a[1]}).map(function(e){return esc(e[0])+': <b>'+e[1]+'</b>'}).join(' · ');
+      var mUid='pcv'+i+'k'+mk.replace('-','');
+      var mRows=mv.slice().sort(function(a,b){return(b._visitDate||0)-(a._visitDate||0)}).map(function(r){
+        return'<tr><td class="c-date">'+fmtDate(r._visitDate)+'</td><td class="c-area">'+esc(r[COL.AREA])+'</td>'
+          +'<td class="c-type">'+esc(r[COL.VISIT_TYPE])+'</td><td>'+esc(r[COL.FARMER_NAME])+'</td><td>'+esc(r[COL.DEALER_NAME])+'</td></tr>';
+      }).join('');
+      visitMonthHtml+='<div style="margin-bottom:4px">'
+        +'<div style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 0;border-bottom:1px solid var(--border)" onclick="toggleMonthCal(\''+mUid+'\')">'
+          +'<span id="marr-'+mUid+'" style="font-size:9px;color:var(--dim);width:10px;flex-shrink:0">▶</span>'
+          +'<span style="font-family:IBM Plex Mono,monospace;font-size:12px;min-width:88px;color:var(--txt)">'+fmtMonth(mk)+'</span>'
+          +'<span style="font-size:11px;color:var(--teal);font-weight:600">'+mv.length+' visits</span>'
+        +'</div>'
+        +'<div style="font-size:11px;color:var(--dim);padding:4px 18px 2px">'+typeSumm+'</div>'
+        +'<div id="cal-'+mUid+'" style="display:none;overflow-x:auto">'
+          +'<table><thead><tr><th>Date</th><th>Area</th><th>Type</th><th>Farmer</th><th>Dealer</th></tr></thead>'
+          +'<tbody>'+mRows+'</tbody></table>'
+        +'</div>'
+      +'</div>';
+    });
+    if(!visitMonthHtml)visitMonthHtml='<div style="color:var(--dim);font-size:12px">No visits</div>';
+
+    // Sales customer table — customer names clickable → opens ledger modal
+    var salesRows=s.customers.filter(function(cn){return s.custSales[cn]}).sort(function(a,b){
+      return(s.custSales[b]?s.custSales[b].billed-s.custSales[b].paid:0)-(s.custSales[a]?s.custSales[a].billed-s.custSales[a].paid:0);
+    }).map(function(cn){
+      var cs=s.custSales[cn];
+      var out=cs.billed-cs.paid;
+      var cnEsc=cn.replace(/\\/g,'\\\\').replace(/'/g,'\\\'');
+      return'<tr>'
+        +'<td style="cursor:pointer;color:var(--teal)" onclick="event.stopPropagation();openCustModal(\''+cnEsc+'\')">'+esc(cn)+'</td>'
+        +'<td class="r" style="color:var(--gold)">'+fmtCurrency(cs.billed)+'</td>'
+        +'<td class="r" style="color:var(--green)">'+fmtCurrency(cs.paid)+'</td>'
+        +'<td class="r" style="color:'+(out>0?'var(--red)':'var(--dim)')+'">'+fmtCurrency(out)+'</td></tr>';
+    }).join('');
+
+    // Attendance monthly calendar
+    var attnHtml='';
+    var mks=Object.keys(s.byMonth).sort().reverse();
+    if(mks.length){
+      mks.forEach(function(mk){
+        var mDays=s.byMonth[mk];
+        var mTotal=countWorkingDaysInMonth(mk,s.globalFirst,today);
+        var mPct=mTotal?Math.round(mDays.size/mTotal*100):0;
+        var mCol=mPct>=90?'var(--green)':mPct>=70?'var(--gold)':'var(--red)';
+        var mUid='pca'+i+'m'+mk.replace('-','');
+        attnHtml+='<div style="margin-bottom:8px">'
+          +'<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="toggleMonthCal(\''+mUid+'\')">'
+          +'<span id="marr-'+mUid+'" style="font-size:9px;color:var(--dim);width:10px">▶</span>'
+          +'<span style="font-family:IBM Plex Mono,monospace;font-size:12px;min-width:90px;color:var(--txt)">'+fmtMonth(mk)+'</span>'
+          +'<span style="font-size:11px;color:var(--teal);min-width:60px">'+mDays.size+'/'+mTotal+' days</span>'
+          +'<span style="font-size:12px;color:'+mCol+'">'+mPct+'%</span>'
+          +'</div>'
+          +'<div id="cal-'+mUid+'" style="display:none"><div class="day-cal">'+buildMonthCal(mk,mDays,s.globalFirst,today)+'</div></div>'
+          +'</div>';
+      });
+    }else{attnHtml='<div style="color:var(--dim);font-size:12px">No calendar data</div>'}
+
+    // KPI badge labels
+    var topType=vtEntries[0],secondType=vtEntries[1];
+    var topTypeLbl=topType?esc(topType[0])+' ('+Math.round(topType[1]/s.visits*100)+'%)':'—';
+    var secTypeLbl=secondType?esc(secondType[0])+' ('+Math.round(secondType[1]/s.visits*100)+'%)':s.areas+' areas';
+
+    var sn=s.name.replace(/'/g,'\\\'');
+    var card=document.createElement('div');card.className='pc-card';card.id='pc-'+i;
+    card.innerHTML=
+      '<div class="pc-head" onclick="togglePerfCard('+i+')">'
+        +'<div><div class="pc-name">'+esc(s.name)+'</div>'
+        +(s.area?'<div class="pc-area">'+esc(s.area)+'</div>':'')
+        +'</div>'
+        +'<div class="pc-actions">'
+          +'<button class="btn btn-primary" style="font-size:11px;padding:4px 10px" onclick="event.stopPropagation();exportStaffPDF('+i+',\''+sn+'\')" title="Export PDF">⬇ PDF</button>'
+          +'<button class="btn wa-sm" onclick="event.stopPropagation();shareStaffWA(\''+sn+'\')" title="WhatsApp">📱</button>'
+          +'<span class="pc-chevron">▼</span>'
+        +'</div>'
+      +'</div>'
+      // KPI badges — each clickable, navigates to relevant tab
+      +'<div class="pc-kpis">'
+        +'<div class="pc-kpi pc-goto" onclick="perfGoto(\'staff\',\'tbl-absent\')" title="View detailed attendance ↗">'
+          +'<div class="pc-kpi-lbl">Attendance</div>'
+          +'<div class="pc-kpi-val" style="color:'+attCol+'">'+s.att+'%</div>'
+          +'<div class="pc-kpi-sub">'+s.present+' / '+s.totalWD+' working days</div>'
+        +'</div>'
+        +'<div class="pc-kpi pc-goto" onclick="perfGoto(\'staff\',\'tbl-leader\')" title="View visit leaderboard ↗">'
+          +'<div class="pc-kpi-lbl">Field Visits</div>'
+          +'<div class="pc-kpi-val" style="color:var(--teal)">'+s.visits+'</div>'
+          +'<div class="pc-kpi-sub">'+s.vpd+'/day · '+s.farmers+' farmer'+(s.farmers===1?'':'s')+' · '+s.areas+' area'+(s.areas===1?'':'s')+'</div>'
+        +'</div>'
+        +'<div class="pc-kpi pc-goto" onclick="perfGoto(\'staff\',\'tbl-leader\')" title="View staff breakdown ↗">'
+          +'<div class="pc-kpi-lbl">Visit Mix</div>'
+          +'<div class="pc-kpi-val" style="color:var(--purple)">'+topTypeLbl+'</div>'
+          +'<div class="pc-kpi-sub">'+secTypeLbl+'</div>'
+        +'</div>'
+        +'<div class="pc-kpi pc-goto" onclick="perfGoto(\'sales\',\'tbl-cust-ledger\')" title="View customer ledger ↗">'
+          +'<div class="pc-kpi-lbl">Sales</div>'
+          +(s.billed>0||s.opening>0
+            ?'<div class="pc-kpi-val" style="color:var(--teal)">'+fmtCurrency(s.billed)+'</div>'
+              +(s.opening>0?'<div class="pc-kpi-sub" style="color:var(--purple)">+'+fmtCurrency(s.opening)+' OB</div>':'')
+              +'<div class="pc-kpi-sub" style="color:var(--red)">'+fmtCurrency(s.outstanding)+' due</div>'
+            :'<div class="pc-kpi-val" style="color:var(--dim)">—</div>'
+              +'<div class="pc-kpi-sub">No linked customers</div>')
+        +'</div>'
+      +'</div>'
+      +'<div class="pc-detail" id="pd-'+i+'">'
+        +'<div class="pc-sections">'
+          // Attendance (detailed calendar)
+          +'<div class="pc-section">'
+            +'<div class="pc-sec-lbl">Attendance</div>'
+            +attnHtml
+          +'</div>'
+          // Field Visits (monthly grouped, expand for details)
+          +'<div class="pc-section">'
+            +'<div class="pc-sec-lbl">Field Visits — by Month</div>'
+            +visitMonthHtml
+          +'</div>'
+          // Visit Analysis (type + area bars)
+          +'<div class="pc-section">'
+            +'<div class="pc-sec-lbl">By Visit Type</div>'
+            +vtBars
+            +'<div class="pc-sec-lbl" style="margin-top:12px">By Area</div>'
+            +areaBars
+          +'</div>'
+          // Sales (KPIs + clickable customer rows)
+          +'<div class="pc-section">'
+            +'<div class="pc-sec-lbl">Sales Summary</div>'
+            +'<div class="pc-sal-kpis">'
+              +(s.opening>0?'<div class="pc-sal-kpi"><div class="pc-sal-kpi-lbl" style="color:var(--purple)">Opening Bal</div><div class="pc-sal-kpi-val" style="color:var(--purple)">'+fmtCurrency(s.opening)+'</div></div>':'')
+              +'<div class="pc-sal-kpi"><div class="pc-sal-kpi-lbl">Billed</div><div class="pc-sal-kpi-val" style="color:var(--teal)">'+fmtCurrency(s.billed)+'</div></div>'
+              +'<div class="pc-sal-kpi"><div class="pc-sal-kpi-lbl">Collected</div><div class="pc-sal-kpi-val" style="color:var(--green)">'+fmtCurrency(s.paid)+'</div></div>'
+              +'<div class="pc-sal-kpi"><div class="pc-sal-kpi-lbl">Outstanding</div><div class="pc-sal-kpi-val" style="color:var(--red)">'+fmtCurrency(s.outstanding)+'</div></div>'
+            +'</div>'
+            +(salesRows
+              ?'<div style="overflow-x:auto;max-height:200px;overflow-y:auto">'
+                +'<table><thead><tr><th>Customer ↗</th><th class="r">Billed</th><th class="r">Paid</th><th class="r">Outstanding</th></tr></thead>'
+                +'<tbody>'+salesRows+'</tbody></table></div>'
+              :'<div style="font-size:12px;color:var(--dim)">No customers linked to this staff.</div>')
+          +'</div>'
+        +'</div>'
+      +'</div>';
+    wrap.appendChild(card);
+  });
+  content.appendChild(wrap);
+}
+
+function setPerfPeriod(key){PERF_PERIOD=key;renderPerformanceTab()}
+function togglePerfCard(i){var c=document.getElementById('pc-'+i);if(c)c.classList.toggle('open')}
+function perfGoto(tab,scrollId){switchTab(tab);if(scrollId)setTimeout(function(){var el=document.getElementById(scrollId);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})},200)}
+
+// ─── PDF HELPERS ─────────────────────────────────────────────────────────────
+function unclipAll(el){
+  var saved=[];
+  [el].concat(Array.from(el.querySelectorAll('*'))).forEach(function(n){
+    saved.push({n:n,oy:n.style.overflowY,ox:n.style.overflowX,mh:n.style.maxHeight,oh:n.style.overflow});
+    n.style.overflow='visible';n.style.overflowY='visible';n.style.overflowX='visible';n.style.maxHeight='none';
+  });
+  return saved;
+}
+function reclipAll(saved){saved.forEach(function(s){s.n.style.overflow=s.oh;s.n.style.overflowY=s.oy;s.n.style.overflowX=s.ox;s.n.style.maxHeight=s.mh})}
+var LT_VARS={'--bg':'#fff','--panel':'#fff','--panel2':'#f0f2f5','--border':'#ccc',
+  '--txt':'#111','--mid':'#333','--dim':'#666',
+  '--teal':'#0e9baa','--gold':'#b45309','--red':'#dc2626',
+  '--green':'#16a34a','--purple':'#7c3aed','--sky':'#0369a1'};
+function applyLightTheme(el){
+  var sv={vars:{},bg:el.style.background,color:el.style.color};
+  Object.keys(LT_VARS).forEach(function(k){sv.vars[k]=el.style.getPropertyValue(k);el.style.setProperty(k,LT_VARS[k])});
+  el.style.background='#fff';el.style.color='#111';
+  sv.styleEl=document.createElement('style');
+  sv.styleEl.textContent='thead th{background:#e8eaed!important;color:#222!important}'
+    +'.kpi-card,.sec-panel,.chart-panel,.tbl-wrap,.pc-card,.pc-kpi,.pc-section,.pc-sal-kpi{background:#fff!important;border-color:#ccc!important}'
+    +'.kpi-label,.sec-label,.chart-label,.pc-sec-lbl,.pc-kpi-lbl,.pc-sal-kpi-lbl{color:#555!important}'
+    +'tbody tr,tfoot tr{border-color:#ddd!important}'
+    +'.row-detail td,.row-detail.open{background:#f5f5f5!important;color:#333!important}'
+    +'.sec-head,.pc-head{border-color:#ccc!important;background:#f5f5f5!important}'
+    +'.pm{border-color:#ddd!important}.pm-lbl{color:#555!important}'
+    +'.pc-bar-wrap{background:#e8eaed!important}';
+  document.head.appendChild(sv.styleEl);
+  return sv;
+}
+function restoreLightTheme(el,sv){
+  Object.keys(sv.vars).forEach(function(k){if(sv.vars[k])el.style.setProperty(k,sv.vars[k]);else el.style.removeProperty(k)});
+  el.style.background=sv.bg;el.style.color=sv.color;
+  if(sv.styleEl&&sv.styleEl.parentNode)sv.styleEl.parentNode.removeChild(sv.styleEl);
+}
+function autoOrientPDF(canvas){
+  var landscape=canvas.width>canvas.height*1.15;
+  var W=landscape?297:210,H=landscape?210:297;
+  var {jsPDF}=window.jspdf;
+  var pdf=new jsPDF({orientation:landscape?'landscape':'portrait',unit:'mm',format:'a4'});
+  return {pdf:pdf,W:W,H:H};
+}
+function canvasToPDF(pdf,canvas,W,H,M,footer,mode){
+  var pw=W-2*M,ph=H-2*M-10,ratio=pw/canvas.width,totalH=canvas.height*ratio;
+  var naturalPages=Math.ceil(totalH/ph)||1;
+  if(mode==='compact'){
+    var scale=Math.min(pw/canvas.width,ph/canvas.height);
+    var fw=canvas.width*scale,fh=canvas.height*scale;
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',M+(pw-fw)/2,M,fw,fh);
+    pdf.setFontSize(7);pdf.setTextColor(140);pdf.text(footer,M,H-4);
+    return;
+  }
+  for(var p=0;p<naturalPages;p++){
+    if(p>0)pdf.addPage();
+    var sy=Math.round(p*ph/ratio),sh=Math.min(Math.round(ph/ratio),canvas.height-sy);
+    if(sh<=0)break;
+    var tmp=document.createElement('canvas');tmp.width=canvas.width;tmp.height=sh;
+    tmp.getContext('2d').drawImage(canvas,0,sy,canvas.width,sh,0,0,canvas.width,sh);
+    pdf.addImage(tmp.toDataURL('image/jpeg',0.92),'JPEG',M,M,pw,sh*ratio);
+    pdf.setFontSize(7);pdf.setTextColor(140);
+    pdf.text(footer+(naturalPages>1?' ('+(p+1)+'/'+naturalPages+')':''),M,H-4);
+  }
+}
+
+function openPdfSheet(){document.getElementById('pdf-sheet').classList.add('open');document.getElementById('pdf-backdrop').classList.add('open');}
+function closePdfSheet(){document.getElementById('pdf-sheet').classList.remove('open');document.getElementById('pdf-backdrop').classList.remove('open');}
+function exportPerfPDF(){openPdfSheet();}
+async function runPerfPDF(mode){
+  closePdfSheet();
+  var btn=document.getElementById('btn-perf-pdf');btn.textContent='⏳…';btn.disabled=true;
+  var _act=[];
+  try{
+    var content=document.getElementById('perf-content');
+    content.querySelectorAll('.pc-actions').forEach(function(el){el.style.display='none';_act.push(el)});
+    var ltSv=applyLightTheme(content),saved=unclipAll(content);
+    var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false});
+    reclipAll(saved);restoreLightTheme(content,ltSv);
+    var M=10,auto=autoOrientPDF(canvas);
+    canvasToPDF(auto.pdf,canvas,auto.W,auto.H,M,'Aqua Analytics — '+document.getElementById('perf-period-lbl').textContent+' — '+new Date().toLocaleString('en-IN'),mode);
+    pdfSave(auto.pdf,'aqua-perf-'+PERF_PERIOD+'-'+new Date().toISOString().slice(0,10)+'.pdf');
+  }catch(e){alert('PDF failed: '+e.message)}
+  finally{_act.forEach(function(el){el.style.display=''});btn.textContent='⬇ PDF';btn.disabled=false}
+}
+
+async function exportPerfImage(){
+  var btn=document.getElementById('btn-perf-img');btn.textContent='⏳…';btn.disabled=true;
+  try{
+    var content=document.getElementById('perf-content');
+    var ltSv=applyLightTheme(content),saved=unclipAll(content);
+    var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true});
+    reclipAll(saved);restoreLightTheme(content,ltSv);
+    var a=document.createElement('a');
+    a.href=canvas.toDataURL('image/jpeg',0.93);
+    a.download='aqua-perf-'+PERF_PERIOD+'-'+new Date().toISOString().slice(0,10)+'.jpg';
+    a.click();
+  }catch(e){alert('Image export failed: '+e.message)}
+  finally{btn.textContent='🖼 Image';btn.disabled=false}
+}
+
+async function exportStaffPDF(i,name){
+  var card=document.getElementById('pc-'+i);if(!card)return;
+  // Expand the card before capture
+  var wasOpen=card.classList.contains('open');
+  if(!wasOpen)card.classList.add('open');
+  // Hide action buttons
+  var _act=[];
+  card.querySelectorAll('.pc-actions').forEach(function(el){el.style.display='none';_act.push(el)});
+  // Expand all max-height / overflow clipped scrollers within card
+  var _scroll=[];
+  card.querySelectorAll('[style*="max-height"]').forEach(function(el){
+    _scroll.push({el:el,mh:el.style.maxHeight,oy:el.style.overflowY});
+    el.style.maxHeight='none';el.style.overflowY='visible';
+  });
+  try{
+    // Capture the card element directly — avoids blank space from hidden siblings
+    var ltSv=applyLightTheme(card),saved=unclipAll(card);
+    var canvas=await html2canvas(card,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false});
+    reclipAll(saved);restoreLightTheme(card,ltSv);
+    var M=10,auto=autoOrientPDF(canvas);
+    var period=document.getElementById('perf-period-lbl').textContent.replace('Performance — ','');
+    canvasToPDF(auto.pdf,canvas,auto.W,auto.H,M,'Aqua — '+name+' — '+period+' — '+new Date().toLocaleDateString('en-IN'),'auto');
+    pdfSave(auto.pdf,'aqua-staff-'+name.replace(/\s+/g,'-').toLowerCase()+'-'+PERF_PERIOD+'.pdf');
+  }catch(e){alert('PDF failed: '+e.message)}
+  finally{
+    _act.forEach(function(el){el.style.display=''});
+    _scroll.forEach(function(x){x.el.style.maxHeight=x.mh;x.el.style.overflowY=x.oy});
+    if(!wasOpen)card.classList.remove('open');
+  }
+}
+
+function shareStaffWA(name){
+  var range=getPerfDateRange(PERF_PERIOD);
+  var stats=computePerfStats(range.from,range.to);
+  var s=stats.find(function(x){return x.name===name});if(!s)return;
+  var attE=s.att>=90?'🟢':s.att>=70?'🟡':'🔴';
+  var period=document.getElementById('perf-period-lbl').textContent.replace('Performance — ','');
+  var vtTop=Object.entries(s.visitTypes).sort(function(a,b){return b[1]-a[1]}).slice(0,2).map(function(e){return e[0]+': '+e[1]}).join(', ');
+  var msg='👤 *'+name+'*'+(s.area?' | 📍 '+s.area:'')+'\n'
+    +'📅 Period: '+period+'\n\n'
+    +'*Field Activity*\n'
+    +'📊 Total Visits: *'+s.visits+'*\n'
+    +'📈 Avg Visits/Day: *'+s.vpd+'*\n'
+    +'👨‍🌾 Farmers Covered: *'+s.farmers+'*\n'
+    +'🗺 Areas Covered: *'+s.areas+'*\n'
+    +(vtTop?'🔖 Visit Mix: '+vtTop+'\n':'')+'\n'
+    +'*Attendance*\n'
+    +attE+' '+s.att+'% ('+s.present+' / '+s.totalWD+' working days)\n\n'
+    +(s.billed>0||s.opening>0
+      ?'*Sales (All-time)*\n'
+        +(s.opening>0?'📂 Opening Balance: ₹'+s.opening.toLocaleString('en-IN')+'\n':'')
+        +'💰 '+(s.opening>0?'Period ':'')+'Billed: ₹'+s.billed.toLocaleString('en-IN')+'\n'
+        +'✅ Collected: ₹'+s.paid.toLocaleString('en-IN')+'\n'
+        +(s.outstanding>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(s.outstanding).toLocaleString('en-IN')+'\n\n'
+      :'');
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+function shareRecentWA(){
+  var rows=FILTERED_DATA.slice().sort(function(a,b){return(b._visitDate||0)-(a._visitDate||0)}).slice(0,20);
+  var msg='🌊 *AQUA — Recent Visits*\n📅 '+new Date().toLocaleDateString('en-IN')+'\n\n';
+  rows.forEach(function(r){msg+='• '+fmtDate(r._visitDate)+' | '+esc(r[COL.STAFF_NAME])+' | '+esc(r[COL.AREA])+' | '+esc(r[COL.FARMER_NAME])+'\n'});
+  msg+='\n_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+function shareLeaderboardWA(){
+  var map={};
+  FILTERED_DATA.forEach(function(r){var n=r[COL.STAFF_NAME];if(!n)return;if(!map[n])map[n]={v:0,f:new Set()};map[n].v++;if(r[COL.FARMER_NAME])map[n].f.add(r[COL.FARMER_NAME])});
+  var msg='🌊 *AQUA — Staff Leaderboard*\n📅 '+new Date().toLocaleDateString('en-IN')+'\n\n';
+  Object.entries(map).sort(function(a,b){return b[1].v-a[1].v}).forEach(function(e,i){
+    msg+=(i+1)+'. '+e[0]+' — '+e[1].v+' visits, '+e[1].f.size+' farmers\n';
+  });
+  msg+='\n_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+function shareRevisitWA(){
+  var groups={};
+  FILTERED_DATA.forEach(function(r){var n=r[COL.STAFF_NAME],f=r[COL.FARMER_NAME];if(!n||!f||!r._visitDate)return;var k=n+'|||'+f;if(!groups[k])groups[k]={n:n,f:f,dates:[]};groups[k].dates.push(r._visitDate)});
+  var results=[];
+  Object.values(groups).forEach(function(g){if(g.dates.length<2)return;g.dates.sort(function(a,b){return a-b});var gaps=[];for(var j=1;j<g.dates.length;j++)gaps.push((g.dates[j]-g.dates[j-1])/86400000);results.push({n:g.n,f:g.f,v:g.dates.length,gap:Math.round(avg(gaps))})});
+  results.sort(function(a,b){return a.gap-b.gap});
+  var msg='🌊 *AQUA — Farmer Revisit Intervals*\n📅 '+new Date().toLocaleDateString('en-IN')+'\n\n';
+  results.slice(0,15).forEach(function(r){msg+='• '+r.n+' → '+r.f+': '+r.v+' visits, avg '+r.gap+' days\n'});
+  msg+='\n_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+function shareAbsentWA(){
+  var today=new Date();today.setHours(23,59,59,999);
+  var globalFirst=null;RAW_DATA.forEach(function(r){if(r._visitDate&&(!globalFirst||r._visitDate<globalFirst))globalFirst=r._visitDate});
+  if(!globalFirst)return;
+  var totalWD=countWorkingDays(globalFirst,today),info={};
+  RAW_DATA.forEach(function(r){var n=r[COL.STAFF_NAME];if(!n||!r._visitDate||r._visitDate.getDay()===0)return;if(!info[n])info[n]=new Set();info[n].add(dateKey(r._visitDate))});
+  var msg='🌊 *AQUA — Attendance Summary*\n📅 '+new Date().toLocaleDateString('en-IN')+'\n\n';
+  Object.entries(info).sort(function(a,b){return a[0].localeCompare(b[0])}).forEach(function(e){
+    var present=e[1].size,pct=totalWD?Math.round(present/totalWD*100):0;
+    msg+=(pct>=90?'🟢':pct>=70?'🟡':'🔴')+' '+e[0]+': '+present+'/'+totalWD+' ('+pct+'%)\n';
+  });
+  msg+='\n_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+function shareStaleWA(){
+  var areaLast={};FILTERED_DATA.forEach(function(r){var a=r[COL.AREA];if(!a||!r._visitDate)return;if(!areaLast[a]||r._visitDate>areaLast[a])areaLast[a]=r._visitDate});
+  var now=Date.now(),stale=[];
+  Object.entries(areaLast).forEach(function(e){var d=Math.floor((now-e[1].getTime())/86400000);if(d>=7)stale.push({a:e[0],d:d,last:e[1]})});
+  stale.sort(function(a,b){return b.d-a.d});
+  var msg='🌊 *AQUA — Areas Not Visited (7+ days)*\n📅 '+new Date().toLocaleDateString('en-IN')+'\n\n';
+  if(!stale.length){msg+='✅ All areas visited within 7 days\n';}
+  else stale.forEach(function(s){msg+='⚠ '+s.a+': last '+fmtDate(s.last)+' ('+s.d+' days ago)\n'});
+  msg+='\n_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+function shareDealersWA(){
+  var dm={};FILTERED_DATA.forEach(function(r){var d=r[COL.DEALER_NAME];if(!d)return;if(!dm[d])dm[d]={cat:r[COL.DEALER_CAT]||'',v:0,f:new Set()};dm[d].v++;if(r[COL.FARMER_NAME])dm[d].f.add(r[COL.FARMER_NAME])});
+  var msg='🌊 *AQUA — Dealer Summary*\n📅 '+new Date().toLocaleDateString('en-IN')+'\n\n';
+  Object.entries(dm).sort(function(a,b){return b[1].v-a[1].v}).slice(0,15).forEach(function(e){
+    msg+='• '+e[0]+(e[1].cat?' ('+e[1].cat+')':'')+': '+e[1].v+' visits, '+e[1].f.size+' farmers\n';
+  });
+  msg+='\n_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+function shareRemarksWA(){
+  var data=[];FILTERED_DATA.forEach(function(r){var t=r[COL.REMARKS]||'';if(t.trim())data.push({r:r,t:t})});
+  data.sort(function(a,b){return(b.r._visitDate||0)-(a.r._visitDate||0)});
+  var msg='🌊 *AQUA — Recent Remarks*\n📅 '+new Date().toLocaleDateString('en-IN')+'\n\n';
+  data.slice(0,10).forEach(function(item){msg+='📝 '+fmtDate(item.r._visitDate)+' | '+esc(item.r[COL.STAFF_NAME])+' | '+esc(item.r[COL.FARMER_NAME])+'\n'+item.t+'\n\n'});
+  msg+='_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+function sendPerfWhatsApp(){
+  var today=new Date(),tdk=dateKey(today);
+  var allStaff=unique(RAW_DATA.map(function(r){return r[COL.STAFF_NAME]}));
+  var todaySet=new Set();
+  RAW_DATA.forEach(function(r){if(r._visitDate&&dateKey(r._visitDate)===tdk&&r[COL.STAFF_NAME])todaySet.add(r[COL.STAFF_NAME])});
+  var todayVisits=RAW_DATA.filter(function(r){return r._visitDate&&dateKey(r._visitDate)===tdk}).length;
+  var stats=computePerfStats(getPerfDateRange(PERF_PERIOD).from,getPerfDateRange(PERF_PERIOD).to);
+  var period=document.getElementById('perf-period-lbl').textContent.replace('Performance — ','');
+  var msg='🌊 *AQUA Field Report*\n'
+    +'📅 '+fmtDate(today)+'\n\n'
+    +'*Today\'s Attendance ('+todaySet.size+'/'+allStaff.length+') — '+todayVisits+' visits*\n';
+  allStaff.forEach(function(s){msg+=(todaySet.has(s)?'✅':'❌')+' '+s+'\n'});
+  msg+='\n*'+period+' — Top Performers*\n';
+  stats.slice(0,5).forEach(function(s){
+    msg+='• '+s.name+' — '+s.visits+' visits, '+s.att+'% att\n';
+  });
+  msg+='\n_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+// ─── SALES TAB ───────────────────────────────────────────────────────────────
+// Set up delegated click handler once for company pills — avoids inline onclick escaping issues
+(function(){
+  var el=document.getElementById('sales-company-pills');
+  if(el){el.addEventListener('click',function(e){
+    var pill=e.target.closest('.staff-pill');if(!pill)return;
+    var co=pill.getAttribute('data-co');
+    if(co===null)return;
+    if(co===''){SALES_COMPANIES.clear();}
+    else{if(SALES_COMPANIES.has(co))SALES_COMPANIES.delete(co);else SALES_COMPANIES.add(co);}
+    renderSalesTab();
+  });}
+})();
+
+function renderSalesTab(){
+  // Company pills
+  var companies=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.COMPANY]}));
+  var pillsEl=document.getElementById('sales-company-pills');
+  if(pillsEl){
+    pillsEl.innerHTML='<span class="staff-pill'+(SALES_COMPANIES.size===0?' active':'')+'" data-co="">All Companies</span>'
+      +companies.map(function(c){return'<span class="staff-pill'+(SALES_COMPANIES.has(c)?' active':'')+'" data-co="'+esc(c)+'" title="'+esc(c)+'">'+esc(c)+'</span>'}).join('');
+  }
+  var lbl=document.getElementById('sales-company-lbl');
+  if(lbl)lbl.textContent='Sales Ledger'+(SALES_COMPANIES.size===1?' — '+[...SALES_COMPANIES][0]:SALES_COMPANIES.size>1?' ('+SALES_COMPANIES.size+' companies)':'');
+
+  // Filtered statements
+  var stmts=SALES_COMPANIES.size>0?STATEMENTS_DATA.filter(function(r){return SALES_COMPANIES.has(r[SCOL.COMPANY])}):STATEMENTS_DATA;
+
+  // KPI Cards
+  var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
+  var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
+  var openingBal=stmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');}).reduce(function(s,r){return s+r._sales;},0);
+  var periodSales=totalSales-openingBal;
+  var custNames=unique(stmts.map(function(r){return r[SCOL.CUST_NAME]}));
+  var totalOutstanding=totalSales-totalPmt;
+
+  var kpiRow=document.getElementById('sales-kpi-row');
+  if(kpiRow){
+    var kpiHtml='<div class="kpi-card"><div class="kpi-label">Customers</div><div class="kpi-value">'+custNames.length+'</div></div>';
+    if(openingBal>0){
+      kpiHtml+='<div class="kpi-card"><div class="kpi-label">Opening Balance</div><div class="kpi-value" style="font-size:18px;color:var(--purple)">'+fmtCurrency(openingBal)+'</div></div>';
+      kpiHtml+='<div class="kpi-card"><div class="kpi-label">This Period Sales</div><div class="kpi-value" style="font-size:18px;color:var(--gold)">'+fmtCurrency(periodSales)+'</div></div>';
+    }else{
+      kpiHtml+='<div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-value" style="font-size:18px;color:var(--gold)">'+fmtCurrency(totalSales)+'</div></div>';
+    }
+    kpiHtml+='<div class="kpi-card"><div class="kpi-label">Total Collected</div><div class="kpi-value" style="font-size:18px;color:var(--green)">'+fmtCurrency(totalPmt)+'</div></div>';
+    kpiHtml+='<div class="kpi-card"><div class="kpi-label">Outstanding</div><div class="kpi-value" style="font-size:18px;color:var(--red)">'+fmtCurrency(totalOutstanding)+'</div></div>';
+    kpiRow.innerHTML=kpiHtml;
+  }
+
+  // Build staff name lookup: STAFF_DATA first, fallback to RAW_DATA (Field Reports has emails+names)
+  var staffLookup={};
+  STAFF_DATA.forEach(function(s){var e=s[STCOL.STAFF_EMAIL];if(e)staffLookup[e]={name:s[STCOL.STAFF_NAME]||e,area:s[STCOL.AREA]||''}});
+  RAW_DATA.forEach(function(r){var e=r[COL.STAFF_EMAIL],n=r[COL.STAFF_NAME];if(e&&n&&!staffLookup[e])staffLookup[e]={name:n,area:r[COL.AREA]||''}});
+  // Apply manual overrides (EMAIL_NAMES config)
+  Object.keys(EMAIL_NAMES).forEach(function(e){if(!staffLookup[e])staffLookup[e]={name:EMAIL_NAMES[e],area:'—'};else staffLookup[e].name=EMAIL_NAMES[e]});
+
+  // Build customer → staff map; CUSTOMER_DATA may have comma-separated emails per customer
+  var custStaffMap={};
+  CUSTOMER_DATA.forEach(function(c){
+    var cn=c[CCOL.CUST_NAME]||c[CCOL.CUST_ID];if(!cn)return;
+    var se=c[CCOL.STAFF_EMAIL]||'';
+    var emails=se.split(/[,;]+/).map(function(e){return e.trim()}).filter(Boolean);
+    var names=emails.map(function(e){return(staffLookup[e]&&staffLookup[e].name)||e}).filter(Boolean);
+    var areas=emails.map(function(e){return(staffLookup[e]&&staffLookup[e].area)||''}).filter(Boolean);
+    custStaffMap[cn]={staffName:names.join(', ')||'—',staffArea:[...new Set(areas)].filter(Boolean).join(', ')||'—',emails:emails};
+  });
+
+  // Populate staff filter dropdown
+  var staffSel=document.getElementById('sales-staff-filter');
+  if(staffSel){
+    var prev=staffSel.value;
+    var staffNames=unique(Object.values(custStaffMap).map(function(x){return x.staffName}).filter(Boolean));
+    while(staffSel.options.length>1)staffSel.remove(1);
+    staffNames.forEach(function(n){var o=document.createElement('option');o.value=o.textContent=n;staffSel.appendChild(o)});
+    if(prev)staffSel.value=prev;
+  }
+
+  renderCustomerLedger(stmts,custStaffMap);
+  renderStaffCustMapping(custStaffMap,staffLookup);
+}
+
+function renderCustomerLedger(stmts,custStaffMap){
+  var tbody=document.getElementById('tbl-cust-ledger');if(!tbody)return;
+  tbody.innerHTML='';
+  var search=((document.getElementById('sales-search')||{}).value||'').toLowerCase();
+  var staffF=(document.getElementById('sales-staff-filter')||{}).value||'';
+
+  // Group by customer name
+  var custMap={};
+  stmts.forEach(function(r){
+    var cn=r[SCOL.CUST_NAME];if(!cn)return;
+    if(!custMap[cn])custMap[cn]={name:cn,stmts:[],sales:0,payment:0};
+    custMap[cn].stmts.push(r);
+    custMap[cn].sales+=r._sales;
+    custMap[cn].payment+=r._payment;
+  });
+
+  var customers=Object.values(custMap).map(function(c){
+    var sm=custStaffMap[c.name]||{staffName:'—',staffArea:'—'};
+    c.staffName=sm.staffName;
+    c.outstanding=c.sales-c.payment;
+    c.companies=unique(c.stmts.map(function(r){return r[SCOL.COMPANY]})).join(', ');
+    return c;
+  });
+
+  if(search)customers=customers.filter(function(c){return c.name.toLowerCase().includes(search)});
+  if(staffF)customers=customers.filter(function(c){return c.staffName===staffF});
+  customers.sort(function(a,b){return b.outstanding-a.outstanding});
+
+  if(!customers.length){
+    tbody.innerHTML='<tr><td colspan="7" style="color:var(--dim);padding:14px">'+(stmts.length?'No customers match filter':'No statements data — deploy updated Code.gs')+'</td></tr>';
+    return;
+  }
+
+  customers.forEach(function(c,i){
+    var outCol=c.outstanding>0?'c-red':c.outstanding<0?'c-green':'c-teal';
+    var tr=document.createElement('tr');tr.className='cl';
+    tr.innerHTML='<td class="c-name">'+esc(c.name)+'</td>'
+      +'<td>'+esc(c.staffName)+'</td>'
+      +'<td style="color:var(--purple)">'+esc(c.companies)+'</td>'
+      +'<td class="c-gold">'+fmtCurrency(c.sales)+'</td>'
+      +'<td class="c-green">'+fmtCurrency(c.payment)+'</td>'
+      +'<td class="'+outCol+'">'+fmtCurrency(c.outstanding)+'</td>'
+      +'<td><button class="btn wa-sm" onclick="event.stopPropagation();shareCustStmtWA(\''+c.name.replace(/'/g,'\\\'')+'\')" title="WhatsApp">📱</button></td>';
+
+    var det=document.createElement('tr');det.className='row-detail';det.id='cust-det-'+i;
+    var sorted=c.stmts.slice().sort(function(a,b){return(a._date||0)-(b._date||0)});
+    var iCashRows=sorted.filter(function(r){return /^[a-zA-Z]/.test(r[SCOL.INVOICE_NO]||'');});
+    var iRegRows=sorted.filter(function(r){return!/^[a-zA-Z]/.test(r[SCOL.INVOICE_NO]||'');});
+    var iHasCash=iCashRows.length>0;
+    function buildInlineTable(rows,label){
+      var t='<div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin:8px 0 3px">'+label+'</div>';
+      t+='<div style="overflow-x:auto"><table><thead><tr>'
+        +'<th>Date</th><th>Type</th><th>Invoice No</th><th>Company</th>'
+        +'<th class="r">Sales</th><th class="r">Payment</th><th class="r">Balance</th>'
+        +'</tr></thead><tbody>';
+      rows.forEach(function(r){
+        var balCol=r._balance>0?'var(--red)':r._balance<0?'var(--green)':'var(--teal)';
+        t+='<tr>'
+          +'<td class="c-date">'+fmtDate(r._date)+'</td>'
+          +'<td class="c-type">'+esc(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID])+'</td>'
+          +'<td style="font-family:IBM Plex Mono,monospace;font-size:11px">'+esc(r[SCOL.INVOICE_NO])+'</td>'
+          +'<td style="color:var(--purple)">'+esc(r[SCOL.COMPANY])+'</td>'
+          +'<td class="c-gold">'+fmtCurrency(r._sales)+'</td>'
+          +'<td class="c-green">'+fmtCurrency(r._payment)+'</td>'
+          +'<td style="text-align:right;font-family:IBM Plex Mono,monospace;color:'+balCol+'">'+fmtCurrency(r._balance)+'</td>'
+          +'</tr>';
+      });
+      t+='</tbody></table></div>';
+      return t;
+    }
+    var tbl=buildInlineTable(iRegRows,iHasCash?'Invoice Ledger':'Transactions');
+    if(iHasCash){
+      var icS=iCashRows.reduce(function(s,r){return s+r._sales},0);
+      var icP=iCashRows.reduce(function(s,r){return s+r._payment},0);
+      var icO=icS-icP;
+      tbl+='<div style="margin-top:10px;padding:8px 10px;background:rgba(16,185,129,.08);border:1px solid var(--teal);border-radius:6px;margin-bottom:4px">'
+        +'<div style="font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">💵 Cash Ledger</div>'
+        +'<div style="display:flex;gap:8px">'
+        +'<div class="kpi-card" style="flex:1;padding:6px 10px"><div class="kpi-label">Cash Billed</div><div class="kpi-value" style="font-size:15px;color:var(--gold)">'+fmtCurrency(icS)+'</div></div>'
+        +'<div class="kpi-card" style="flex:1;padding:6px 10px"><div class="kpi-label">Cash Paid</div><div class="kpi-value" style="font-size:15px;color:var(--green)">'+fmtCurrency(icP)+'</div></div>'
+        +'<div class="kpi-card" style="flex:1;padding:6px 10px"><div class="kpi-label">Cash Outstanding</div><div class="kpi-value" style="font-size:15px;color:'+(icO>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(icO))+'</div></div>'
+        +'</div></div>';
+      tbl+=buildInlineTable(iCashRows,'Cash Transactions');
+    }
+    det.innerHTML='<td colspan="7"><div style="padding:6px 0 8px;display:flex;gap:8px">'
+      +'<button class="btn btn-primary" onclick="event.stopPropagation();exportCustDirectPDF(\''+c.name.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')+'\',this)" style="font-size:11px;padding:4px 10px">⬇ PDF</button>'
+      +'<button class="btn" onclick="event.stopPropagation();openCustModal(\''+c.name.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')+'\')" style="font-size:11px;padding:4px 10px;border-color:var(--teal);color:var(--teal)">👁 Detail</button>'
+      +'<button class="btn wa-sm" onclick="event.stopPropagation();shareCustStmtWA(\''+c.name.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')+'\')" style="font-size:11px;padding:4px 10px">📱 WhatsApp</button>'
+      +'</div>'+tbl+'</td>';
+    tr.addEventListener('click',function(){det.classList.toggle('open')});
+    tbody.appendChild(tr);tbody.appendChild(det);
+  });
+  makeSortable('tbl-cust-ledger');
+}
+
+function renderStaffCustMapping(custStaffMap,staffLookup){
+  var tbody=document.getElementById('tbl-staff-cust');if(!tbody)return;
+  tbody.innerHTML='';
+  staffLookup=staffLookup||{};
+
+  // Group customers by individual staff member (handle comma-separated emails)
+  var staffCusts={};
+  CUSTOMER_DATA.forEach(function(c){
+    var cn=c[CCOL.CUST_NAME]||c[CCOL.CUST_ID];if(!cn)return;
+    var se=c[CCOL.STAFF_EMAIL]||'';
+    var emails=se.split(/[,;]+/).map(function(e){return e.trim()}).filter(Boolean);
+    if(!emails.length)emails=['Unknown'];
+    emails.forEach(function(email){
+      var si=staffLookup[email]||{name:email,area:'—'};
+      var sname=si.name||email;
+      if(!staffCusts[sname])staffCusts[sname]={name:sname,area:si.area||'—',custs:[]};
+      if(staffCusts[sname].custs.indexOf(cn)===-1)staffCusts[sname].custs.push(cn);
+    });
+  });
+
+  if(!Object.keys(staffCusts).length){
+    tbody.innerHTML='<tr><td colspan="3" style="color:var(--dim);padding:14px">No customer mapping data — deploy updated Code.gs</td></tr>';
+    return;
+  }
+
+  Object.values(staffCusts).sort(function(a,b){return b.custs.length-a.custs.length}).forEach(function(s,i){
+    var uid='scm'+i;
+    var tr=document.createElement('tr');tr.className='cl';
+    tr.innerHTML='<td class="c-name"><span id="scm-arr-'+uid+'" style="font-size:9px;margin-right:6px;color:var(--dim);display:inline-block;width:10px">▶</span>'+esc(s.name)+'</td>'
+      +'<td class="c-area">'+esc(s.area)+'</td>'
+      +'<td class="c-teal">'+s.custs.length+'</td>';
+
+    var det=document.createElement('tr');det.className='row-detail';det.id='scm-det-'+uid;
+    var custList=s.custs.map(function(cn){
+      var cStmts=STATEMENTS_DATA.filter(function(r){return r[SCOL.CUST_NAME]===cn&&(SALES_COMPANIES.size===0||SALES_COMPANIES.has(r[SCOL.COMPANY]))});
+      var sorted=cStmts.filter(function(r){return r._date}).sort(function(a,b){return a._date-b._date});
+      var bal=sorted.length?sorted[sorted.length-1]._balance:0;
+      var balHtml=bal>0?' <span style="color:var(--red);font-family:IBM Plex Mono,monospace;font-size:10px">('+fmtCurrency(bal)+' due)</span>':'';
+      return'<button onclick="openCustModal(\''+cn.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')+'\')" '
+        +'style="background:var(--panel2);border:1px solid var(--border);color:var(--txt);padding:5px 10px;border-radius:4px;margin:3px;cursor:pointer;font-size:12px;text-align:left">'
+        +esc(cn)+balHtml+'</button>';
+    }).join('');
+    det.innerHTML='<td colspan="3" style="padding:8px 14px 12px 28px">'+custList+'</td>';
+
+    tr.addEventListener('click',function(){
+      det.classList.toggle('open');
+      var arr=document.getElementById('scm-arr-'+uid);
+      if(arr)arr.textContent=det.classList.contains('open')?'▼':'▶';
+    });
+    tbody.appendChild(tr);tbody.appendChild(det);
+  });
+  makeSortable('tbl-staff-cust');
+}
+
+async function exportCustLedgerPDF(){
+  var btn=document.getElementById('btn-cust-pdf');btn.textContent='⏳…';btn.disabled=true;
+  var _hidden=[];
+  try{
+    var{jsPDF}=window.jspdf;
+    var content=document.getElementById('tbl-cust-ledger').closest('.sec-panel');
+    // Hide controls + WhatsApp buttons before capture
+    var ctrlWrap=btn.parentElement;
+    if(ctrlWrap){ctrlWrap.style.display='none';_hidden.push({el:ctrlWrap,prop:'display',val:''});}
+    content.querySelectorAll('.wa-sm').forEach(function(el){el.style.visibility='hidden';_hidden.push({el:el,prop:'visibility',val:''});});
+    // Disable sticky thead so html2canvas captures header at top of table, not mid-viewport
+    content.querySelectorAll('thead th').forEach(function(el){_hidden.push({el:el,prop:'position',val:el.style.position});el.style.position='static';});
+    var ltSv=applyLightTheme(content),saved=unclipAll(content);
+    var contentH=Math.max(content.scrollHeight,content.offsetHeight,100);
+    var canvas=await html2canvas(content,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false,windowWidth:content.offsetWidth||720,windowHeight:contentH,scrollX:0,scrollY:-content.getBoundingClientRect().top});
+    reclipAll(saved);restoreLightTheme(content,ltSv);
+    var M=10,auto=autoOrientPDF(canvas);
+    var coLabel=SALES_COMPANIES.size===1?' ('+[...SALES_COMPANIES][0]+')':SALES_COMPANIES.size>1?' ('+SALES_COMPANIES.size+' companies)':'';
+    canvasToPDF(auto.pdf,canvas,auto.W,auto.H,M,'Aqua — Customer Ledger'+coLabel+' — '+new Date().toLocaleString('en-IN'),'auto');
+    pdfSave(auto.pdf,'aqua-customer-ledger-'+new Date().toISOString().slice(0,10)+'.pdf');
+  }catch(e){alert('PDF failed: '+e.message)}
+  finally{
+    _hidden.forEach(function(x){x.el.style[x.prop]=x.val;});
+    btn.textContent='⬇ PDF';btn.disabled=false;
+  }
+}
+
+var CUST_MODAL_NAME='';
+function openCustModal(custName){
+  CUST_MODAL_NAME=custName;
+  var stmts=STATEMENTS_DATA.filter(function(r){
+    return r[SCOL.CUST_NAME]===custName&&(SALES_COMPANIES.size===0||SALES_COMPANIES.has(r[SCOL.COMPANY]));
+  });
+  var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
+  var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
+  var outstanding=totalSales-totalPmt;
+  var openingBal=stmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening')}).reduce(function(s,r){return s+r._sales},0);
+  var periodSales=totalSales-openingBal;
+  stmts=stmts.sort(function(a,b){return(a._date||0)-(b._date||0)});
+  document.getElementById('cust-modal-name').textContent=custName;
+  var kpis='';
+  if(openingBal>0){
+    kpis+='<div class="kpi-card"><div class="kpi-label">Opening Balance</div><div class="kpi-value" style="font-size:20px;color:var(--purple)">'+fmtCurrency(openingBal)+'</div></div>';
+    kpis+='<div class="kpi-card"><div class="kpi-label">This Period Sales</div><div class="kpi-value" style="font-size:20px;color:var(--gold)">'+fmtCurrency(periodSales)+'</div></div>';
+  }else{
+    kpis+='<div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-value" style="font-size:20px;color:var(--gold)">'+fmtCurrency(totalSales)+'</div></div>';
+  }
+  kpis+='<div class="kpi-card"><div class="kpi-label">Total Paid</div><div class="kpi-value" style="font-size:20px;color:var(--green)">'+fmtCurrency(totalPmt)+'</div></div>';
+  kpis+='<div class="kpi-card"><div class="kpi-label">Outstanding</div><div class="kpi-value" style="font-size:20px;color:'+(outstanding>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(outstanding))+'</div></div>';
+  document.getElementById('cust-modal-kpis').innerHTML=kpis;
+  var mCashStmts=stmts.filter(function(r){return /^[a-zA-Z]/.test(r[SCOL.INVOICE_NO]||'');});
+  var mRegStmts=stmts.filter(function(r){return!/^[a-zA-Z]/.test(r[SCOL.INVOICE_NO]||'');});
+  var mHasCash=mCashStmts.length>0;
+  function buildModalTable(rows,label){
+    var rS=rows.reduce(function(s,r){return s+r._sales},0);
+    var rP=rows.reduce(function(s,r){return s+r._payment},0);
+    var t='<div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin:10px 0 4px">'+label+'</div>';
+    t+='<table><thead><tr><th>Date</th><th>Type</th><th>Invoice</th><th>Company</th><th class="r">Sales</th><th class="r">Payment</th></tr></thead><tbody>';
+    rows.forEach(function(r){
+      var isOpening=(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');
+      var rowStyle=isOpening?'background:rgba(155,108,255,.08);font-style:italic;color:var(--dim)':'';
+      t+='<tr style="'+rowStyle+'">'
+        +'<td class="c-date">'+fmtDate(r._date)+'</td>'
+        +'<td class="c-type" style="color:var(--purple)">'+(isOpening?'📂 ':'')+esc(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID])+'</td>'
+        +'<td style="font-family:IBM Plex Mono,monospace;font-size:11px">'+esc(r[SCOL.INVOICE_NO])+'</td>'
+        +'<td style="color:var(--purple)">'+esc(r[SCOL.COMPANY])+'</td>'
+        +'<td class="'+(isOpening?'':'c-gold')+'" style="'+(isOpening?'color:var(--purple)':'')+'">'+fmtCurrency(r._sales)+'</td>'
+        +'<td class="c-green">'+fmtCurrency(r._payment)+'</td>'
+        +'</tr>';
+    });
+    t+='</tbody><tfoot><tr style="border-top:2px solid var(--border)">'
+      +'<td colspan="4" style="padding:8px 12px;font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px">Totals</td>'
+      +'<td style="text-align:right;padding:8px 12px;color:var(--gold);font-family:IBM Plex Mono,monospace;font-weight:700">'+fmtCurrency(rS)+'</td>'
+      +'<td style="text-align:right;padding:8px 12px;color:var(--green);font-family:IBM Plex Mono,monospace;font-weight:700">'+fmtCurrency(rP)+'</td>'
+      +'</tr></tfoot></table>';
+    return t;
+  }
+  var tbl='';
+  if(!stmts.length){
+    tbl='<div style="color:var(--dim);padding:20px">No transactions found for this customer.</div>';
+  }else{
+    tbl+=buildModalTable(mRegStmts,mHasCash?'Invoice Ledger':'Transactions');
+    if(mHasCash){
+      var cS=mCashStmts.reduce(function(s,r){return s+r._sales},0);
+      var cP=mCashStmts.reduce(function(s,r){return s+r._payment},0);
+      var cO=cS-cP;
+      tbl+='<div style="margin-top:14px;padding:10px 12px;background:rgba(16,185,129,.08);border:1px solid var(--teal);border-radius:8px;margin-bottom:6px">'
+        +'<div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">💵 Cash Ledger</div>'
+        +'<div style="display:flex;gap:8px">'
+        +'<div class="kpi-card" style="flex:1"><div class="kpi-label">Cash Billed</div><div class="kpi-value" style="font-size:18px;color:var(--gold)">'+fmtCurrency(cS)+'</div></div>'
+        +'<div class="kpi-card" style="flex:1"><div class="kpi-label">Cash Paid</div><div class="kpi-value" style="font-size:18px;color:var(--green)">'+fmtCurrency(cP)+'</div></div>'
+        +'<div class="kpi-card" style="flex:1"><div class="kpi-label">Cash Outstanding</div><div class="kpi-value" style="font-size:18px;color:'+(cO>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(cO))+'</div></div>'
+        +'</div></div>';
+      tbl+=buildModalTable(mCashStmts,'Cash Transactions');
+    }
+  }
+  // Payment details block
+  var custCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
+  var payCompany=SALES_COMPANIES.size===1?[...SALES_COMPANIES][0]:(custCompanies.length===1?custCompanies[0]:'');
+  var payInfo=payCompany?getPayInfo(payCompany):'';
+  if(!payInfo&&custCompanies.length>1){
+    payInfo=custCompanies.map(function(c){return getPayInfo(c)?'🏢 '+c+'\n'+getPayInfo(c):''}).filter(Boolean).join('\n\n');
+  }
+  if(payInfo){
+    tbl+='<div style="margin-top:16px;padding:12px 16px;background:var(--panel2);border:1px solid var(--border);border-radius:8px">'
+      +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">💳 Payment Details'+(payCompany?' — '+esc(payCompany):'')+'</div>'
+      +'<div style="font-size:13px;color:var(--txt);white-space:pre-line;line-height:1.6">'+esc(payInfo)+'</div>'
+      +'</div>';
+  }
+  document.getElementById('cust-modal-tbl').innerHTML=tbl;
+  document.getElementById('cust-modal').style.display='block';
+  document.body.style.overflow='hidden';
+}
+function closeCustModal(){
+  document.getElementById('cust-modal').style.display='none';
+  document.body.style.overflow='';
+}
+async function exportCustModalPDF(){
+  var btn=document.getElementById('cust-modal-pdf');
+  await exportCustDirectPDF(CUST_MODAL_NAME,btn);
+}
+function shareCustModalWA(){shareCustStmtWA(CUST_MODAL_NAME)}
+
+async function exportCustDirectPDF(custName,btn){
+  var orig=btn.textContent;btn.textContent='⏳…';btn.disabled=true;
+  try{
+    var{jsPDF}=window.jspdf;
+    var stmts=STATEMENTS_DATA.filter(function(r){
+      return r[SCOL.CUST_NAME]===custName&&(SALES_COMPANIES.size===0||SALES_COMPANIES.has(r[SCOL.COMPANY]));
+    }).sort(function(a,b){return(a._date||0)-(b._date||0)});
+    var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
+    var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
+    var outstanding=totalSales-totalPmt;
+    var openingBal=stmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening')}).reduce(function(s,r){return s+r._sales},0);
+    var periodSales=totalSales-openingBal;
+    // Split: cash rows = Invoice No starts with a letter (a-z)
+    var cashStmts=stmts.filter(function(r){return /^[a-zA-Z]/.test(r[SCOL.INVOICE_NO]||'');});
+    var regularStmts=stmts.filter(function(r){return!/^[a-zA-Z]/.test(r[SCOL.INVOICE_NO]||'');});
+    var hasCash=cashStmts.length>0;
+    var pdfCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
+    var multiCo=pdfCompanies.length>1;
+
+    // 720px wide → A4 190mm content → each 10px CSS ≈ 2.64mm ≈ standard table text
+    var wrap=document.createElement('div');
+    wrap.style.cssText='position:absolute;left:-9999px;top:0;width:720px;background:#fff;color:#111;padding:14px 16px;font-family:IBM Plex Sans,sans-serif;font-size:10px;line-height:1.4';
+    // Override CSS vars so global rules (thead th bg, tbody td color) use light values
+    Object.keys(LT_VARS).forEach(function(k){wrap.style.setProperty(k,LT_VARS[k])});
+    var S='font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:2px';
+    var V='font-size:13px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#111';
+    var CARD='flex:1;background:#f0f2f5;border:1px solid #ccc;border-radius:5px;padding:7px 9px';
+    var TH='padding:4px 6px;border-bottom:1px solid #bbb;color:#222;font-size:9px;font-weight:700';
+    var TD='padding:3px 6px';
+
+    // ── Header + overall KPI row ──────────────────────────────────────
+    var html='<div style="font-size:11px;font-weight:700;margin-bottom:8px;font-family:IBM Plex Mono,monospace">'+esc(custName)+'</div>'
+      +'<div style="display:flex;gap:8px;margin-bottom:10px">';
+    if(openingBal>0){
+      html+='<div style="'+CARD+'"><div style="'+S+'">Opening Balance</div><div style="'+V+'">'+fmtCurrency(openingBal)+'</div></div>';
+      html+='<div style="'+CARD+'"><div style="'+S+'">This Period Sales</div><div style="'+V+'">'+fmtCurrency(periodSales)+'</div></div>';
+    }else{
+      html+='<div style="'+CARD+'"><div style="'+S+'">Total Billed</div><div style="'+V+'">'+fmtCurrency(totalSales)+'</div></div>';
+    }
+    html+='<div style="'+CARD+'"><div style="'+S+'">Total Paid</div><div style="'+V+'">'+fmtCurrency(totalPmt)+'</div></div>';
+    html+='<div style="'+CARD+'"><div style="'+S+'">Outstanding</div><div style="'+V+';color:'+(outstanding>0?'#dc2626':'#16a34a')+'">'+fmtCurrency(Math.abs(outstanding))+'</div></div>';
+    html+='</div>';
+
+    // ── Per-company breakdown (only when multiple companies) ──────────
+    if(multiCo){
+      html+='<div style="margin-bottom:12px">'
+        +'<div style="font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:5px">Company Breakdown</div>';
+      pdfCompanies.forEach(function(co){
+        var coStmts=stmts.filter(function(r){return r[SCOL.COMPANY]===co;});
+        var coOpen=coStmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');}).reduce(function(s,r){return s+r._sales;},0);
+        var coBilled=coStmts.reduce(function(s,r){return s+r._sales;},0)-coOpen;
+        var coPaid=coStmts.reduce(function(s,r){return s+r._payment;},0);
+        var coOut=coOpen+coBilled-coPaid;
+        var coPayInfo=getPayInfo(co);
+        html+='<div style="margin-bottom:6px;border:1px solid #ccc;border-radius:5px;overflow:hidden">';
+        html+='<div style="background:#e8eaed;padding:5px 9px;font-size:10px;font-weight:700;color:#222">🏢 '+esc(co)+'</div>';
+        html+='<div style="display:flex">';
+        if(coOpen>0){
+          html+='<div style="flex:1;padding:5px 9px;border-right:1px solid #ddd"><div style="'+S+'">Opening</div><div style="font-size:11px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#7c3aed">'+fmtCurrency(coOpen)+'</div></div>';
+          html+='<div style="flex:1;padding:5px 9px;border-right:1px solid #ddd"><div style="'+S+'">Billed</div><div style="font-size:11px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#b45309">'+fmtCurrency(coBilled)+'</div></div>';
+        }else{
+          html+='<div style="flex:1;padding:5px 9px;border-right:1px solid #ddd"><div style="'+S+'">Billed</div><div style="font-size:11px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#b45309">'+fmtCurrency(coBilled)+'</div></div>';
+        }
+        html+='<div style="flex:1;padding:5px 9px;border-right:1px solid #ddd"><div style="'+S+'">Paid</div><div style="font-size:11px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#16a34a">'+fmtCurrency(coPaid)+'</div></div>';
+        html+='<div style="flex:1;padding:5px 9px"><div style="'+S+'">Outstanding</div><div style="font-size:11px;font-weight:700;font-family:IBM Plex Mono,monospace;color:'+(coOut>0?'#dc2626':'#16a34a')+'">'+fmtCurrency(Math.abs(coOut))+'</div></div>';
+        html+='</div>';
+        if(coPayInfo){
+          html+='<div style="border-top:1px solid #ddd;padding:5px 9px;font-size:8px;color:#333;font-family:IBM Plex Mono,monospace;white-space:pre-line;line-height:1.5">💳 '+esc(coPayInfo)+'</div>';
+        }
+        html+='</div>';
+      });
+      html+='</div>';
+    }
+
+    // ── Transaction table (invoices / regular rows) ───────────────────
+    function buildTxTable(rows,sectionLabel){
+      var rSales=rows.reduce(function(s,r){return s+r._sales},0);
+      var rPmt=rows.reduce(function(s,r){return s+r._payment},0);
+      var out='<div style="font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:4px">'+sectionLabel+'</div>';
+      out+='<table style="width:100%;border-collapse:collapse;font-size:10px">'
+        +'<thead><tr style="background:#e8eaed">'
+        +'<th style="text-align:left;'+TH+';white-space:nowrap">Date</th>'
+        +'<th style="text-align:left;'+TH+'">Type</th>'
+        +'<th style="text-align:left;'+TH+'">Invoice</th>'
+        +'<th style="text-align:left;'+TH+'">Company</th>'
+        +'<th style="text-align:right;'+TH+';white-space:nowrap">Sales</th>'
+        +'<th style="text-align:right;'+TH+';white-space:nowrap">Payment</th>'
+        +'</tr></thead><tbody>';
+      rows.forEach(function(r){
+        var isOpening=(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');
+        var rowBg=isOpening?'background:#f0ecff;':'';
+        var dimStyle=isOpening?'color:#888;font-style:italic;':'';
+        out+='<tr style="border-bottom:1px solid #ebebeb;'+rowBg+'">'
+          +'<td style="'+TD+';white-space:nowrap;'+dimStyle+'">'+fmtDate(r._date)+'</td>'
+          +'<td style="'+TD+';color:#7c3aed">'+(isOpening?'📂 ':'')+esc(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID])+'</td>'
+          +'<td style="'+TD+';font-family:IBM Plex Mono,monospace;'+dimStyle+'">'+esc(r[SCOL.INVOICE_NO])+'</td>'
+          +'<td style="'+TD+';'+dimStyle+'">'+esc(r[SCOL.COMPANY])+'</td>'
+          +'<td style="'+TD+';text-align:right;font-weight:600;color:'+(isOpening?'#7c3aed':'#b45309')+'">'+fmtCurrency(r._sales)+'</td>'
+          +'<td style="'+TD+';text-align:right;font-weight:600;color:#16a34a">'+fmtCurrency(r._payment)+'</td>'
+          +'</tr>';
+      });
+      out+='<tr style="border-top:2px solid #999;font-weight:700">'
+        +'<td colspan="4" style="'+TD+';text-transform:uppercase;letter-spacing:.05em;font-size:9px">Totals</td>'
+        +'<td style="'+TD+';text-align:right">'+fmtCurrency(rSales)+'</td>'
+        +'<td style="'+TD+';text-align:right">'+fmtCurrency(rPmt)+'</td>'
+        +'</tr></tbody></table>';
+      return out;
+    }
+    html+=buildTxTable(regularStmts,hasCash?'Invoice Ledger':'Transactions');
+
+    // ── Cash Ledger section ───────────────────────────────────────────
+    if(hasCash){
+      var cashSales=cashStmts.reduce(function(s,r){return s+r._sales},0);
+      var cashPmt=cashStmts.reduce(function(s,r){return s+r._payment},0);
+      var cashOut=cashSales-cashPmt;
+      html+='<div style="margin-top:14px;padding:8px 10px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:5px;margin-bottom:6px">'
+        +'<div style="font-size:9px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">💵 Cash Ledger</div>'
+        +'<div style="display:flex;gap:6px">';
+      html+='<div style="flex:1;background:#fff;border:1px solid #a7f3d0;border-radius:4px;padding:5px 8px"><div style="'+S+'">Cash Billed</div><div style="font-size:12px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#b45309">'+fmtCurrency(cashSales)+'</div></div>';
+      html+='<div style="flex:1;background:#fff;border:1px solid #a7f3d0;border-radius:4px;padding:5px 8px"><div style="'+S+'">Cash Paid</div><div style="font-size:12px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#16a34a">'+fmtCurrency(cashPmt)+'</div></div>';
+      html+='<div style="flex:1;background:#fff;border:1px solid #a7f3d0;border-radius:4px;padding:5px 8px"><div style="'+S+'">Cash Outstanding</div><div style="font-size:12px;font-weight:700;font-family:IBM Plex Mono,monospace;color:'+(cashOut>0?'#dc2626':'#16a34a')+'">'+fmtCurrency(Math.abs(cashOut))+'</div></div>';
+      html+='</div></div>';
+      html+=buildTxTable(cashStmts,'Cash Transactions');
+    }
+
+    // ── Payment details (single company only — multi-co shown above) ──
+    if(!multiCo){
+      var pdfPayCo=pdfCompanies.length===1?pdfCompanies[0]:'';
+      var pdfPayInfo=pdfPayCo?getPayInfo(pdfPayCo):'';
+      if(pdfPayInfo){
+        html+='<div style="margin-top:14px;padding:10px 12px;background:#f0f2f5;border:1px solid #ccc;border-radius:5px">'
+          +'<div style="font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:6px">💳 Payment Details — '+esc(pdfPayCo)+'</div>'
+          +'<div style="font-size:9px;color:#111;white-space:pre-line;line-height:1.6;font-family:IBM Plex Mono,monospace">'+esc(pdfPayInfo)+'</div>'
+          +'</div>';
+      }
+    }
+    // Neutralise sticky thead — global CSS has position:sticky on thead th which
+    // causes html2canvas to render the header at the viewport top (mid-table) instead
+    // of at the top of the table in the off-screen div.
+    wrap.innerHTML='<style>thead,thead tr,thead th{position:static!important;z-index:auto!important}</style>'+html;
+    document.body.appendChild(wrap);
+    await new Promise(function(r){requestAnimationFrame(r)});
+    var wrapH=Math.max(wrap.scrollHeight,wrap.offsetHeight,100);
+    var canvas=await html2canvas(wrap,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false,windowWidth:720,windowHeight:wrapH,scrollX:0,scrollY:0});
+    document.body.removeChild(wrap);
+    var M=10,pw=190,ratio=pw/canvas.width,totalH=canvas.height*ratio;
+    var {jsPDF}=window.jspdf;
+    var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:[210,totalH+2*M+6]});
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',M,M,pw,totalH);
+    pdf.setFontSize(7);pdf.setTextColor(140);
+    pdf.text('Aqua — '+custName+' — '+new Date().toLocaleString('en-IN'),M,totalH+M+4);
+    pdfSave(pdf,'aqua-'+custName.replace(/[^a-z0-9]/gi,'-')+'-ledger.pdf');
+  }catch(e){alert('PDF failed: '+e.message)}
+  finally{btn.textContent=orig;btn.disabled=false}
+}
+
+function shareCustStmtWA(custName){
+  var stmts=STATEMENTS_DATA.filter(function(r){
+    return r[SCOL.CUST_NAME]===custName&&(SALES_COMPANIES.size===0||SALES_COMPANIES.has(r[SCOL.COMPANY]));
+  }).sort(function(a,b){return(a._date||0)-(b._date||0)});
+  var cashStmtsWA=stmts.filter(function(r){return /^[a-zA-Z]/.test(r[SCOL.INVOICE_NO]||'');});
+  var hasCashWA=cashStmtsWA.length>0;
+  var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
+  var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
+  var openingBal=stmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');}).reduce(function(s,r){return s+r._sales;},0);
+  var periodSales=totalSales-openingBal;
+  var lastBalance=stmts.length?stmts[stmts.length-1]._balance:(totalSales-totalPmt);
+  var waCos=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
+  var multiCo=waCos.length>1;
+
+  var msg='👤 *'+custName+'*\n'
+    +(waCos.length===1?'🏢 '+waCos[0]+'\n':'')
+    +'📅 '+new Date().toLocaleDateString('en-IN')+'\n\n';
+
+  if(multiCo){
+    // Overall totals
+    msg+=(openingBal>0?'📂 Opening Balance: ₹'+openingBal.toLocaleString('en-IN')+'\n💰 Period Sales: ₹'+periodSales.toLocaleString('en-IN')+'\n':'💰 Total Billed: ₹'+totalSales.toLocaleString('en-IN')+'\n')
+      +'✅ Total Paid: ₹'+totalPmt.toLocaleString('en-IN')+'\n'
+      +(lastBalance>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(lastBalance).toLocaleString('en-IN')+'\n';
+    // Per-company breakdown
+    msg+='\n*Company Breakdown*\n';
+    waCos.forEach(function(co){
+      var coStmts=stmts.filter(function(r){return r[SCOL.COMPANY]===co;});
+      var coOpen=coStmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');}).reduce(function(s,r){return s+r._sales;},0);
+      var coBilled=coStmts.reduce(function(s,r){return s+r._sales;},0)-coOpen;
+      var coPaid=coStmts.reduce(function(s,r){return s+r._payment;},0);
+      var coOut=coOpen+coBilled-coPaid;
+      msg+='🏢 *'+co+'*\n';
+      if(coOpen>0)msg+='  📂 Opening: ₹'+coOpen.toLocaleString('en-IN')+'\n'
+        +'  💰 Billed: ₹'+coBilled.toLocaleString('en-IN')+'\n';
+      else msg+='  💰 Billed: ₹'+coBilled.toLocaleString('en-IN')+'\n';
+      msg+='  ✅ Paid: ₹'+coPaid.toLocaleString('en-IN')+'\n'
+        +'  '+(coOut>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(coOut).toLocaleString('en-IN')+'\n';
+      var coPayInfo=getPayInfo(co);
+      if(coPayInfo)msg+='  💳 '+coPayInfo.replace(/\n/g,'\n  ')+'\n';
+      msg+='\n';
+    });
+  }else{
+    msg+=(openingBal>0?'📂 Opening Balance: ₹'+openingBal.toLocaleString('en-IN')+'\n💰 Period Sales: ₹'+periodSales.toLocaleString('en-IN')+'\n':'💰 Total Billed: ₹'+totalSales.toLocaleString('en-IN')+'\n')
+      +'✅ Total Paid: ₹'+totalPmt.toLocaleString('en-IN')+'\n'
+      +(lastBalance>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(lastBalance).toLocaleString('en-IN')+'\n';
+    var waPayInfo=waCos.length===1?getPayInfo(waCos[0]):'';
+    if(waPayInfo)msg+='\n💳 *Payment Details:*\n'+waPayInfo+'\n';
+  }
+  if(hasCashWA){
+    var cashSalesWA=cashStmtsWA.reduce(function(s,r){return s+r._sales},0);
+    var cashPmtWA=cashStmtsWA.reduce(function(s,r){return s+r._payment},0);
+    var cashOutWA=cashSalesWA-cashPmtWA;
+    msg+='\n💵 *Cash Ledger*\n'
+      +'  💰 Cash Billed: ₹'+cashSalesWA.toLocaleString('en-IN')+'\n'
+      +'  ✅ Cash Paid: ₹'+cashPmtWA.toLocaleString('en-IN')+'\n'
+      +'  '+(cashOutWA>0?'🔴':'🟢')+' Cash Outstanding: ₹'+Math.abs(cashOutWA).toLocaleString('en-IN')+'\n';
+  }
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+function shareSalesSummaryWA(){
+  var stmts=SALES_COMPANIES.size>0?STATEMENTS_DATA.filter(function(r){return SALES_COMPANIES.has(r[SCOL.COMPANY])}):STATEMENTS_DATA;
+  var totalSales=stmts.reduce(function(s,r){return s+r._sales},0);
+  var totalPmt=stmts.reduce(function(s,r){return s+r._payment},0);
+  var lastBal={};
+  stmts.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn||!r._date)return;if(!lastBal[cn]||r._date>lastBal[cn].date)lastBal[cn]={date:r._date,bal:r._balance}});
+  var outstanding=Object.values(lastBal).reduce(function(s,x){return s+x.bal},0);
+  var sumCoLabel=SALES_COMPANIES.size===1?'🏢 '+[...SALES_COMPANIES][0]+'\n':SALES_COMPANIES.size>1?'🏢 '+[...SALES_COMPANIES].join(', ')+'\n':'';
+  var msg='🌊 *AQUA — Sales Summary*\n'
+    +sumCoLabel
+    +'📅 '+new Date().toLocaleDateString('en-IN')+'\n\n'
+    +'👥 Customers: '+Object.keys(lastBal).length+'\n'
+    +'💰 Total Billed: ₹'+totalSales.toLocaleString('en-IN')+'\n'
+    +'✅ Total Collected: ₹'+totalPmt.toLocaleString('en-IN')+'\n'
+    +(outstanding>0?'🔴':'🟢')+' Outstanding: ₹'+Math.abs(outstanding).toLocaleString('en-IN')+'\n\n';
+  var tops=Object.entries(lastBal).filter(function(e){return e[1].bal>0}).sort(function(a,b){return b[1].bal-a[1].bal}).slice(0,5);
+  if(tops.length){msg+='_Top Outstanding:_\n';tops.forEach(function(e){msg+='⚠ '+e[0]+': ₹'+e[1].bal.toLocaleString('en-IN')+'\n'})}
+  msg+='\n_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+// ─── AUTO-REFRESH ────────────────────────────────────────────────────────────
+var AUTO_REFRESH_MINS=15;
+var _countdown=AUTO_REFRESH_MINS*60,_countTimer=null,_refreshTimer=null;
+function startCountdown(){
+  clearInterval(_countTimer);clearInterval(_refreshTimer);
+  _countdown=AUTO_REFRESH_MINS*60;
+  _countTimer=setInterval(function(){
+    _countdown--;
+    var m=Math.floor(_countdown/60),s=_countdown%60;
+    var statusEl=document.getElementById('data-status');
+    if(statusEl&&RAW_DATA.length){
+      var base=statusEl.dataset.base||statusEl.textContent;
+      statusEl.dataset.base=base.split(' · next')[0];
+      statusEl.textContent=statusEl.dataset.base+' · next refresh in '+m+':'+(s<10?'0':'')+s;
+    }
+    if(_countdown<=0){clearInterval(_countTimer);loadData(true)}
+  },1000);
+}
+// Wrap loadData to restart countdown after each load
+var _origLoad=loadData;
+loadData=async function(silent){await _origLoad(silent);startCountdown()};
+
+// Pause countdown when tab goes to background (prevents spurious refresh when viewing PDF)
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){clearInterval(_countTimer);}
+  else{startCountdown();}  // resume full 15-min countdown when tab becomes visible again
+});
+
+// Helper: save PDF without navigating away on iOS
+function pdfSave(pdf,filename){
+  if(/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream){
+    pdf.output('dataurlnewwindow');  // opens in new tab, original page untouched
+  }else{
+    pdf.save(filename);
+  }
+}
+
+function sendPerfWhatsApp(){
+  var period=(document.getElementById('perf-period-lbl')||{}).textContent||'';
+  period=period.replace('Performance — ','');
+  var range=getPerfDateRange(PERF_PERIOD);
+  var stats=computePerfStats(range.from,range.to);
+  if(!stats.length){alert('No data for this period.');return}
+  var msg='🌊 *AQUA — Team Performance*\n📅 '+period+'\n👥 '+stats.length+' staff\n\n';
+  stats.forEach(function(s){
+    var attE=s.att>=90?'🟢':s.att>=70?'🟡':'🔴';
+    msg+='👤 *'+s.name+'*'+(s.area?' | '+s.area:'')+'\n'
+      +'  📊 Visits: '+s.visits+' ('+s.vpd+'/day) · '+attE+' '+s.att+'%\n'
+      +(s.billed>0?'  💰 ₹'+s.billed.toLocaleString('en-IN')+' billed'+(s.outstanding>0?' · 🔴 ₹'+s.outstanding.toLocaleString('en-IN')+' due':'')+'\n':'')
+      +'\n';
+  });
+  msg+='_Aqua Analytics_';
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+// ─── EVENTS & INIT ────────────────────────────────────────────────────────────
+document.getElementById('btn-refresh').addEventListener('click',function(){loadData()});
+document.getElementById('btn-perf-pdf').addEventListener('click',exportPerfPDF);
+document.getElementById('btn-perf-img').addEventListener('click',exportPerfImage);
+document.getElementById('btn-perf-wa').addEventListener('click',sendPerfWhatsApp);
+document.getElementById('btn-apply').addEventListener('click',function(){applyFilters();closeFilter();});
+document.getElementById('btn-clear').addEventListener('click',function(){
+  ['f-staff','f-area','f-type','f-dealer'].forEach(function(id){document.getElementById(id).value=''});
+  document.getElementById('f-from').value='';document.getElementById('f-to').value='';
+  applyFilters();closeFilter();
+});
+document.querySelectorAll('.tab-btn').forEach(function(btn){btn.addEventListener('click',function(){switchTab(this.dataset.tab)})});
+
+// ─── CHAT ASSISTANT ──────────────────────────────────────────────────────────
+var _chatOpen=false;
+function chatToggle(){
+  _chatOpen=!_chatOpen;
+  document.getElementById('chat-panel').style.display=_chatOpen?'flex':'none';
+  if(_chatOpen&&!document.getElementById('chat-msgs').children.length){
+    // Live greeting with today's key numbers
+    var today=new Date(),tdk=dateKey(today);
+    var todayRows=RAW_DATA.filter(function(r){return r._visitDate&&dateKey(r._visitDate)===tdk});
+    var totalStaff=unique((STAFF_DATA.length?STAFF_DATA.map(function(s){return s[STCOL.STAFF_NAME]}):RAW_DATA.map(function(r){return r[COL.STAFF_NAME]})).filter(Boolean)).length;
+    var outStaff=new Set(todayRows.map(function(r){return r[COL.STAFF_NAME]}).filter(Boolean)).size;
+    var totalOut=STATEMENTS_DATA.reduce(function(s,r){return s+(r._sales-r._payment)},0);
+    var greeting='👋 <b>Good '+(today.getHours()<12?'morning':today.getHours()<17?'afternoon':'evening')+'!</b><br><br>';
+    if(RAW_DATA.length){
+      greeting+='📋 Today: <b>'+todayRows.length+' visits</b>, <b>'+outStaff+'/'+totalStaff+'</b> staff out<br>';
+    }
+    if(STATEMENTS_DATA.length&&totalOut>0){
+      greeting+='🔴 Total outstanding: <b style="color:var(--red)">'+fmtCurrency(totalOut)+'</b><br>';
+    }
+    greeting+='<br>Ask me anything — try the chips below or type a question.';
+    chatBotMsg(greeting);
+    chatUpdateChips();
+  }
+}
+function chatUpdateChips(){
+  var chips=document.getElementById('chat-chips');if(!chips)return;
+  var companies=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
+  var hasStmts=STATEMENTS_DATA.length>0;
+  var rows=[
+    {label:'📋 Today',q:'today attendance'},
+    {label:'📊 This Month',q:'this month visits'},
+    {label:'🔴 Outstanding',q:'top outstanding'},
+    hasStmts?{label:'💰 Top Sales',q:'top customers by sales'}:{label:'📈 Weekly',q:'last week visits'},
+    companies.length>0?{label:'🏢 '+companies[0],q:'company '+companies[0]}:{label:'👥 Staff',q:'best performer'},
+    {label:'📅 Summary',q:'daily summary'},
+  ];
+  chips.innerHTML=rows.map(function(c){
+    return'<button class="chat-chip" onclick="chatAsk(\''+c.q+'\')">'+c.label+'</button>';
+  }).join('');
+}
+function chatSend(){var inp=document.getElementById('chat-inp');var q=inp.value.trim();if(!q)return;inp.value='';chatAsk(q);}
+function chatAsk(q){chatAddMsg('user',q);setTimeout(function(){chatBotMsg(chatProcess(q));},180);}
+function chatAddMsg(role,html){
+  var msgs=document.getElementById('chat-msgs');
+  var d=document.createElement('div');d.className='cmsg-'+(role==='user'?'user':'bot');
+  d.innerHTML=html;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+}
+function chatBotMsg(html){chatAddMsg('bot',html);}
+function chatStaffName(email){
+  if(EMAIL_NAMES[email])return EMAIL_NAMES[email];
+  var r=RAW_DATA.find(function(x){return x[COL.STAFF_EMAIL]===email&&x[COL.STAFF_NAME];});
+  return r?r[COL.STAFF_NAME]:email;
+}
+// ── NLP helpers ──────────────────────────────────────────────────────────────
+function chatExtractPeriod(ql){
+  var now=new Date();
+  if(/\btoday\b/.test(ql)){var d=new Date();d.setHours(0,0,0,0);return{from:d,to:now,label:'today'};}
+  if(/\byesterday\b/.test(ql)){var d=new Date();d.setDate(d.getDate()-1);d.setHours(0,0,0,0);var e=new Date(d);e.setHours(23,59,59,999);return{from:d,to:e,label:'yesterday'};}
+  if(/\bthis\s+week\b/.test(ql)){var d=new Date();d.setDate(d.getDate()-d.getDay());d.setHours(0,0,0,0);return{from:d,to:now,label:'this week'};}
+  if(/\blast\s+week\b/.test(ql)){
+    var d=new Date();var day=d.getDay()||7;
+    var mon=new Date(d);mon.setDate(d.getDate()-day-6);mon.setHours(0,0,0,0);
+    var sun=new Date(mon);sun.setDate(mon.getDate()+6);sun.setHours(23,59,59,999);
+    return{from:mon,to:sun,label:'last week'};
+  }
+  if(/\bthis\s+month\b/.test(ql)){var d=new Date();d.setDate(1);d.setHours(0,0,0,0);return{from:d,to:now,label:'this month'};}
+  if(/\blast\s+month\b/.test(ql)){
+    var d=new Date();d.setDate(1);d.setDate(d.getDate()-1);var e=new Date(d);e.setHours(23,59,59,999);d.setDate(1);d.setHours(0,0,0,0);
+    return{from:d,to:e,label:'last month'};
+  }
+  if(/\b(last\s+)?(7|seven)\s+days?\b/.test(ql)){var d=new Date();d.setDate(d.getDate()-6);d.setHours(0,0,0,0);return{from:d,to:now,label:'last 7 days'};}
+  if(/\b(last\s+)?(30|thirty)\s+days?\b/.test(ql)){var d=new Date();d.setDate(d.getDate()-29);d.setHours(0,0,0,0);return{from:d,to:now,label:'last 30 days'};}
+  if(/\bweek\b|7.day/.test(ql)){var d=new Date();d.setDate(d.getDate()-6);d.setHours(0,0,0,0);return{from:d,to:now,label:'last 7 days'};}
+  if(/\bmonth\b|30.day/.test(ql)){var d=new Date();d.setDate(d.getDate()-29);d.setHours(0,0,0,0);return{from:d,to:now,label:'last 30 days'};}
+  return null;
+}
+function chatExtractMetric(ql){
+  if(/\b(visit|attend|check.?in|trip|tour)\b/.test(ql))return'visits';
+  if(/\b(collect|payment|paid|receipt|recover)\b/.test(ql))return'collection';
+  if(/\b(outstanding|pending|due|unpaid|overdue)\b/.test(ql))return'outstanding';
+  if(/\b(sales?|billed?|invoice|sold|billing)\b/.test(ql))return'sales';
+  return null;
+}
+function chatStripName(ql){
+  return ql
+    .replace(/\b(what|is|are|the|of|for|show|me|give|tell|get|find|fetch|check|display|report|data|detail|info|information|performance|activity|record|summary)\b/g,' ')
+    .replace(/\b(today|yesterday|this|last|week|month|day|days?|seven|thirty)\b/g,' ')
+    .replace(/\b(sales?|billed?|invoice|sold|billing|collect|payment|paid|receipt|visit|attend|trip|outstanding|pending|due|unpaid|balance)\b/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+function chatFindCustomer(str){
+  if(!str||str.length<2)return null;
+  var allCust=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.CUST_NAME];}).filter(Boolean));
+  var hit=allCust.filter(function(cn){return cn.toLowerCase().includes(str);});
+  if(hit.length===1)return{name:hit[0],multi:false};
+  if(hit.length>1&&hit.length<=8)return{name:null,multi:true,matches:hit};
+  var words=str.split(/\s+/).filter(function(w){return w.length>=3;});
+  if(words.length){
+    var wHit=allCust.filter(function(cn){return words.some(function(w){return cn.toLowerCase().includes(w);});});
+    if(wHit.length===1)return{name:wHit[0],multi:false};
+    if(wHit.length>1&&wHit.length<=8)return{name:null,multi:true,matches:wHit};
+  }
+  return null;
+}
+function chatFindStaff(str){
+  if(!str||str.length<2)return null;
+  var allEmails=unique(RAW_DATA.map(function(r){return r[COL.STAFF_EMAIL];}).filter(Boolean));
+  Object.keys(EMAIL_NAMES).forEach(function(e){if(allEmails.indexOf(e)<0)allEmails.push(e);});
+  var hit=allEmails.filter(function(e){return chatStaffName(e).toLowerCase().includes(str);});
+  if(hit.length===1)return{email:hit[0],multi:false};
+  if(hit.length>1)return{email:null,multi:true,matches:hit};
+  var words=str.split(/\s+/).filter(function(w){return w.length>=3;});
+  if(words.length){
+    var wHit=allEmails.filter(function(e){var nm=chatStaffName(e).toLowerCase();return words.some(function(w){return nm.includes(w);});});
+    if(wHit.length===1)return{email:wHit[0],multi:false};
+    if(wHit.length>1&&wHit.length<=6)return{email:null,multi:true,matches:wHit};
+  }
+  return null;
+}
+function chatDateFilter(rows,period,field){
+  if(!period)return rows;
+  return rows.filter(function(r){return r[field]&&r[field]>=period.from&&r[field]<=period.to;});
+}
+function chatPeriodLabel(period){return period?'('+period.label+')':'(all time)';}
+
+// ── Main dispatcher ───────────────────────────────────────────────────────────
+function chatProcess(q){
+  var ql=q.toLowerCase().trim();
+  var period=chatExtractPeriod(ql);
+  var metric=chatExtractMetric(ql);
+  var nameStr=chatStripName(ql);
+
+  // Today attendance (no entity)
+  if((metric==='visits'||/attend/.test(ql))&&!nameStr&&period&&period.label==='today')return chatTodayAttend();
+  // Visits aggregate (no entity)
+  if(metric==='visits'&&!nameStr)return chatVisitsPeriod(period||{from:new Date(new Date().getTime()-6*86400000),to:new Date(),label:'last 7 days'});
+  // Outstanding (no entity)
+  if(metric==='outstanding'&&!nameStr)return chatOutstanding();
+  // Top customers
+  if(/top.*cust|top.*sale|highest.*sale|best.*cust/.test(ql))return chatTopCust(period);
+  // Best performer / top staff
+  if(/best.*(perform|staff|sales?man|rep)|top.*staff|performer/.test(ql))return chatBestStaff(period);
+  // Daily summary
+  if(/daily.?summary|summary.?today|day.?summ/.test(ql))return chatDailySummary();
+  // Company breakdown
+  var compMatch=null;
+  (function(){var companies=unique(STATEMENTS_DATA.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
+    companies.forEach(function(c){if(ql.indexOf(c.toLowerCase())!==-1)compMatch=c;});
+    if(!compMatch){var m=ql.match(/company\s+(.+)/);if(m){var partial=m[1].trim();companies.forEach(function(c){if(c.toLowerCase().indexOf(partial)!==-1)compMatch=c;});}}
+  })();
+  if(compMatch)return chatCompanyBreakdown(compMatch);
+
+  // Entity lookup
+  var custMatch=nameStr.length>=2?chatFindCustomer(nameStr):null;
+  var staffMatch=(!custMatch&&nameStr.length>=2)?chatFindStaff(nameStr):null;
+
+  if(custMatch&&custMatch.multi)return chatPickOne(custMatch.matches,'cust');
+  if(staffMatch&&staffMatch.multi)return chatPickStaff(staffMatch.matches);
+  if(custMatch&&custMatch.name)return chatCustData(custMatch.name,metric,period);
+  if(staffMatch&&staffMatch.email)return chatStaffData(staffMatch.email,metric,period);
+
+  // Aggregate by metric
+  if(metric==='collection')return chatCollectionAll(period);
+  if(metric==='sales')return chatSalesAll(period);
+  if(period)return chatVisitsPeriod(period);
+
+  // Fallback today attendance
+  if(/today|attend/.test(ql))return chatTodayAttend();
+
+  return'❓ Didn\'t understand.<br><br>Try:<br>• <i>today attendance</i><br>• <i>last week visits</i><br>• <i>this month sales</i><br>• <i>[staff name] last month collection</i><br>• <i>sale of [customer]</i><br>• <i>outstanding</i><br>• <i>top customers</i>';
+}
+
+// ── Disambiguation ────────────────────────────────────────────────────────────
+function chatPickOne(names,type){
+  return'Found '+names.length+' matches — which one?<br>'+names.map(function(n){
+    var safe=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    var cmd=type==='cust'?'sale of '+safe:safe+' performance';
+    return'<button class="chat-chip" style="margin:2px" onclick="chatAsk(\''+cmd+'\')">'+esc(n)+'</button>';
+  }).join(' ');
+}
+function chatPickStaff(emails){
+  return'Found '+emails.length+' staff — which one?<br>'+emails.map(function(e){
+    var nm=chatStaffName(e);var safe=nm.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return'<button class="chat-chip" style="margin:2px" onclick="chatAsk(\''+safe+' performance\')">'+esc(nm)+'</button>';
+  }).join(' ');
+}
+
+// ── Open ledger: close chat first to avoid z-index conflict ───────────────────
+function chatOpenLedger(custName){
+  _chatOpen=false;document.getElementById('chat-panel').style.display='none';
+  openCustModal(custName);
+}
+
+// ── Aggregate queries ─────────────────────────────────────────────────────────
+function chatTodayAttend(){
+  var today=new Date();var todayKey=today.toISOString().slice(0,10);
+  var rows=RAW_DATA.filter(function(r){return r._visitDate&&r._visitDate.toISOString().slice(0,10)===todayKey;});
+  if(!rows.length)return'📋 No visits recorded today ('+fmtDate(today)+').';
+  var byStaff={};
+  rows.forEach(function(r){
+    var n=r[COL.STAFF_NAME]||chatStaffName(r[COL.STAFF_EMAIL])||'—';
+    if(!byStaff[n])byStaff[n]={v:0,areas:new Set()};
+    byStaff[n].v++;if(r[COL.AREA])byStaff[n].areas.add(r[COL.AREA]);
+  });
+  var trows=Object.keys(byStaff).sort().map(function(n){var d=byStaff[n];return'<tr><td>'+esc(n)+'</td><td style="text-align:center">'+d.v+'</td><td>'+esc(Array.from(d.areas).join(', '))+'</td></tr>';}).join('');
+  return'📋 <b>Today\'s Attendance</b> — '+fmtDate(today)+'<br>'
+    +'<table><thead><tr><th>Staff</th><th>Visits</th><th>Area</th></tr></thead><tbody>'+trows+'</tbody></table>'
+    +'<br><b>'+rows.length+'</b> visits · <b>'+Object.keys(byStaff).length+'</b> staff out';
+}
+function chatVisitsPeriod(period){
+  var rows=chatDateFilter(RAW_DATA,period,'_visitDate');
+  if(!rows.length)return'📋 No visits '+chatPeriodLabel(period)+'.';
+  var byStaff={};
+  rows.forEach(function(r){
+    var n=r[COL.STAFF_NAME]||chatStaffName(r[COL.STAFF_EMAIL])||'—';
+    if(!byStaff[n])byStaff[n]={v:0,areas:new Set()};
+    byStaff[n].v++;if(r[COL.AREA])byStaff[n].areas.add(r[COL.AREA]);
+  });
+  var sorted=Object.keys(byStaff).sort(function(a,b){return byStaff[b].v-byStaff[a].v;});
+  var trows=sorted.map(function(n){var d=byStaff[n];return'<tr><td>'+esc(n)+'</td><td style="text-align:right"><b>'+d.v+'</b></td><td>'+esc(Array.from(d.areas).slice(0,3).join(', '))+'</td></tr>';}).join('');
+  return'📋 <b>Visits '+chatPeriodLabel(period)+'</b><br>'
+    +'<table><thead><tr><th>Staff</th><th>Visits</th><th>Areas</th></tr></thead><tbody>'+trows+'</tbody></table>'
+    +'<br>Total: <b>'+rows.length+'</b> visits · <b>'+sorted.length+'</b> staff';
+}
+function chatOutstanding(){
+  var cm={};
+  STATEMENTS_DATA.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;if(!cm[cn])cm[cn]={s:0,p:0};cm[cn].s+=r._sales;cm[cn].p+=r._payment;});
+  var list=Object.keys(cm).map(function(n){return{n:n,out:cm[n].s-cm[n].p};}).filter(function(x){return x.out>0;}).sort(function(a,b){return b.out-a.out;}).slice(0,10);
+  if(!list.length)return'✅ No outstanding balances found.';
+  var trows=list.map(function(x){
+    var safe=x.n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return'<tr><td><button class="chat-chip" style="margin:1px;padding:2px 6px;font-size:11px" onclick="chatOpenLedger(\''+safe+'\')">'+esc(x.n)+'</button></td>'
+      +'<td style="text-align:right;color:var(--red)"><b>'+fmtCurrency(x.out)+'</b></td></tr>';
+  }).join('');
+  return'🔴 <b>Top Outstanding</b><br>'
+    +'<table><thead><tr><th>Customer</th><th>Outstanding</th></tr></thead><tbody>'+trows+'</tbody></table>';
+}
+function chatTopCust(period){
+  var stmts=chatDateFilter(STATEMENTS_DATA,period,'_date');
+  var cm={};
+  stmts.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;if(!cm[cn])cm[cn]=0;cm[cn]+=r._sales;});
+  var list=Object.keys(cm).sort(function(a,b){return cm[b]-cm[a];}).slice(0,10);
+  if(!list.length)return'No customer data.';
+  var trows=list.map(function(n){
+    var safe=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return'<tr><td><button class="chat-chip" style="margin:1px;padding:2px 6px;font-size:11px" onclick="chatOpenLedger(\''+safe+'\')">'+esc(n)+'</button></td>'
+      +'<td style="text-align:right"><b>'+fmtCurrency(cm[n])+'</b></td></tr>';
+  }).join('');
+  return'💰 <b>Top Customers by Sales '+chatPeriodLabel(period)+'</b><br>'
+    +'<table><thead><tr><th>Customer</th><th>Total Sales</th></tr></thead><tbody>'+trows+'</tbody></table>';
+}
+function chatBestStaff(period){
+  var p=period||{from:new Date(new Date().getFullYear(),new Date().getMonth(),1),to:new Date(),label:'this month'};
+  var rows=chatDateFilter(RAW_DATA,p,'_visitDate');
+  if(!rows.length)return'📋 No visit data '+chatPeriodLabel(p)+'.';
+  var sm={};
+  rows.forEach(function(r){
+    var n=r[COL.STAFF_NAME]||chatStaffName(r[COL.STAFF_EMAIL])||'—';
+    if(!sm[n])sm[n]={v:0,cust:new Set(),areas:new Set()};
+    sm[n].v++;if(r[COL.CUST_NAME])sm[n].cust.add(r[COL.CUST_NAME]);if(r[COL.AREA])sm[n].areas.add(r[COL.AREA]);
+  });
+  var stmts=chatDateFilter(STATEMENTS_DATA,p,'_date');
+  var billing={};stmts.forEach(function(r){var rn=r[SCOL.STAFF_NAME]||r['Salesman']||'';if(!rn)return;if(!billing[rn])billing[rn]=0;billing[rn]+=r._sales;});
+  var sorted=Object.keys(sm).sort(function(a,b){return sm[b].v-sm[a].v;}).slice(0,8);
+  var trows=sorted.map(function(n,i){
+    var d=sm[n];var bill=billing[n]||0;
+    var medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    return'<tr><td>'+medal+' <b>'+esc(n)+'</b></td><td style="text-align:center">'+d.v+'</td><td style="text-align:center">'+d.cust.size+'</td>'
+      +(bill>0?'<td style="text-align:right">'+fmtCurrency(bill)+'</td>':'<td>—</td>')+'</tr>';
+  }).join('');
+  return'🏆 <b>Top Performers — '+chatPeriodLabel(p)+'</b><br>'
+    +'<table><thead><tr><th>Staff</th><th>Visits</th><th>Custs</th><th>Billed</th></tr></thead><tbody>'+trows+'</tbody></table>';
+}
+function chatDailySummary(){
+  var today=new Date();var todayKey=today.toISOString().slice(0,10);
+  var rows=RAW_DATA.filter(function(r){return r._visitDate&&r._visitDate.toISOString().slice(0,10)===todayKey;});
+  var totalStaff=unique((STAFF_DATA.length?STAFF_DATA.map(function(s){return s[STCOL.STAFF_NAME]}):RAW_DATA.map(function(r){return r[COL.STAFF_NAME]})).filter(Boolean)).length;
+  var outStaff=new Set(rows.map(function(r){return r[COL.STAFF_NAME]}).filter(Boolean)).size;
+  var totalOut=STATEMENTS_DATA.reduce(function(s,r){return s+(r._sales-r._payment);},0);
+  var totalSales=STATEMENTS_DATA.reduce(function(s,r){return s+r._sales;},0);
+  var custs=new Set(rows.map(function(r){return r[COL.CUST_NAME]}).filter(Boolean));
+  var areas=unique(rows.map(function(r){return r[COL.AREA]}).filter(Boolean));
+  var out='📅 <b>Daily Summary — '+fmtDate(today)+'</b><br><br>';
+  out+='👥 <b>Staff:</b> '+outStaff+'/'+totalStaff+' out today<br>';
+  out+='📋 <b>Visits:</b> '+rows.length+' visits · '+custs.size+' customers<br>';
+  if(areas.length)out+='📍 <b>Areas:</b> '+esc(areas.slice(0,5).join(', '))+(areas.length>5?' +more':'')+' <br>';
+  if(totalSales>0)out+='💰 <b>Total Billed:</b> '+fmtCurrency(totalSales)+'<br>';
+  if(totalOut>0)out+='🔴 <b>Outstanding:</b> <span style="color:var(--red)">'+fmtCurrency(totalOut)+'</span><br>';
+  out+='<br><button class="chat-chip" onclick="chatAsk(\'today attendance\')">📋 Attendance</button> ';
+  out+='<button class="chat-chip" onclick="chatAsk(\'top outstanding\')">🔴 Outstanding</button>';
+  return out;
+}
+function chatCompanyBreakdown(company){
+  var stmts=STATEMENTS_DATA.filter(function(r){return r[SCOL.COMPANY]&&r[SCOL.COMPANY].toLowerCase()===company.toLowerCase();});
+  if(!stmts.length)return'No statements found for <b>'+esc(company)+'</b>.';
+  var totalSales=stmts.reduce(function(s,r){return s+r._sales;},0);
+  var totalPaid=stmts.reduce(function(s,r){return s+r._payment;},0);
+  var outstanding=totalSales-totalPaid;
+  var custs={};stmts.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;if(!custs[cn])custs[cn]={s:0,p:0};custs[cn].s+=r._sales;custs[cn].p+=r._payment;});
+  var topCusts=Object.keys(custs).sort(function(a,b){return custs[b].s-custs[a].s;}).slice(0,5);
+  var trows=topCusts.map(function(n){var d=custs[n];var out=d.s-d.p;return'<tr><td>'+esc(n)+'</td><td style="text-align:right">'+fmtCurrency(d.s)+'</td><td style="text-align:right;color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(out)+'</td></tr>';}).join('');
+  return'🏢 <b>'+esc(company)+'</b><br>'
+    +'💰 Sales: <b>'+fmtCurrency(totalSales)+'</b> · Collected: <b>'+fmtCurrency(totalPaid)+'</b><br>'
+    +(outstanding>0?'🔴 Outstanding: <b style="color:var(--red)">'+fmtCurrency(outstanding)+'</b><br>':'✅ Fully collected<br>')
+    +(trows?'<br><b>Top Customers:</b><br><table><thead><tr><th>Customer</th><th>Sales</th><th>Balance</th></tr></thead><tbody>'+trows+'</tbody></table>':'');
+}
+function chatCollectionAll(period){
+  var stmts=chatDateFilter(STATEMENTS_DATA,period,'_date');
+  var total=stmts.reduce(function(s,r){return s+r._payment;},0);
+  var staffLookup={};
+  CUSTOMER_DATA.forEach(function(c){
+    (c[CCOL.STAFF_EMAIL]||'').split(/[,;\s]+/).map(function(e){return e.trim();}).filter(Boolean).forEach(function(e){
+      if(!staffLookup[c[CCOL.CUST_NAME]])staffLookup[c[CCOL.CUST_NAME]]=e;
+    });
+  });
+  var byStaff={};
+  stmts.forEach(function(r){
+    var e=staffLookup[r[SCOL.CUST_NAME]];
+    if(!e)return;var n=chatStaffName(e);
+    if(!byStaff[n])byStaff[n]=0;byStaff[n]+=r._payment;
+  });
+  var sorted=Object.keys(byStaff).sort(function(a,b){return byStaff[b]-byStaff[a];});
+  var html='💵 <b>Collections '+chatPeriodLabel(period)+'</b><br>Total: <b>'+fmtCurrency(total)+'</b><br>';
+  if(sorted.length){
+    var trows=sorted.slice(0,10).map(function(n){return'<tr><td>'+esc(n)+'</td><td style="text-align:right"><b>'+fmtCurrency(byStaff[n])+'</b></td></tr>';}).join('');
+    html+='<table><thead><tr><th>Staff</th><th>Collection</th></tr></thead><tbody>'+trows+'</tbody></table>';
+  }
+  return html;
+}
+function chatSalesAll(period){
+  var stmts=chatDateFilter(STATEMENTS_DATA,period,'_date');
+  var total=stmts.reduce(function(s,r){return s+r._sales;},0);
+  var cm={};
+  stmts.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;if(!cm[cn])cm[cn]=0;cm[cn]+=r._sales;});
+  var list=Object.keys(cm).sort(function(a,b){return cm[b]-cm[a];}).slice(0,10);
+  var trows=list.map(function(n){
+    var safe=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return'<tr><td><button class="chat-chip" style="margin:1px;padding:2px 6px;font-size:11px" onclick="chatOpenLedger(\''+safe+'\')">'+esc(n)+'</button></td>'
+      +'<td style="text-align:right"><b>'+fmtCurrency(cm[n])+'</b></td></tr>';
+  }).join('');
+  return'💰 <b>Sales '+chatPeriodLabel(period)+'</b><br>Total: <b>'+fmtCurrency(total)+'</b><br>'
+    +(trows?'<table><thead><tr><th>Customer</th><th>Sales</th></tr></thead><tbody>'+trows+'</tbody></table>':'');
+}
+
+// ── Entity-specific queries ───────────────────────────────────────────────────
+function chatCustData(custName,metric,period){
+  var allStmts=STATEMENTS_DATA.filter(function(r){return r[SCOL.CUST_NAME]===custName;});
+  if(!allStmts.length)return'No data for <b>'+esc(custName)+'</b>.';
+  var stmts=period?chatDateFilter(allStmts,period,'_date'):allStmts;
+  var ts=stmts.reduce(function(s,r){return s+r._sales;},0);
+  var tp=stmts.reduce(function(s,r){return s+r._payment;},0);
+  var allTs=allStmts.reduce(function(s,r){return s+r._sales;},0);
+  var allTp=allStmts.reduce(function(s,r){return s+r._payment;},0);
+  var ob=allStmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');}).reduce(function(s,r){return s+r._sales;},0);
+  var out=allTs-allTp;
+  var last=allStmts.slice().sort(function(a,b){return(b._date||0)-(a._date||0);})[0];
+  var safe=custName.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  var html='💰 <b>'+esc(custName)+'</b> '+chatPeriodLabel(period)+'<br><br>';
+  if(metric==='outstanding'){
+    html+='Outstanding: <b style="color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(out))+'</b><br>';
+    html+='(Billed: '+fmtCurrency(allTs)+' | Paid: '+fmtCurrency(allTp)+')<br>';
+  }else if(metric==='collection'){
+    html+='Collected '+chatPeriodLabel(period)+': <b style="color:var(--green)">'+fmtCurrency(tp)+'</b><br>';
+    html+='All-time Outstanding: <b style="color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(out))+'</b><br>';
+  }else{
+    if(ob>0&&!period){html+='Opening Balance: <b>'+fmtCurrency(ob)+'</b><br>This Period Sales: <b>'+fmtCurrency(ts-ob)+'</b><br>';}
+    else{html+='Total Billed: <b>'+fmtCurrency(ts)+'</b><br>';}
+    html+='Total Paid: <b>'+fmtCurrency(tp)+'</b><br>';
+    html+='Outstanding: <b style="color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(out))+'</b><br>';
+    if(last&&last._date)html+='Last Transaction: '+fmtDate(last._date)+'<br>';
+  }
+  html+='<br><button class="chat-chip" onclick="chatOpenLedger(\''+safe+'\')" style="border-color:var(--teal);color:var(--teal)">View Full Ledger →</button>';
+  return html;
+}
+function chatStaffData(email,metric,period){
+  var name=chatStaffName(email);
+  var allVisits=RAW_DATA.filter(function(r){return r[COL.STAFF_EMAIL]===email||r[COL.STAFF_NAME]===name;});
+  var filtVisits=period?chatDateFilter(allVisits,period,'_visitDate'):allVisits;
+  var areas=unique(filtVisits.map(function(r){return r[COL.AREA];}).filter(Boolean));
+  var farmers=unique(filtVisits.map(function(r){return r[COL.FARMER_NAME];}).filter(Boolean));
+
+  if(metric==='visits'){
+    return'👤 <b>'+esc(name)+'</b> — Visits '+chatPeriodLabel(period)+'<br><br>'
+      +'Total Visits: <b>'+filtVisits.length+'</b><br>'
+      +'Unique Farmers: <b>'+farmers.length+'</b><br>'
+      +(areas.length?'Areas: <b>'+esc(areas.slice(0,6).join(', '))+(areas.length>6?' …':'')+'</b>':'');
+  }
+
+  var custNames=CUSTOMER_DATA.filter(function(c){
+    return(c[CCOL.STAFF_EMAIL]||'').split(/[,;\s]+/).map(function(e){return e.trim();}).indexOf(email)>=0;
+  }).map(function(c){return c[CCOL.CUST_NAME];}).filter(Boolean);
+
+  var stmts=period
+    ?STATEMENTS_DATA.filter(function(r){return custNames.indexOf(r[SCOL.CUST_NAME])>=0&&r._date&&r._date>=period.from&&r._date<=period.to;})
+    :STATEMENTS_DATA.filter(function(r){return custNames.indexOf(r[SCOL.CUST_NAME])>=0;});
+
+  var ts=stmts.reduce(function(s,r){return s+r._sales;},0);
+  var tp=stmts.reduce(function(s,r){return s+r._payment;},0);
+
+  // Per-customer breakdown
+  var cm={};
+  stmts.forEach(function(r){var cn=r[SCOL.CUST_NAME];if(!cn)return;if(!cm[cn])cm[cn]={s:0,p:0};cm[cn].s+=r._sales;cm[cn].p+=r._payment;});
+  var custList=Object.keys(cm).sort(function(a,b){return cm[b].s-cm[a].s;});
+
+  var html='👤 <b>'+esc(name)+'</b> '+chatPeriodLabel(period)+'<br>';
+  html+='Visits: <b>'+filtVisits.length+'</b>'+(areas.length?' | Areas: '+esc(areas.slice(0,3).join(', '))+(areas.length>3?' …':''):'')+'<br><br>';
+
+  if(metric==='collection'){
+    html+='💵 Collected: <b style="color:var(--green)">'+fmtCurrency(tp)+'</b><br>';
+  }else if(metric==='outstanding'){
+    var allS=STATEMENTS_DATA.filter(function(r){return custNames.indexOf(r[SCOL.CUST_NAME])>=0;});
+    var aTs=allS.reduce(function(s,r){return s+r._sales;},0);
+    var aTp=allS.reduce(function(s,r){return s+r._payment;},0);
+    html+='🔴 Outstanding: <b style="color:var(--red)">'+fmtCurrency(aTs-aTp)+'</b><br>';
+  }else{
+    html+='💰 Total Billed: <b style="color:var(--gold)">'+fmtCurrency(ts)+'</b><br>';
+    html+='💵 Total Collected: <b style="color:var(--green)">'+fmtCurrency(tp)+'</b><br>';
+    html+='🔴 Outstanding: <b style="color:var(--red)">'+fmtCurrency(ts-tp)+'</b><br>';
+  }
+
+  if(custList.length){
+    var trows=custList.map(function(cn){
+      var out=cm[cn].s-cm[cn].p;var safe=cn.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return'<tr><td><button class="chat-chip" style="margin:1px;padding:2px 6px;font-size:11px" onclick="chatOpenLedger(\''+safe+'\')">'+esc(cn)+'</button></td>'
+        +'<td style="text-align:right">'+fmtCurrency(cm[cn].s)+'</td>'
+        +'<td style="text-align:right">'+fmtCurrency(cm[cn].p)+'</td>'
+        +'<td style="text-align:right;color:'+(out>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(out)+'</td></tr>';
+    }).join('');
+    html+='<br><b>Customers ('+custList.length+')</b><br>'
+      +'<table><thead><tr><th>Customer</th><th>Billed</th><th>Paid</th><th>Outstanding</th></tr></thead><tbody>'+trows+'</tbody></table>';
+  }else if(!allVisits.length){
+    html='No data found for <b>'+esc(name)+'</b>.';
+  }
+  return html;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+window.addEventListener('DOMContentLoaded',function(){
+  var to=new Date(),from=new Date();from.setDate(from.getDate()-30);
+  document.getElementById('f-to').valueAsDate=to;
+  document.getElementById('f-from').valueAsDate=from;
+  (function(){
+    try{
+      var cached=JSON.parse(localStorage.getItem('aqua_cache_v3')||'null');
+      if(cached&&cached.data&&cached.ts&&typeof cached.data==='object'&&!Array.isArray(cached.data)&&!cached.data.error){
+        parseAndRender(cached.data);
+        populateFilters();applyFilters();
+        var age=Math.round((Date.now()-cached.ts)/60000);
+        if(age<30){
+          setStatus('● '+age+'m ago · auto-refreshes at 15m');
+          startCountdown();
+        }else{
+          setStatus('Cached · '+(age<60?age+'m ago':Math.round(age/60)+'h ago')+' — refreshing…');
+          loadData(true);
+        }
+        return;
+      }
+    }catch(e){}
+    loadData();
+  })();
+});
+</script>
+
+<!-- ── Chat Assistant ── -->
+<button id="chat-fab" onclick="chatToggle()" title="Aqua Assistant">💬</button>
+<div id="chat-panel">
+  <div id="chat-hdr">
+    <span id="chat-hdr-title">🤖 Aqua Assistant</span>
+    <button onclick="chatToggle()">✕</button>
+  </div>
+  <div id="chat-msgs"></div>
+  <div id="chat-chips">
+    <button class="chat-chip" onclick="chatAsk('Today attendance')">📋 Today</button>
+    <button class="chat-chip" onclick="chatAsk('Weekly performance')">📊 This Week</button>
+    <button class="chat-chip" onclick="chatAsk('Monthly performance')">📅 This Month</button>
+    <button class="chat-chip" onclick="chatAsk('Top outstanding')">🔴 Outstanding</button>
+    <button class="chat-chip" onclick="chatAsk('Top customers by sales')">💰 Top Sales</button>
+  </div>
+  <div id="chat-irow">
+    <input id="chat-inp" type="text" placeholder="Ask about data… e.g. sale of Ramesh" onkeydown="if(event.key==='Enter')chatSend()">
+    <button id="chat-send" onclick="chatSend()">↑</button>
+  </div>
+</div>
+
+<!-- Filter backdrop -->
+<div id="filter-backdrop" onclick="closeFilter()"></div>
+
+<!-- Reports sheet -->
+<div id="reports-backdrop" onclick="closeReports()"></div>
+<div id="reports-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Reports &amp; Analysis</div>
+  <div class="reports-grid">
+    <div class="report-chip" onclick="switchTab('attendance');closeReports()"><div class="rc-icon">📋</div><div class="rc-lbl">Attend</div></div>
+    <div class="report-chip" onclick="switchTab('coverage');closeReports()"><div class="rc-icon">🗺️</div><div class="rc-lbl">Coverage</div></div>
+    <div class="report-chip" onclick="switchTab('trends');closeReports()"><div class="rc-icon">📈</div><div class="rc-lbl">Trends</div></div>
+    <div class="report-chip" onclick="switchTab('dealers');closeReports()"><div class="rc-icon">🏪</div><div class="rc-lbl">Dealers</div></div>
+    <div class="report-chip" onclick="switchTab('remarks');closeReports()"><div class="rc-icon">💬</div><div class="rc-lbl">Remarks</div></div>
+    <div class="report-chip" onclick="switchTab('staff');closeReports()"><div class="rc-icon">🏆</div><div class="rc-lbl">Leaders</div></div>
+  </div>
+</div>
+
+<!-- PDF picker sheet -->
+<div id="pdf-backdrop" onclick="closePdfSheet()"></div>
+<div id="pdf-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Export PDF</div>
+  <button class="pdf-opt" onclick="runPerfPDF('compact')">
+    <div class="pdf-opt-icon">📄</div>
+    <div><span class="pdf-opt-label">Compact — 1 Page</span><span class="pdf-opt-desc">Scale everything to fit a single A4 sheet (portrait or landscape)</span></div>
+  </button>
+  <button class="pdf-opt" onclick="runPerfPDF('full')">
+    <div class="pdf-opt-icon">📑</div>
+    <div><span class="pdf-opt-label">Full Report</span><span class="pdf-opt-desc">Natural size, auto-paginated — best for printing</span></div>
+  </button>
+  <button class="pdf-opt" onclick="closePdfSheet()" style="color:var(--mid)">
+    <div class="pdf-opt-icon" style="font-size:18px">✕</div>
+    <div><span class="pdf-opt-label" style="font-weight:400">Cancel</span></div>
+  </button>
+</div>
+
+<!-- Bottom nav -->
+<div id="bottom-nav">
+  <button class="bnav-btn active" data-bnav="overview" onclick="switchTab('overview')"><span class="bnav-icon">🏠</span><span class="bnav-lbl">Home</span></button>
+  <button class="bnav-btn" data-bnav="performance" onclick="switchTab('performance')"><span class="bnav-icon">👥</span><span class="bnav-lbl">Staff</span></button>
+  <button class="bnav-btn" data-bnav="sales" onclick="switchTab('sales')"><span class="bnav-icon">💰</span><span class="bnav-lbl">Sales</span></button>
+  <button class="bnav-btn" data-bnav="more" onclick="openReports()"><span class="bnav-icon">⋯</span><span class="bnav-lbl">More</span></button>
+</div>
+</body>
+</html>
