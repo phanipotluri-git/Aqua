@@ -2149,6 +2149,10 @@ async function exportCustDirectPDF(custName,btn){
     var outstanding=totalSales-totalPmt;
     var openingBal=stmts.filter(function(r){return(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening')}).reduce(function(s,r){return s+r._sales},0);
     var periodSales=totalSales-openingBal;
+    // Split: cash rows = Invoice No starts with a letter (a-z)
+    var cashStmts=stmts.filter(function(r){return /^[a-zA-Z]/.test(r[SCOL.INVOICE_NO]||'');});
+    var regularStmts=stmts.filter(function(r){return!/^[a-zA-Z]/.test(r[SCOL.INVOICE_NO]||'');});
+    var hasCash=cashStmts.length>0;
     var pdfCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
     var multiCo=pdfCompanies.length>1;
 
@@ -2207,34 +2211,56 @@ async function exportCustDirectPDF(custName,btn){
       html+='</div>';
     }
 
-    // ── Transaction table ─────────────────────────────────────────────
-    html+='<table style="width:100%;border-collapse:collapse;font-size:10px">'
-      +'<thead><tr style="background:#e8eaed">'
-      +'<th style="text-align:left;'+TH+';white-space:nowrap">Date</th>'
-      +'<th style="text-align:left;'+TH+'">Type</th>'
-      +'<th style="text-align:left;'+TH+'">Invoice</th>'
-      +'<th style="text-align:left;'+TH+'">Company</th>'
-      +'<th style="text-align:right;'+TH+';white-space:nowrap">Sales</th>'
-      +'<th style="text-align:right;'+TH+';white-space:nowrap">Payment</th>'
-      +'</tr></thead><tbody>';
-    stmts.forEach(function(r){
-      var isOpening=(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');
-      var rowBg=isOpening?'background:#f0ecff;':'';
-      var dimStyle=isOpening?'color:#888;font-style:italic;':'';
-      html+='<tr style="border-bottom:1px solid #ebebeb;'+rowBg+'">'
-        +'<td style="'+TD+';white-space:nowrap;'+dimStyle+'">'+fmtDate(r._date)+'</td>'
-        +'<td style="'+TD+';color:#7c3aed">'+( isOpening?'📂 ':'')+esc(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID])+'</td>'
-        +'<td style="'+TD+';font-family:IBM Plex Mono,monospace;'+dimStyle+'">'+esc(r[SCOL.INVOICE_NO])+'</td>'
-        +'<td style="'+TD+';'+dimStyle+'">'+esc(r[SCOL.COMPANY])+'</td>'
-        +'<td style="'+TD+';text-align:right;font-weight:600;color:'+(isOpening?'#7c3aed':'#b45309')+'">'+fmtCurrency(r._sales)+'</td>'
-        +'<td style="'+TD+';text-align:right;font-weight:600;color:#16a34a">'+fmtCurrency(r._payment)+'</td>'
-        +'</tr>';
-    });
-    html+='<tr style="border-top:2px solid #999;font-weight:700">'
-      +'<td colspan="4" style="'+TD+';text-transform:uppercase;letter-spacing:.05em;font-size:9px">Totals</td>'
-      +'<td style="'+TD+';text-align:right">'+fmtCurrency(totalSales)+'</td>'
-      +'<td style="'+TD+';text-align:right">'+fmtCurrency(totalPmt)+'</td>'
-      +'</tr></tbody></table>';
+    // ── Transaction table (invoices / regular rows) ───────────────────
+    function buildTxTable(rows,sectionLabel){
+      var rSales=rows.reduce(function(s,r){return s+r._sales},0);
+      var rPmt=rows.reduce(function(s,r){return s+r._payment},0);
+      var out='<div style="font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:4px">'+sectionLabel+'</div>';
+      out+='<table style="width:100%;border-collapse:collapse;font-size:10px">'
+        +'<thead><tr style="background:#e8eaed">'
+        +'<th style="text-align:left;'+TH+';white-space:nowrap">Date</th>'
+        +'<th style="text-align:left;'+TH+'">Type</th>'
+        +'<th style="text-align:left;'+TH+'">Invoice</th>'
+        +'<th style="text-align:left;'+TH+'">Company</th>'
+        +'<th style="text-align:right;'+TH+';white-space:nowrap">Sales</th>'
+        +'<th style="text-align:right;'+TH+';white-space:nowrap">Payment</th>'
+        +'</tr></thead><tbody>';
+      rows.forEach(function(r){
+        var isOpening=(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');
+        var rowBg=isOpening?'background:#f0ecff;':'';
+        var dimStyle=isOpening?'color:#888;font-style:italic;':'';
+        out+='<tr style="border-bottom:1px solid #ebebeb;'+rowBg+'">'
+          +'<td style="'+TD+';white-space:nowrap;'+dimStyle+'">'+fmtDate(r._date)+'</td>'
+          +'<td style="'+TD+';color:#7c3aed">'+(isOpening?'📂 ':'')+esc(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID])+'</td>'
+          +'<td style="'+TD+';font-family:IBM Plex Mono,monospace;'+dimStyle+'">'+esc(r[SCOL.INVOICE_NO])+'</td>'
+          +'<td style="'+TD+';'+dimStyle+'">'+esc(r[SCOL.COMPANY])+'</td>'
+          +'<td style="'+TD+';text-align:right;font-weight:600;color:'+(isOpening?'#7c3aed':'#b45309')+'">'+fmtCurrency(r._sales)+'</td>'
+          +'<td style="'+TD+';text-align:right;font-weight:600;color:#16a34a">'+fmtCurrency(r._payment)+'</td>'
+          +'</tr>';
+      });
+      out+='<tr style="border-top:2px solid #999;font-weight:700">'
+        +'<td colspan="4" style="'+TD+';text-transform:uppercase;letter-spacing:.05em;font-size:9px">Totals</td>'
+        +'<td style="'+TD+';text-align:right">'+fmtCurrency(rSales)+'</td>'
+        +'<td style="'+TD+';text-align:right">'+fmtCurrency(rPmt)+'</td>'
+        +'</tr></tbody></table>';
+      return out;
+    }
+    html+=buildTxTable(regularStmts,hasCash?'Invoice Ledger':'Transactions');
+
+    // ── Cash Ledger section ───────────────────────────────────────────
+    if(hasCash){
+      var cashSales=cashStmts.reduce(function(s,r){return s+r._sales},0);
+      var cashPmt=cashStmts.reduce(function(s,r){return s+r._payment},0);
+      var cashOut=cashSales-cashPmt;
+      html+='<div style="margin-top:14px;padding:8px 10px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:5px;margin-bottom:6px">'
+        +'<div style="font-size:9px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">💵 Cash Ledger</div>'
+        +'<div style="display:flex;gap:6px">';
+      html+='<div style="flex:1;background:#fff;border:1px solid #a7f3d0;border-radius:4px;padding:5px 8px"><div style="'+S+'">Cash Billed</div><div style="font-size:12px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#b45309">'+fmtCurrency(cashSales)+'</div></div>';
+      html+='<div style="flex:1;background:#fff;border:1px solid #a7f3d0;border-radius:4px;padding:5px 8px"><div style="'+S+'">Cash Paid</div><div style="font-size:12px;font-weight:700;font-family:IBM Plex Mono,monospace;color:#16a34a">'+fmtCurrency(cashPmt)+'</div></div>';
+      html+='<div style="flex:1;background:#fff;border:1px solid #a7f3d0;border-radius:4px;padding:5px 8px"><div style="'+S+'">Cash Outstanding</div><div style="font-size:12px;font-weight:700;font-family:IBM Plex Mono,monospace;color:'+(cashOut>0?'#dc2626':'#16a34a')+'">'+fmtCurrency(Math.abs(cashOut))+'</div></div>';
+      html+='</div></div>';
+      html+=buildTxTable(cashStmts,'Cash Transactions');
+    }
 
     // ── Payment details (single company only — multi-co shown above) ──
     if(!multiCo){
