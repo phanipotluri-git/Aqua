@@ -1958,23 +1958,44 @@ function renderCustomerLedger(stmts,custStaffMap){
 
     var det=document.createElement('tr');det.className='row-detail';det.id='cust-det-'+i;
     var sorted=c.stmts.slice().sort(function(a,b){return(a._date||0)-(b._date||0)});
-    var tbl='<div style="overflow-x:auto"><table><thead><tr>'
-      +'<th>Date</th><th>Type</th><th>Invoice No</th><th>Company</th>'
-      +'<th class="r">Sales</th><th class="r">Payment</th><th class="r">Balance</th>'
-      +'</tr></thead><tbody>';
-    sorted.forEach(function(r){
-      var balCol=r._balance>0?'var(--red)':r._balance<0?'var(--green)':'var(--teal)';
-      tbl+='<tr>'
-        +'<td class="c-date">'+fmtDate(r._date)+'</td>'
-        +'<td class="c-type">'+esc(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID])+'</td>'
-        +'<td style="font-family:IBM Plex Mono,monospace;font-size:11px">'+esc(r[SCOL.INVOICE_NO])+'</td>'
-        +'<td style="color:var(--purple)">'+esc(r[SCOL.COMPANY])+'</td>'
-        +'<td class="c-gold">'+fmtCurrency(r._sales)+'</td>'
-        +'<td class="c-green">'+fmtCurrency(r._payment)+'</td>'
-        +'<td style="text-align:right;font-family:IBM Plex Mono,monospace;color:'+balCol+'">'+fmtCurrency(r._balance)+'</td>'
-        +'</tr>';
-    });
-    tbl+='</tbody></table></div>';
+    var iCashRows=sorted.filter(function(r){return /^[a-zA-Z]/.test(r[SCOL.INVOICE_NO]||'');});
+    var iRegRows=sorted.filter(function(r){return!/^[a-zA-Z]/.test(r[SCOL.INVOICE_NO]||'');});
+    var iHasCash=iCashRows.length>0;
+    function buildInlineTable(rows,label){
+      var t='<div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin:8px 0 3px">'+label+'</div>';
+      t+='<div style="overflow-x:auto"><table><thead><tr>'
+        +'<th>Date</th><th>Type</th><th>Invoice No</th><th>Company</th>'
+        +'<th class="r">Sales</th><th class="r">Payment</th><th class="r">Balance</th>'
+        +'</tr></thead><tbody>';
+      rows.forEach(function(r){
+        var balCol=r._balance>0?'var(--red)':r._balance<0?'var(--green)':'var(--teal)';
+        t+='<tr>'
+          +'<td class="c-date">'+fmtDate(r._date)+'</td>'
+          +'<td class="c-type">'+esc(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID])+'</td>'
+          +'<td style="font-family:IBM Plex Mono,monospace;font-size:11px">'+esc(r[SCOL.INVOICE_NO])+'</td>'
+          +'<td style="color:var(--purple)">'+esc(r[SCOL.COMPANY])+'</td>'
+          +'<td class="c-gold">'+fmtCurrency(r._sales)+'</td>'
+          +'<td class="c-green">'+fmtCurrency(r._payment)+'</td>'
+          +'<td style="text-align:right;font-family:IBM Plex Mono,monospace;color:'+balCol+'">'+fmtCurrency(r._balance)+'</td>'
+          +'</tr>';
+      });
+      t+='</tbody></table></div>';
+      return t;
+    }
+    var tbl=buildInlineTable(iRegRows,iHasCash?'Invoice Ledger':'Transactions');
+    if(iHasCash){
+      var icS=iCashRows.reduce(function(s,r){return s+r._sales},0);
+      var icP=iCashRows.reduce(function(s,r){return s+r._payment},0);
+      var icO=icS-icP;
+      tbl+='<div style="margin-top:10px;padding:8px 10px;background:rgba(16,185,129,.08);border:1px solid var(--teal);border-radius:6px;margin-bottom:4px">'
+        +'<div style="font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">💵 Cash Ledger</div>'
+        +'<div style="display:flex;gap:8px">'
+        +'<div class="kpi-card" style="flex:1;padding:6px 10px"><div class="kpi-label">Cash Billed</div><div class="kpi-value" style="font-size:15px;color:var(--gold)">'+fmtCurrency(icS)+'</div></div>'
+        +'<div class="kpi-card" style="flex:1;padding:6px 10px"><div class="kpi-label">Cash Paid</div><div class="kpi-value" style="font-size:15px;color:var(--green)">'+fmtCurrency(icP)+'</div></div>'
+        +'<div class="kpi-card" style="flex:1;padding:6px 10px"><div class="kpi-label">Cash Outstanding</div><div class="kpi-value" style="font-size:15px;color:'+(icO>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(icO))+'</div></div>'
+        +'</div></div>';
+      tbl+=buildInlineTable(iCashRows,'Cash Transactions');
+    }
     det.innerHTML='<td colspan="7"><div style="padding:6px 0 8px;display:flex;gap:8px">'
       +'<button class="btn btn-primary" onclick="event.stopPropagation();exportCustDirectPDF(\''+c.name.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')+'\',this)" style="font-size:11px;padding:4px 10px">⬇ PDF</button>'
       +'<button class="btn" onclick="event.stopPropagation();openCustModal(\''+c.name.replace(/\\/g,'\\\\').replace(/'/g,'\\\'')+'\')" style="font-size:11px;padding:4px 10px;border-color:var(--teal);color:var(--teal)">👁 Detail</button>'
