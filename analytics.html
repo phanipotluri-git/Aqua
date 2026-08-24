@@ -2090,26 +2090,52 @@ function openCustModal(custName){
   kpis+='<div class="kpi-card"><div class="kpi-label">Total Paid</div><div class="kpi-value" style="font-size:20px;color:var(--green)">'+fmtCurrency(totalPmt)+'</div></div>';
   kpis+='<div class="kpi-card"><div class="kpi-label">Outstanding</div><div class="kpi-value" style="font-size:20px;color:'+(outstanding>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(outstanding))+'</div></div>';
   document.getElementById('cust-modal-kpis').innerHTML=kpis;
-  var tbl='<table><thead><tr><th>Date</th><th>Type</th><th>Invoice</th><th>Company</th><th class="r">Sales</th><th class="r">Payment</th></tr></thead><tbody>';
-  stmts.forEach(function(r){
-    var isOpening=(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');
-    var rowStyle=isOpening?'background:rgba(155,108,255,.08);font-style:italic;color:var(--dim)':'';
-    tbl+='<tr style="'+rowStyle+'">'
-      +'<td class="c-date">'+fmtDate(r._date)+'</td>'
-      +'<td class="c-type" style="color:var(--purple)">'+(isOpening?'📂 ':'')+esc(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID])+'</td>'
-      +'<td style="font-family:IBM Plex Mono,monospace;font-size:11px">'+esc(r[SCOL.INVOICE_NO])+'</td>'
-      +'<td style="color:var(--purple)">'+esc(r[SCOL.COMPANY])+'</td>'
-      +'<td class="'+(isOpening?'':'c-gold')+'" style="'+(isOpening?'color:var(--purple)':'')+'">'+fmtCurrency(r._sales)+'</td>'
-      +'<td class="c-green">'+fmtCurrency(r._payment)+'</td>'
-      +'</tr>';
-  });
-  // Totals footer row
-  tbl+='</tbody><tfoot><tr style="border-top:2px solid var(--border)">'
-    +'<td colspan="4" style="padding:8px 12px;font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px">Totals</td>'
-    +'<td style="text-align:right;padding:8px 12px;color:var(--gold);font-family:IBM Plex Mono,monospace;font-weight:700">'+fmtCurrency(totalSales)+'</td>'
-    +'<td style="text-align:right;padding:8px 12px;color:var(--green);font-family:IBM Plex Mono,monospace;font-weight:700">'+fmtCurrency(totalPmt)+'</td>'
-    +'</tr></tfoot></table>';
-  if(!stmts.length)tbl='<div style="color:var(--dim);padding:20px">No transactions found for this customer.</div>';
+  var mCashStmts=stmts.filter(function(r){return /^[a-zA-Z]/.test(r[SCOL.INVOICE_NO]||'');});
+  var mRegStmts=stmts.filter(function(r){return!/^[a-zA-Z]/.test(r[SCOL.INVOICE_NO]||'');});
+  var mHasCash=mCashStmts.length>0;
+  function buildModalTable(rows,label){
+    var rS=rows.reduce(function(s,r){return s+r._sales},0);
+    var rP=rows.reduce(function(s,r){return s+r._payment},0);
+    var t='<div style="font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin:10px 0 4px">'+label+'</div>';
+    t+='<table><thead><tr><th>Date</th><th>Type</th><th>Invoice</th><th>Company</th><th class="r">Sales</th><th class="r">Payment</th></tr></thead><tbody>';
+    rows.forEach(function(r){
+      var isOpening=(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID]||'').toLowerCase().includes('opening');
+      var rowStyle=isOpening?'background:rgba(155,108,255,.08);font-style:italic;color:var(--dim)':'';
+      t+='<tr style="'+rowStyle+'">'
+        +'<td class="c-date">'+fmtDate(r._date)+'</td>'
+        +'<td class="c-type" style="color:var(--purple)">'+(isOpening?'📂 ':'')+esc(r[SCOL.TRANS_TYPE]||r[SCOL.BILLED_PAID])+'</td>'
+        +'<td style="font-family:IBM Plex Mono,monospace;font-size:11px">'+esc(r[SCOL.INVOICE_NO])+'</td>'
+        +'<td style="color:var(--purple)">'+esc(r[SCOL.COMPANY])+'</td>'
+        +'<td class="'+(isOpening?'':'c-gold')+'" style="'+(isOpening?'color:var(--purple)':'')+'">'+fmtCurrency(r._sales)+'</td>'
+        +'<td class="c-green">'+fmtCurrency(r._payment)+'</td>'
+        +'</tr>';
+    });
+    t+='</tbody><tfoot><tr style="border-top:2px solid var(--border)">'
+      +'<td colspan="4" style="padding:8px 12px;font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px">Totals</td>'
+      +'<td style="text-align:right;padding:8px 12px;color:var(--gold);font-family:IBM Plex Mono,monospace;font-weight:700">'+fmtCurrency(rS)+'</td>'
+      +'<td style="text-align:right;padding:8px 12px;color:var(--green);font-family:IBM Plex Mono,monospace;font-weight:700">'+fmtCurrency(rP)+'</td>'
+      +'</tr></tfoot></table>';
+    return t;
+  }
+  var tbl='';
+  if(!stmts.length){
+    tbl='<div style="color:var(--dim);padding:20px">No transactions found for this customer.</div>';
+  }else{
+    tbl+=buildModalTable(mRegStmts,mHasCash?'Invoice Ledger':'Transactions');
+    if(mHasCash){
+      var cS=mCashStmts.reduce(function(s,r){return s+r._sales},0);
+      var cP=mCashStmts.reduce(function(s,r){return s+r._payment},0);
+      var cO=cS-cP;
+      tbl+='<div style="margin-top:14px;padding:10px 12px;background:rgba(16,185,129,.08);border:1px solid var(--teal);border-radius:8px;margin-bottom:6px">'
+        +'<div style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">💵 Cash Ledger</div>'
+        +'<div style="display:flex;gap:8px">'
+        +'<div class="kpi-card" style="flex:1"><div class="kpi-label">Cash Billed</div><div class="kpi-value" style="font-size:18px;color:var(--gold)">'+fmtCurrency(cS)+'</div></div>'
+        +'<div class="kpi-card" style="flex:1"><div class="kpi-label">Cash Paid</div><div class="kpi-value" style="font-size:18px;color:var(--green)">'+fmtCurrency(cP)+'</div></div>'
+        +'<div class="kpi-card" style="flex:1"><div class="kpi-label">Cash Outstanding</div><div class="kpi-value" style="font-size:18px;color:'+(cO>0?'var(--red)':'var(--green)')+'">'+fmtCurrency(Math.abs(cO))+'</div></div>'
+        +'</div></div>';
+      tbl+=buildModalTable(mCashStmts,'Cash Transactions');
+    }
+  }
   // Payment details block
   var custCompanies=unique(stmts.map(function(r){return r[SCOL.COMPANY]}).filter(Boolean));
   var payCompany=SALES_COMPANIES.size===1?[...SALES_COMPANIES][0]:(custCompanies.length===1?custCompanies[0]:'');
